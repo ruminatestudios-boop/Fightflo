@@ -264,9 +264,9 @@ export function BagCalibrationScreen({
         } ${cameraReady ? "opacity-100" : "opacity-0"}`}
       />
 
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/55" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
 
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
+      <div className="relative z-10 px-5 pt-[max(1rem,env(safe-area-inset-top))]">
         <BackButton
           onClick={onBack}
           className="border-white/20 bg-black/40 text-white backdrop-blur-sm"
@@ -286,18 +286,30 @@ export function BagCalibrationScreen({
             />
           ))}
         </div>
+      </div>
 
-        <div className="mt-auto space-y-3">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-black/92 px-5 py-4 backdrop-blur-lg pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        <div className="space-y-3">
           {cameraReady && step !== "done" && (
-            <p className="text-center text-xs text-white/50">{statusLine}</p>
+            <p className="text-center text-xs leading-relaxed text-white/60">
+              {statusLine}
+            </p>
+          )}
+
+          {cameraReady && step === "done" && (
+            <p className="text-center text-xs leading-relaxed text-white/60">
+              {statusLine}
+            </p>
           )}
 
           {previewError && (
-            <p className="text-center text-xs text-[#fa4141]/90">{previewError}</p>
+            <p className="text-center text-xs leading-relaxed text-[#fa4141]/90">
+              {previewError}
+            </p>
           )}
 
           {!gpuOk && cameraReady && (
-            <p className="text-center text-xs text-amber-400/80">
+            <p className="text-center text-xs leading-relaxed text-amber-400/80">
               Use Chrome on a modern phone for best accuracy
             </p>
           )}

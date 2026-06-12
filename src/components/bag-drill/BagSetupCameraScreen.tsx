@@ -96,9 +96,9 @@ export function BagSetupCameraScreen({
         } ${cameraReady ? "opacity-100" : "opacity-0"}`}
       />
 
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
 
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
+      <div className="relative z-10 px-5 pt-[max(1rem,env(safe-area-inset-top))]">
         <div className="flex items-center justify-between gap-3">
           <BackButton
             onClick={handleBack}
@@ -117,8 +117,10 @@ export function BagSetupCameraScreen({
             ))}
           </div>
         </div>
+      </div>
 
-        <div className="mt-auto space-y-3">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-black/92 px-5 py-4 backdrop-blur-lg pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        <div className="space-y-3">
           {previewError && (
             <p className="text-center text-xs leading-relaxed text-[#fa4141]/90">
               {previewError}
