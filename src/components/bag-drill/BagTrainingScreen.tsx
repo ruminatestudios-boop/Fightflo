@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { SessionControlBar } from "@/components/training/SessionControlBar";
 import {
   formatReaction,
@@ -24,6 +24,12 @@ function formatTimer(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+const VALIDATION_COPY = {
+  correct: "Combo complete",
+  wrong: "Not enough hits",
+  miss: "Missed",
+} as const;
+
 export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenProps) {
   const { state, videoRef, start, tapPunch, disputeStrike, micBackupPunch } = drill;
   const tapOnly =
@@ -41,7 +47,6 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
     1,
     state.elapsedSeconds / config.timing.durationSeconds
   );
-  const comboKey = state.currentCombo?.id ?? "idle";
 
   const phaseLabel = state.inComboWindow
     ? aiMode && state.nextStrikeLabel
@@ -49,9 +54,40 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
       : "Go — throw the combo"
     : "Listen";
 
-  const showStatus =
+  const modeBadge = poseMode
+    ? config.cameraMode === "fighter"
+      ? "Pose AI"
+      : "Triple"
+    : state.detectionMode === "audio-hybrid"
+      ? "Mic"
+      : "Tap";
+
+  const statusText =
     (state.statusMessage && !state.inComboWindow) ||
-    (state.statusMessage && state.inComboWindow && aiMode);
+    (state.statusMessage && state.inComboWindow && aiMode)
+      ? state.statusMessage
+      : "\u00a0";
+
+  const validationText = state.lastValidation
+    ? VALIDATION_COPY[state.lastValidation]
+    : "\u00a0";
+
+  const validationColor =
+    state.lastValidation === "correct"
+      ? "#4ade80"
+      : state.lastValidation === "wrong" || state.lastValidation === "miss"
+        ? "#fa4141"
+        : "transparent";
+
+  const reactionText =
+    state.lastReactionSeconds != null && state.lastReactionTier
+      ? `${formatReaction(state.lastReactionSeconds)} to first hit`
+      : "\u00a0";
+
+  const reactionColor =
+    state.lastReactionTier != null
+      ? tierColor(state.lastReactionTier)
+      : "transparent";
 
   useEffect(() => {
     void start(config);
@@ -64,41 +100,39 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
     }
   }, [state.elapsedSeconds, state.isActive, config.timing.durationSeconds, onStop]);
 
-  const validationColor =
-    state.lastValidation === "correct"
-      ? "#4ade80"
-      : state.lastValidation === "wrong" || state.lastValidation === "miss"
-        ? "#fa4141"
-        : undefined;
+  const maxHitDots = Math.max(state.hitsExpected, 6);
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col overflow-hidden bg-black">
-      <AnimatePresence>
-        {state.lastValidation === "correct" && (
-          <motion.div
-            key="ok"
-            initial={{ opacity: 0.35 }}
-            animate={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="pointer-events-none absolute inset-0 bg-emerald-500/20"
-          />
-        )}
-        {(state.lastValidation === "wrong" || state.lastValidation === "miss") && (
-          <motion.div
-            key="bad"
-            initial={{ opacity: 0.35 }}
-            animate={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="pointer-events-none absolute inset-0 bg-[#fa4141]/25"
-          />
-        )}
-      </AnimatePresence>
+    <div
+      className="fixed inset-0 z-40 grid overflow-hidden bg-black"
+      style={{
+        gridTemplateRows:
+          "auto minmax(0, 1fr) 15.5rem 5.5rem",
+      }}
+    >
+      <motion.div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-[1] bg-emerald-500/20"
+        animate={{ opacity: state.lastValidation === "correct" ? 0.35 : 0 }}
+        transition={{ duration: 0.35 }}
+      />
+      <motion.div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-[1] bg-[#fa4141]/25"
+        animate={{
+          opacity:
+            state.lastValidation === "wrong" || state.lastValidation === "miss"
+              ? 0.35
+              : 0,
+        }}
+        transition={{ duration: 0.35 }}
+      />
 
       <video
         ref={videoRef}
         playsInline
         muted
-        className={`pointer-events-none fixed inset-0 h-full w-full object-cover ${
+        className={`pointer-events-none fixed inset-0 z-0 h-full w-full object-cover ${
           config.cameraMode === "fighter" ? "scale-x-[-1] opacity-30" : "h-px w-px opacity-0"
         }`}
         aria-hidden={config.cameraMode !== "fighter"}
@@ -106,14 +140,15 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
 
       <GuardWarningOverlay guard={state.guardWarning} />
 
-      {/* Fixed top band — height never changes */}
-      <div className="relative z-10 shrink-0 px-6 pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="mx-auto flex h-5 items-center justify-center gap-2">
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/40">
+      {/* Top band — fixed structure */}
+      <header className="relative z-10 px-6 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div className="mx-auto grid h-6 max-w-md grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <span />
+          <p className="truncate text-center text-xs font-medium uppercase tracking-[0.2em] text-white/40">
             {phaseLabel}
           </p>
           <span
-            className={`rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
+            className={`justify-self-end rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
               aiMode
                 ? "bg-emerald-500/20 text-emerald-400"
                 : state.detectionMode === "audio-hybrid"
@@ -121,35 +156,22 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
                   : "bg-white/10 text-white/45"
             }`}
           >
-            {poseMode
-              ? config.cameraMode === "fighter"
-                ? "Pose AI"
-                : "Triple"
-              : state.detectionMode === "audio-hybrid"
-                ? "Mic"
-                : "Tap"}
+            {modeBadge}
           </span>
         </div>
 
-        <div className="mx-auto flex h-10 max-w-xs items-center justify-center">
-          <p
-            className={`text-center text-[11px] leading-relaxed text-white/35 ${
-              showStatus ? "opacity-100" : "opacity-0"
-            }`}
-            aria-hidden={!showStatus}
-          >
-            {showStatus ? state.statusMessage : "\u00a0"}
-          </p>
-        </div>
+        <p className="mx-auto mt-2 flex h-10 max-w-xs items-center justify-center text-center text-[11px] leading-snug text-white/35">
+          {statusText}
+        </p>
 
-        <div className="mx-auto flex h-6 items-center justify-center gap-4 text-xs uppercase tracking-[0.12em] text-white/40">
-          <span>
+        <div className="mx-auto mt-1 flex h-6 items-center justify-center gap-4 text-xs uppercase tracking-[0.12em] text-white/40">
+          <span className="tabular-nums">
             Acc <span className="text-white/80">{state.accuracyPercent}%</span>
           </span>
-          <span>
+          <span className="tabular-nums">
             Hits <span className="text-white/80">{state.punchCount}</span>
           </span>
-          <span>
+          <span className="tabular-nums">
             Avg{" "}
             <span className="text-white/80">
               {state.avgReactionSeconds > 0
@@ -159,26 +181,32 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
           </span>
         </div>
 
-        <div className="mx-auto mb-2 flex h-2 items-center justify-center gap-1.5">
-          {state.hitsExpected > 0 && state.inComboWindow
-            ? Array.from({ length: state.hitsExpected }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`h-2 w-8 rounded-full transition-colors ${
-                    i < state.hitsInCombo ? "bg-emerald-500/80" : "bg-white/10"
-                  }`}
-                />
-              ))
-            : null}
+        <div className="mx-auto mt-2 flex h-2 items-center justify-center gap-1.5">
+          {Array.from({ length: maxHitDots }).map((_, i) => {
+            const active =
+              state.hitsExpected > 0 &&
+              state.inComboWindow &&
+              i < state.hitsExpected;
+            const filled = active && i < state.hitsInCombo;
+            return (
+              <div
+                key={i}
+                className={`h-2 w-8 rounded-full transition-colors ${
+                  !active
+                    ? "bg-transparent"
+                    : filled
+                      ? "bg-emerald-500/80"
+                      : "bg-white/10"
+                }`}
+              />
+            );
+          })}
         </div>
-      </div>
+      </header>
 
-      {/* Timer — locked vertical position */}
-      <div className="relative z-10 flex flex-1 items-center justify-center px-6">
-        <div
-          className="relative flex items-center justify-center"
-          style={{ height: 260, width: 260 }}
-        >
+      {/* Timer — centered in middle row only */}
+      <main className="relative z-10 flex items-center justify-center px-6">
+        <div className="relative h-[260px] w-[260px] shrink-0">
           <svg
             className="absolute inset-0 h-full w-full -rotate-90"
             viewBox="0 0 200 200"
@@ -207,109 +235,93 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
               transition={{ duration: 0.35, ease: "easeOut" }}
             />
           </svg>
-          <p className="relative z-10 font-display text-[clamp(2.5rem,12vw,4.5rem)] font-bold tabular-nums leading-none text-white">
+          <p className="absolute inset-0 flex items-center justify-center font-display text-[4rem] font-bold tabular-nums leading-none tracking-tight text-white">
             {formatTimer(state.elapsedSeconds)}
           </p>
         </div>
-      </div>
+      </main>
 
-      {/* Fixed bottom band — combo + feedback */}
-      <div className="relative z-10 w-full shrink-0 px-6 pb-2">
-        <div className="mx-auto min-h-[11rem] w-full max-w-md text-center">
-          <div className="flex min-h-[4.5rem] items-center justify-center">
-            <AnimatePresence mode="wait">
-              {state.currentCombo ? (
-                <motion.div
-                  key={comboKey}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <p className="font-display text-[clamp(1.75rem,8vw,3.25rem)] leading-tight tracking-wide text-white">
-                    {state.currentCombo.label}
-                  </p>
-                </motion.div>
-              ) : (
-                <p className="text-xs uppercase tracking-[0.2em] text-white/25">Ready</p>
-              )}
-            </AnimatePresence>
+      {/* Bottom band — every slot has fixed height */}
+      <section className="relative z-10 w-full px-6">
+        <div className="mx-auto flex h-full max-w-md flex-col">
+          <div className="relative h-[4.5rem] shrink-0">
+            <p
+              className={`absolute inset-0 flex items-center justify-center text-xs uppercase tracking-[0.2em] text-white/25 transition-opacity ${
+                state.currentCombo ? "opacity-0" : "opacity-100"
+              }`}
+            >
+              Ready
+            </p>
+            <p
+              className={`font-display absolute inset-0 flex items-center justify-center text-[clamp(1.75rem,8vw,3rem)] leading-tight tracking-wide text-white transition-opacity ${
+                state.currentCombo ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              {state.currentCombo?.label ?? "\u00a0"}
+            </p>
           </div>
 
-          <div className="flex min-h-[1.75rem] items-center justify-center">
-            <AnimatePresence>
-              {state.lastValidation && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="text-sm font-medium uppercase tracking-[0.14em]"
-                  style={{ color: validationColor }}
-                >
-                  {state.lastValidation === "correct"
-                    ? "Combo complete"
-                    : state.lastValidation === "wrong"
-                      ? "Not enough hits"
-                      : "Missed"}
-                </motion.p>
-              )}
-            </AnimatePresence>
-          </div>
+          <p
+            className="flex h-7 shrink-0 items-center justify-center text-sm font-medium uppercase tracking-[0.14em] transition-colors duration-200"
+            style={{ color: validationColor }}
+          >
+            {validationText}
+          </p>
 
-          <div className="min-h-[2.5rem]">
-            {state.inComboWindow && state.strikeLog.length > 0 && (
+          <div className="flex h-10 shrink-0 items-center justify-center overflow-hidden">
+            {state.inComboWindow && state.strikeLog.length > 0 ? (
               <StrikeLogStrip entries={state.strikeLog} />
+            ) : (
+              <span className="text-xs text-transparent">—</span>
             )}
           </div>
 
-          <div className="flex min-h-[1.25rem] items-center justify-center">
-            {state.lastReactionSeconds != null && state.lastReactionTier && (
-              <p
-                className="text-xs uppercase tracking-[0.12em]"
-                style={{ color: tierColor(state.lastReactionTier) }}
-              >
-                {formatReaction(state.lastReactionSeconds)} to first hit
-              </p>
-            )}
-          </div>
+          <p
+            className="flex h-5 shrink-0 items-center justify-center text-xs uppercase tracking-[0.12em] transition-colors duration-200"
+            style={{ color: reactionColor }}
+          >
+            {reactionText}
+          </p>
 
-          <div className="flex min-h-[2.5rem] flex-col items-center justify-start gap-3 pt-1">
+          <div className="relative mt-1 h-14 shrink-0">
             {state.canDispute && (
               <button
                 type="button"
                 onClick={disputeStrike}
-                className="text-[11px] uppercase tracking-[0.12em] text-amber-400/90 underline-offset-2 hover:underline"
+                className="absolute inset-x-0 top-0 text-center text-[11px] uppercase tracking-[0.12em] text-amber-400/90 underline-offset-2 hover:underline"
               >
                 Dispute last call (1 per combo)
               </button>
             )}
 
-            {showMicBackup && (
-              <button
-                type="button"
-                onClick={micBackupPunch}
-                className="min-h-[3rem] min-w-[10rem] rounded-full border border-amber-500/30 bg-amber-500/10 px-8 py-3 text-xs font-medium uppercase tracking-[0.14em] text-amber-200/90 active:bg-amber-500/20"
-              >
-                Mic backup — count hit
-              </button>
-            )}
+            <div className="absolute inset-x-0 bottom-0 flex justify-center">
+              {showMicBackup && (
+                <button
+                  type="button"
+                  onClick={micBackupPunch}
+                  className="h-12 min-w-[10rem] rounded-full border border-amber-500/30 bg-amber-500/10 px-8 text-xs font-medium uppercase tracking-[0.14em] text-amber-200/90 active:bg-amber-500/20"
+                >
+                  Mic backup — count hit
+                </button>
+              )}
 
-            {showTap && (
-              <button
-                type="button"
-                onClick={tapPunch}
-                className="min-h-[3rem] min-w-[10rem] rounded-full border border-white/15 bg-white/[0.06] px-8 py-3 text-xs font-medium uppercase tracking-[0.14em] text-white/70 active:bg-white/10"
-              >
-                {tapOnly ? "Tap per strike" : "+1 hit"}
-              </button>
-            )}
+              {showTap && (
+                <button
+                  type="button"
+                  onClick={tapPunch}
+                  className="h-12 min-w-[10rem] rounded-full border border-white/15 bg-white/[0.06] px-8 text-xs font-medium uppercase tracking-[0.14em] text-white/70 active:bg-white/10"
+                >
+                  {tapOnly ? "Tap per strike" : "+1 hit"}
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="relative z-10 w-full shrink-0 px-8 pb-[env(safe-area-inset-bottom)]">
+      <footer className="relative z-10 flex items-end justify-center px-8 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <SessionControlBar showPause={false} onStop={onStop} />
-      </div>
+      </footer>
     </div>
   );
 }

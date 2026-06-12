@@ -24,7 +24,7 @@ export function StrikeLogStrip({ entries }: StrikeLogStripProps) {
   if (entries.length === 0) return null;
 
   return (
-    <div className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-2">
+    <div className="flex max-h-10 flex-wrap items-center justify-center gap-x-3 gap-y-1 overflow-hidden">
       {entries.map((e, i) => (
         <span
           key={`${e.strikeId}-${i}`}
