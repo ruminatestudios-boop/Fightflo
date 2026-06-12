@@ -236,26 +236,35 @@ export function BagCalibrationScreen({
     }
   }, [micOk, step]);
 
-  const statusLine =
-    step === "done"
-      ? `Ready · ${stanceLabel(detectedStance ?? stance)}`
-      : step === "camera"
-        ? bodyOk
-          ? lightOk
-            ? "Full body visible"
-            : "Improve lighting"
-          : "Step back — full body in frame"
-        : step === "stance"
-          ? detectedStance
-            ? `${stanceLabel(detectedStance)} detected`
-            : "Hold your stance"
-          : step === "guard"
-            ? guardOk
-              ? "Guard set"
-              : "Hands up by your chin"
-            : micOk
-              ? "Mic calibrated"
-              : "Throw one punch at the bag";
+  const stepIndex =
+    step === "done" ? 4 : ["camera", "stance", "guard", "mic"].indexOf(step) + 1;
+
+  const stepTitle: Record<CalStep, string> = {
+    camera: "Stand back — full body",
+    stance: "Hold your fighting stance",
+    guard: "Hold your guard up",
+    mic: "Throw one punch at the bag",
+    done: "Ready to train",
+  };
+
+  const stepHint: Record<CalStep, string> = {
+    camera: bodyOk
+      ? lightOk
+        ? "Full body visible"
+        : "Step back a little / improve lighting"
+      : "Step back a little / improve lighting",
+    stance: detectedStance
+      ? `${stanceLabel(detectedStance)} stance detected`
+      : "Detecting stance…",
+    guard: guardOk ? "Guard calibrated" : "Keep hands by your chin…",
+    mic: micOk ? "Mic calibrated" : "Hit the bag once",
+    done: `All systems go · ${stanceLabel(detectedStance ?? stance)}`,
+  };
+
+  const micWarning =
+    cameraReady && !micReady
+      ? "Microphone blocked — punch counting may be limited"
+      : null;
 
   return (
     <div className="fixed inset-0 z-20 flex flex-col bg-black">
@@ -295,50 +304,81 @@ export function BagCalibrationScreen({
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-black/92 px-5 py-4 backdrop-blur-lg pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-        <div className="space-y-3">
-          {cameraReady && step !== "done" && (
-            <p className="text-center text-xs leading-relaxed text-white/60">
-              {statusLine}
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-black/92 px-5 py-5 backdrop-blur-lg pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        {cameraReady ? (
+          <div className="text-left">
+            <p className="label text-white/45">
+              Calibration · step {stepIndex}/4
             </p>
-          )}
-
-          {cameraReady && step === "done" && (
-            <p className="text-center text-xs leading-relaxed text-white/60">
-              {statusLine}
+            <h1 className="font-display mt-2 text-[1.65rem] leading-tight tracking-wide text-white">
+              {stepTitle[step]}
+            </h1>
+            <p className="mt-2 text-sm leading-relaxed text-white/65">
+              {stepHint[step]}
             </p>
-          )}
 
-          {cameraReady && micReady && step !== "done" && (
-            <p className="text-center text-xs text-emerald-400/80">
-              Mic on — throw a punch on the mic step
+            {(micWarning || previewError) && (
+              <>
+                <div className="mt-4 border-t border-white/10" />
+                {micWarning && (
+                  <p className="mt-3 text-sm leading-relaxed text-[#fa4141]/90">
+                    {micWarning}
+                  </p>
+                )}
+                {previewError && previewError !== micWarning && (
+                  <p className="mt-2 text-sm leading-relaxed text-[#fa4141]/90">
+                    {previewError}
+                  </p>
+                )}
+              </>
+            )}
+
+            {!gpuOk && (
+              <p className="mt-3 text-xs leading-relaxed text-amber-400/80">
+                Use Chrome on a modern phone for best accuracy
+              </p>
+            )}
+
+            {!micReady && (
+              <button
+                type="button"
+                onClick={() => void bootCamera()}
+                disabled={starting}
+                className="font-display mt-4 flex h-11 w-full items-center justify-center rounded-full border border-[#fa4141]/35 text-[11px] tracking-[0.14em] text-[#fa4141] disabled:opacity-60"
+              >
+                {starting ? "Retrying mic…" : "Enable microphone"}
+              </button>
+            )}
+
+            {step === "done" ? (
+              <button
+                type="button"
+                onClick={finish}
+                className="font-display mt-5 flex h-14 w-full items-center justify-center rounded-full bg-white text-[15px] tracking-[0.18em] text-black"
+              >
+                Continue
+              </button>
+            ) : (
+              <p className="mt-5 text-center text-xs text-white/40">
+                Auto-calibrating… hold still
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="label text-white/45">Calibration · step 1/4</p>
+            <h1 className="font-display text-[1.65rem] leading-tight tracking-wide text-white">
+              Allow camera access
+            </h1>
+            <p className="text-sm text-white/65">
+              Camera and mic needed to score your bag work
             </p>
-          )}
-
-          {previewError && (
-            <p className="text-center text-xs leading-relaxed text-[#fa4141]/90">
-              {previewError}
-            </p>
-          )}
-
-          {cameraReady && !micReady && (
-            <button
-              type="button"
-              onClick={() => void bootCamera()}
-              disabled={starting}
-              className="font-display flex h-12 w-full items-center justify-center rounded-full border border-[#fa4141]/40 text-[12px] tracking-[0.12em] text-[#fa4141] disabled:opacity-60"
-            >
-              {starting ? "Retrying mic…" : "Enable microphone"}
-            </button>
-          )}
-
-          {!gpuOk && cameraReady && (
-            <p className="text-center text-xs leading-relaxed text-amber-400/80">
-              Use Chrome on a modern phone for best accuracy
-            </p>
-          )}
-
-          {!cameraReady && (
+            {previewError && (
+              <>
+                <div className="border-t border-white/10" />
+                <p className="text-sm text-[#fa4141]/90">{previewError}</p>
+              </>
+            )}
             <button
               type="button"
               onClick={() => void bootCamera()}
@@ -347,18 +387,8 @@ export function BagCalibrationScreen({
             >
               {starting ? "Opening camera…" : "Allow camera & microphone"}
             </button>
-          )}
-
-          {cameraReady && step === "done" && (
-            <button
-              type="button"
-              onClick={finish}
-              className="font-display flex h-14 w-full items-center justify-center rounded-full bg-white text-[15px] tracking-[0.18em] text-black"
-            >
-              Continue
-            </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
