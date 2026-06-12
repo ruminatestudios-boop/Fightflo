@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { BackButton } from "@/components/ui/BackButton";
+import { FighterFrameOverlay } from "@/components/bag-drill/FighterFrameOverlay";
 import { chipClass } from "@/components/bag-drill/bag-ui";
 import type { BagStance } from "@/lib/bag-drill/calibration";
 import { startMediaCapture } from "@/lib/bag-drill/media-capture";
@@ -30,6 +31,7 @@ export function BagSetupCameraScreen({
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraMode, setCameraMode] = useState<BagCameraMode>(initialMode);
   const [cameraReady, setCameraReady] = useState(false);
+  const [micReady, setMicReady] = useState(false);
   const [starting, setStarting] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
@@ -40,6 +42,7 @@ export function BagSetupCameraScreen({
     stopRef.current = null;
     streamRef.current = null;
     setCameraReady(false);
+    setMicReady(false);
   }, []);
 
   const startCamera = useCallback(async () => {
@@ -58,10 +61,13 @@ export function BagSetupCameraScreen({
     stopRef.current = result.handles.stop;
     streamRef.current = result.handles.stream;
     setCameraReady(result.hasCamera);
+    setMicReady(result.hasMic);
     setPreviewError(
-      result.hasCamera
-        ? result.error
-        : result.error ?? "Camera blocked — allow access when prompted"
+      !result.hasCamera
+        ? result.error ?? "Camera blocked — allow access when prompted"
+        : !result.hasMic
+          ? result.error
+          : null
     );
     setStarting(false);
   }, [fighterCam, releaseCamera, starting]);
@@ -96,6 +102,8 @@ export function BagSetupCameraScreen({
         } ${cameraReady ? "opacity-100" : "opacity-0"}`}
       />
 
+      {fighterCam && cameraReady && <FighterFrameOverlay mirrored size="large" />}
+
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
 
       <div className="relative z-10 px-5 pt-[max(1rem,env(safe-area-inset-top))]">
@@ -121,6 +129,12 @@ export function BagSetupCameraScreen({
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-black/92 px-5 py-4 backdrop-blur-lg pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <div className="space-y-3">
+          {cameraReady && micReady && (
+            <p className="text-center text-xs text-emerald-400/90">
+              Camera &amp; mic ready
+            </p>
+          )}
+
           {previewError && (
             <p className="text-center text-xs leading-relaxed text-[#fa4141]/90">
               {previewError}
@@ -135,7 +149,17 @@ export function BagSetupCameraScreen({
               disabled={starting}
               className="font-display flex h-14 w-full items-center justify-center rounded-full bg-[#fa4141] text-[15px] tracking-[0.14em] text-white disabled:opacity-60"
             >
-              {starting ? "Opening camera…" : "Allow camera access"}
+              {starting ? "Opening camera…" : "Allow camera & microphone"}
+            </motion.button>
+          ) : !micReady ? (
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.98 }}
+              onClick={() => void startCamera()}
+              disabled={starting}
+              className="font-display flex h-14 w-full items-center justify-center rounded-full bg-[#fa4141] text-[15px] tracking-[0.14em] text-white disabled:opacity-60"
+            >
+              {starting ? "Retrying mic…" : "Enable microphone"}
             </motion.button>
           ) : (
             <motion.button
@@ -148,7 +172,7 @@ export function BagSetupCameraScreen({
             </motion.button>
           )}
 
-          {!cameraReady && previewError && (
+          {(!cameraReady || !micReady) && previewError && (
             <button
               type="button"
               onClick={() => void startCamera()}

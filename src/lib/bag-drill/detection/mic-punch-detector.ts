@@ -27,7 +27,11 @@ export class MicPunchDetector {
 
   start(stream: MediaStream): void {
     this.stop();
+    if (!stream.getAudioTracks().length) return;
+
     this.audioContext = new AudioContext();
+    void this.audioContext.resume();
+
     const source = this.audioContext.createMediaStreamSource(stream);
     this.analyser = this.audioContext.createAnalyser();
     this.analyser.fftSize = 256;

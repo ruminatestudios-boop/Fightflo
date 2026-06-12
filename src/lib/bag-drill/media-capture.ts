@@ -55,45 +55,98 @@ async function tryGetUserMedia(
   }
 }
 
+async function attachMicrophone(stream: MediaStream): Promise<boolean> {
+  if (stream.getAudioTracks().some((t) => t.readyState === "live")) {
+    return true;
+  }
+
+  const attempts: MediaStreamConstraints[] = [
+    { audio: true },
+    {
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    },
+    {
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+      },
+    },
+  ];
+
+  for (const constraints of attempts) {
+    const audioStream = await tryGetUserMedia(constraints);
+    const track = audioStream?.getAudioTracks()[0];
+    if (track) {
+      stream.addTrack(track);
+      return true;
+    }
+    audioStream?.getTracks().forEach((t) => t.stop());
+  }
+
+  return false;
+}
+
 /** Progressive constraint ladder — mobile Safari often rejects bundled A/V or HD requests. */
-async function openCameraStream(
+async function openVideoStream(
   facingMode: FacingMode,
   highQuality: boolean
 ): Promise<MediaStream | null> {
-  const audio: MediaTrackConstraints = {
-    echoCancellation: false,
-    noiseSuppression: false,
-    autoGainControl: false,
-  };
-
   const attempts: MediaStreamConstraints[] = [
     {
       video: highQuality
         ? { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }
         : { facingMode: { ideal: facingMode }, width: { ideal: 640 }, height: { ideal: 480 } },
-      audio,
+      audio: true,
     },
     {
       video: { facingMode: { ideal: facingMode } },
-      audio,
+      audio: true,
     },
+    { video: { facingMode: { ideal: facingMode } }, audio: true },
+    { video: { facingMode: { exact: facingMode } }, audio: true },
+    { video: true, audio: true },
     { video: { facingMode: { ideal: facingMode } } },
-    { video: { facingMode: { exact: facingMode } } },
-    { video: true, audio },
     { video: true },
-    {
-      video: { facingMode: { ideal: facingMode === "user" ? "environment" : "user" } },
-    },
+    { video: { facingMode: "user" }, audio: true },
     { video: { facingMode: "user" } },
   ];
 
   for (const constraints of attempts) {
     const stream = await tryGetUserMedia(constraints);
-    if (stream?.getVideoTracks().length) return stream;
+    if (stream?.getVideoTracks().length) {
+      if (!stream.getAudioTracks().length) {
+        await attachMicrophone(stream);
+      }
+      return stream;
+    }
     stream?.getTracks().forEach((t) => t.stop());
   }
 
   return null;
+}
+
+async function initAudioContext(
+  stream: MediaStream
+): Promise<AudioContext | null> {
+  if (!stream.getAudioTracks().length) return null;
+  try {
+    const ctx = new AudioContext({ sampleRate: 16000 });
+    await ctx.resume();
+    return ctx;
+  } catch {
+    try {
+      const ctx = new AudioContext();
+      await ctx.resume();
+      return ctx;
+    } catch {
+      return null;
+    }
+  }
 }
 
 export async function startMediaCapture(
@@ -122,19 +175,22 @@ export async function startMediaCapture(
     };
   }
 
-  const stream = await openCameraStream(facingMode, highQuality);
+  const stream = await openVideoStream(facingMode, highQuality);
 
   if (stream) {
     handles.stream = stream;
     hasCamera = stream.getVideoTracks().length > 0;
-    hasMic = stream.getAudioTracks().length > 0;
+    hasMic = await attachMicrophone(stream);
+
     try {
       await attachStreamToVideo(videoEl, stream);
     } catch {
       error = "Camera on — tap the screen if preview is black";
     }
+
     if (!hasMic) {
-      error = "Microphone blocked — punch counting may be limited";
+      error =
+        "Microphone blocked — tap Allow below and enable Mic for fightflo.app in Settings";
     }
   } else {
     const audioOnly = await tryGetUserMedia({ audio: true });
@@ -144,16 +200,13 @@ export async function startMediaCapture(
       error = "Camera blocked — allow camera in browser settings, then tap Retry";
     } else {
       error =
-        "Camera unavailable — tap Allow camera below, or enable it in Settings → Safari → Camera";
+        "Camera unavailable — tap Allow below, or enable Camera in Settings → Safari";
     }
   }
 
   if (handles.stream?.getAudioTracks().length) {
-    try {
-      handles.audioContext = new AudioContext({ sampleRate: 16000 });
-    } catch {
-      handles.audioContext = new AudioContext();
-    }
+    handles.audioContext = await initAudioContext(handles.stream);
+    hasMic = Boolean(handles.audioContext);
   }
 
   handles.stop = () => {
@@ -180,7 +233,7 @@ export async function attachExistingStream(
   };
 
   const hasCamera = stream.getVideoTracks().length > 0;
-  const hasMic = stream.getAudioTracks().length > 0;
+  let hasMic = await attachMicrophone(stream);
   let error: string | null = null;
 
   try {
@@ -190,15 +243,13 @@ export async function attachExistingStream(
   }
 
   if (hasCamera && !hasMic) {
-    error = "Microphone blocked — punch counting may be limited";
+    error =
+      "Microphone blocked — enable Mic for fightflo.app in Settings, then go back and retry";
   }
 
   if (stream.getAudioTracks().length) {
-    try {
-      handles.audioContext = new AudioContext({ sampleRate: 16000 });
-    } catch {
-      handles.audioContext = new AudioContext();
-    }
+    handles.audioContext = await initAudioContext(stream);
+    hasMic = Boolean(handles.audioContext);
   }
 
   handles.stop = () => {

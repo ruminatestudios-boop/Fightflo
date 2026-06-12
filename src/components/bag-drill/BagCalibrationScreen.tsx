@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BackButton } from "@/components/ui/BackButton";
+import { FighterFrameOverlay } from "@/components/bag-drill/FighterFrameOverlay";
 import {
   brightnessOk,
   micThresholdFromPeaks,
@@ -70,6 +71,7 @@ export function BagCalibrationScreen({
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [gpuOk, setGpuOk] = useState(true);
   const [cameraReady, setCameraReady] = useState(Boolean(existingStream));
+  const [micReady, setMicReady] = useState(false);
   const [starting, setStarting] = useState(false);
   const startingRef = useRef(false);
 
@@ -115,10 +117,13 @@ export function BagCalibrationScreen({
 
     stopRef.current = result.handles.stop;
     setCameraReady(result.hasCamera);
+    setMicReady(result.hasMic);
     setPreviewError(
-      result.hasCamera
-        ? result.error
-        : result.error ?? "Camera blocked — tap Allow camera below"
+      !result.hasCamera
+        ? result.error ?? "Camera blocked — tap Allow camera below"
+        : !result.hasMic
+          ? result.error
+          : null
     );
 
     try {
@@ -264,6 +269,8 @@ export function BagCalibrationScreen({
         } ${cameraReady ? "opacity-100" : "opacity-0"}`}
       />
 
+      {fighterCam && cameraReady && <FighterFrameOverlay mirrored size="large" />}
+
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
 
       <div className="relative z-10 px-5 pt-[max(1rem,env(safe-area-inset-top))]">
@@ -302,10 +309,27 @@ export function BagCalibrationScreen({
             </p>
           )}
 
+          {cameraReady && micReady && step !== "done" && (
+            <p className="text-center text-xs text-emerald-400/80">
+              Mic on — throw a punch on the mic step
+            </p>
+          )}
+
           {previewError && (
             <p className="text-center text-xs leading-relaxed text-[#fa4141]/90">
               {previewError}
             </p>
+          )}
+
+          {cameraReady && !micReady && (
+            <button
+              type="button"
+              onClick={() => void bootCamera()}
+              disabled={starting}
+              className="font-display flex h-12 w-full items-center justify-center rounded-full border border-[#fa4141]/40 text-[12px] tracking-[0.12em] text-[#fa4141] disabled:opacity-60"
+            >
+              {starting ? "Retrying mic…" : "Enable microphone"}
+            </button>
           )}
 
           {!gpuOk && cameraReady && (
@@ -321,7 +345,7 @@ export function BagCalibrationScreen({
               disabled={starting}
               className="font-display flex h-14 w-full items-center justify-center rounded-full bg-[#fa4141] text-[15px] tracking-[0.14em] text-white disabled:opacity-60"
             >
-              {starting ? "Opening camera…" : "Allow camera access"}
+              {starting ? "Opening camera…" : "Allow camera & microphone"}
             </button>
           )}
 
