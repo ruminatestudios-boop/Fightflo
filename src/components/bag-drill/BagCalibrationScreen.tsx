@@ -1,10 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { BackButton } from "@/components/ui/BackButton";
-import { FighterFrameOverlay } from "@/components/bag-drill/FighterFrameOverlay";
-import { chipClass } from "@/components/bag-drill/bag-ui";
 import {
   brightnessOk,
   micThresholdFromPeaks,
@@ -64,7 +61,6 @@ export function BagCalibrationScreen({
 
   const [step, setStep] = useState<CalStep>("camera");
   stepRef.current = step;
-  const [progress, setProgress] = useState(0);
   const [detectedStance, setDetectedStance] = useState<BagStance | null>(null);
   const [guardOk, setGuardOk] = useState(false);
   const [micOk, setMicOk] = useState(false);
@@ -160,7 +156,6 @@ export function BagCalibrationScreen({
 
   useEffect(() => {
     stepStartRef.current = Date.now();
-    setProgress(0);
 
     if (step === "mic" && micRef.current) {
       peaksRef.current = [];
@@ -187,7 +182,6 @@ export function BagCalibrationScreen({
       const result = detectPose(lm, v, now);
       const landmarks = result?.landmarks?.[0];
       const elapsed = Date.now() - stepStartRef.current;
-      setProgress(Math.min(1, elapsed / STEP_MS));
 
       if (landmarks) {
         if (step === "camera") {
@@ -237,27 +231,26 @@ export function BagCalibrationScreen({
     }
   }, [micOk, step]);
 
-  const stepTitle: Record<CalStep, string> = {
-    camera: "Stand back — full body",
-    stance: "Hold your fighting stance",
-    guard: "Hold your guard up",
-    mic: "Throw one punch at the bag",
-    done: "Ready to train",
-  };
-
-  const stepHint: Record<CalStep, string> = {
-    camera: bodyOk
-      ? lightOk
-        ? "Full body visible ✅"
-        : "Improve lighting"
-      : "Step back a little / improve lighting",
-    stance: detectedStance
-      ? `${stanceLabel(detectedStance)} stance detected ✅`
-      : "Detecting stance…",
-    guard: guardOk ? "Guard calibrated ✅" : "Keep hands by your chin…",
-    mic: micOk ? "Mic calibrated ✅" : "Hit the bag once",
-    done: `All systems go · ${stanceLabel(detectedStance ?? stance)}`,
-  };
+  const statusLine =
+    step === "done"
+      ? `Ready · ${stanceLabel(detectedStance ?? stance)}`
+      : step === "camera"
+        ? bodyOk
+          ? lightOk
+            ? "Full body visible"
+            : "Improve lighting"
+          : "Step back — full body in frame"
+        : step === "stance"
+          ? detectedStance
+            ? `${stanceLabel(detectedStance)} detected`
+            : "Hold your stance"
+          : step === "guard"
+            ? guardOk
+              ? "Guard set"
+              : "Hands up by your chin"
+            : micOk
+              ? "Mic calibrated"
+              : "Throw one punch at the bag";
 
   return (
     <div className="fixed inset-0 z-20 flex flex-col bg-black">
@@ -271,9 +264,7 @@ export function BagCalibrationScreen({
         } ${cameraReady ? "opacity-100" : "opacity-0"}`}
       />
 
-      {fighterCam && cameraReady && <FighterFrameOverlay mirrored={mirrored} />}
-
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-black/85" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/55" />
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
         <BackButton
@@ -296,70 +287,41 @@ export function BagCalibrationScreen({
           ))}
         </div>
 
-        <div className="flex flex-1 flex-col justify-end">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
+        <div className="mt-auto space-y-3">
+          {cameraReady && step !== "done" && (
+            <p className="text-center text-xs text-white/50">{statusLine}</p>
+          )}
+
+          {previewError && (
+            <p className="text-center text-xs text-[#fa4141]/90">{previewError}</p>
+          )}
+
+          {!gpuOk && cameraReady && (
+            <p className="text-center text-xs text-amber-400/80">
+              Use Chrome on a modern phone for best accuracy
+            </p>
+          )}
+
+          {!cameraReady && (
+            <button
+              type="button"
+              onClick={() => void bootCamera()}
+              disabled={starting}
+              className="font-display flex h-14 w-full items-center justify-center rounded-full bg-[#fa4141] text-[15px] tracking-[0.14em] text-white disabled:opacity-60"
             >
-              <p className="label text-white/45">Calibration · step{" "}
-                {step === "done" ? 4 : ["camera", "stance", "guard", "mic"].indexOf(step) + 1}
-                /4
-              </p>
-              <h1 className="font-display mt-1 text-2xl tracking-wide text-white">
-                {stepTitle[step]}
-              </h1>
-              <p className="mt-3 text-sm text-white/70">{stepHint[step]}</p>
+              {starting ? "Opening camera…" : "Allow camera access"}
+            </button>
+          )}
 
-              {step !== "done" && (
-                <div className="mt-4 h-1 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full bg-[#fa4141] transition-all duration-100"
-                    style={{ width: `${progress * 100}%` }}
-                  />
-                </div>
-              )}
-
-              {!gpuOk && (
-                <p className="mt-2 text-xs text-amber-400/90">
-                  For best accuracy use Chrome on a modern phone
-                </p>
-              )}
-
-              {previewError && (
-                <p className="mt-2 text-xs text-[#fa4141]/90">{previewError}</p>
-              )}
-            </motion.div>
-          </AnimatePresence>
-
-          <div className="mt-8">
-            {!cameraReady && (
-              <button
-                type="button"
-                onClick={() => void bootCamera()}
-                disabled={starting}
-                className="font-display flex h-14 w-full items-center justify-center rounded-full bg-[#fa4141] text-[15px] tracking-[0.14em] text-white disabled:opacity-60"
-              >
-                {starting ? "Opening camera…" : "Allow camera access"}
-              </button>
-            )}
-            {cameraReady && step === "done" && (
-              <button
-                type="button"
-                onClick={finish}
-                className="font-display flex h-14 w-full items-center justify-center rounded-full bg-[#fa4141] text-[15px] tracking-[0.18em] text-white"
-              >
-                Start session setup
-              </button>
-            )}
-            {cameraReady && step !== "done" && (
-              <p className="text-center text-xs text-white/40">
-                Auto-calibrating… hold still
-              </p>
-            )}
-          </div>
+          {cameraReady && step === "done" && (
+            <button
+              type="button"
+              onClick={finish}
+              className="font-display flex h-14 w-full items-center justify-center rounded-full bg-white text-[15px] tracking-[0.18em] text-black"
+            >
+              Continue
+            </button>
+          )}
         </div>
       </div>
     </div>
