@@ -1,89 +1,68 @@
-import {
-  cancelCoachVoice,
-  initCoachVoice,
-  speakCoachLine,
-  unlockCoachAudio,
-} from "@/lib/coach-voice";
+"use client";
+
 import type { BagDifficulty } from "./types";
-import { DIFFICULTY_SPEECH_RATE } from "./combos";
-
-let speaking = false;
-let endCallback: (() => void) | null = null;
-
-/** Natural phrasing for combo calls — avoids robotic dash lists */
-function formatComboSpeech(text: string, prefix?: string): string {
-  const body = text
-    .trim()
-    .replace(/\s*—\s*/g, ", ")
-    .replace(/\s+-\s+/g, ", ");
-  return prefix ? `${prefix}${body}` : body;
-}
+import { resolveComboAudio } from "./audio/combo-resolver";
+import {
+  ENCOURAGEMENT_FILES,
+  GUARD_FILES,
+} from "./audio/cues";
+import {
+  interruptAudio,
+  isBagAudioPlaying,
+  queueAudio,
+  stopBagAudio,
+  unlockBagAudio,
+} from "./audio-queue";
 
 export function isSpeaking(): boolean {
-  return speaking;
+  return isBagAudioPlaying();
 }
 
 export function stopSpeech(): void {
-  endCallback = null;
-  speaking = false;
-  cancelCoachVoice();
-  if (typeof window !== "undefined") {
-    window.speechSynthesis.cancel();
-  }
+  stopBagAudio();
 }
 
 export async function prepareBagSpeech(): Promise<void> {
-  if (typeof window === "undefined") return;
-  await unlockCoachAudio();
-  void initCoachVoice("en");
+  await unlockBagAudio();
 }
 
 export function speakCombo(
   text: string,
-  difficulty: BagDifficulty,
+  _difficulty: BagDifficulty,
   options?: { prefix?: string; onEnd?: () => void }
 ): void {
-  if (typeof window === "undefined") {
-    options?.onEnd?.();
-    return;
-  }
+  const file = resolveComboAudio(text, options?.prefix);
+  queueAudio(file, { onEnd: options?.onEnd });
+}
 
-  const phrase = formatComboSpeech(text, options?.prefix);
-  speaking = true;
-  endCallback = options?.onEnd ?? null;
+export function speakGuardWarning(kind: "left" | "right" | "both"): void {
+  const file = GUARD_FILES[kind];
+  interruptAudio(file);
+}
 
-  const finish = () => {
-    speaking = false;
-    const cb = endCallback;
-    endCallback = null;
-    cb?.();
-  };
+export function speakEncouragement(): void {
+  const file =
+    ENCOURAGEMENT_FILES[Math.floor(Math.random() * ENCOURAGEMENT_FILES.length)];
+  queueAudio(file);
+}
 
-  // Slight pace tweak via shorter/longer phrasing — coach TTS handles delivery
-  void initCoachVoice("en").then((geminiOk) => {
-    if (geminiOk) {
-      speakCoachLine(phrase, 0.92, "en", {
-        onEnd: finish,
-        onStart: () => {
-          speaking = true;
-        },
-      });
-      return;
-    }
+export function speakSessionStart(): void {
+  queueAudio("session-start.mp3");
+}
 
-    // Device fallback — same voice picker as main app coach
-    const utterance = new SpeechSynthesisUtterance(phrase);
-    utterance.rate = Math.min(1.08, DIFFICULTY_SPEECH_RATE[difficulty] * 0.95);
-    utterance.pitch = 0.96;
-    utterance.volume = 1;
+export function speakSessionReady(): void {
+  queueAudio("session-ready.mp3");
+}
 
-    const voices = window.speechSynthesis.getVoices();
-    const preferred = voices.find((v) => /daniel|aaron|nathan|enhanced|natural/i.test(v.name));
-    if (preferred) utterance.voice = preferred;
+export function speakSessionEnd(): void {
+  queueAudio("session-end.mp3");
+}
 
-    utterance.onend = finish;
-    utterance.onerror = finish;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-  });
+export function speakMilestone(kind: "10" | "half" | "20"): void {
+  const files = {
+    "10": "milestone-10.mp3",
+    half: "milestone-half.mp3",
+    "20": "milestone-20.mp3",
+  } as const;
+  queueAudio(files[kind]);
 }

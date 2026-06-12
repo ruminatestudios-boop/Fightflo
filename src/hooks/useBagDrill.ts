@@ -6,16 +6,11 @@ import {
   pickWeaknessFocusedCombo,
   shouldChampionMidSwap,
 } from "@/lib/bag-drill/combo-picker";
+import { fetchComboFeedback } from "@/lib/bag-drill/detection/fetch-combo-feedback";
+import type { GuardState } from "@/lib/bag-drill/detection/guard-monitor";
+import { PunchDetectionEngine } from "@/lib/bag-drill/detection/punch-detection-engine";
 import {
-  connectStrikeValidator,
-  sendAudioChunk,
-  sendVideoFrame,
-  type GeminiLiveConnection,
-} from "@/lib/bag-drill/gemini-live";
-import {
-  captureVideoFrameAsync,
   createAudioImpactDetector,
-  createAudioProcessor,
   startMediaCapture,
   type MediaCaptureHandles,
 } from "@/lib/bag-drill/media-capture";
@@ -24,20 +19,26 @@ import {
   reactionTier,
   tierColor,
 } from "@/lib/bag-drill/reaction-timing";
-import { prepareBagSpeech, speakCombo, stopSpeech } from "@/lib/bag-drill/speech";
+import {
+  prepareBagSpeech,
+  speakCombo,
+  speakEncouragement,
+  speakGuardWarning,
+  speakMilestone,
+  speakSessionEnd,
+  speakSessionStart,
+  stopSpeech,
+} from "@/lib/bag-drill/speech";
 import {
   comboWindowMs,
   expectedHits,
   hitStrikes,
   normaliseStrikeId,
   validateBagComboHits,
-  validateFighterComboResult,
-  type StrikeParseResult,
 } from "@/lib/bag-drill/strike-validator";
 import { computeSessionWeaknesses } from "@/lib/bag-drill/weakness";
 import { loadBagData } from "@/lib/bag-drill/storage";
 import type { BagStance } from "@/lib/bag-drill/calibration";
-import { isPro } from "@/lib/subscription";
 import type {
   BagCameraMode,
   BagCombo,
@@ -71,6 +72,9 @@ export interface BagTrainingState {
   micBackupHint: boolean;
   isActive: boolean;
   inComboWindow: boolean;
+  guardWarning: GuardState | null;
+  comboCoachTip: string | null;
+  guardDropCount: number;
 }
 
 export interface UseBagDrillResult {
@@ -95,7 +99,7 @@ const INITIAL: BagTrainingState = {
   lastValidation: null,
   accuracyPercent: 100,
   avgReactionSeconds: 0,
-  detectionMode: "live",
+  detectionMode: "pose-triple",
   cameraMode: "bag",
   statusMessage: null,
   nextStrikeLabel: null,
@@ -105,14 +109,12 @@ const INITIAL: BagTrainingState = {
   micBackupHint: false,
   isActive: false,
   inComboWindow: false,
+  guardWarning: null,
+  comboCoachTip: null,
+  guardDropCount: 0,
 };
 
 const PUNCH_DEBOUNCE_MS = 110;
-const LIVE_FRAME_MS = 100;
-const LIVE_JPEG_QUALITY = 0.62;
-const LIVE_GRACE_MS = 1_800;
-const AI_CONFIRM_FRAMES = 2;
-const AI_CONFIRM_WINDOW_MS = 700;
 
 export function useBagDrill(): UseBagDrillResult {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -121,8 +123,9 @@ export function useBagDrill(): UseBagDrillResult {
   const configRef = useRef<BagTrainingConfig | null>(null);
   const elapsedRef = useRef(0);
   const mediaRef = useRef<MediaCaptureHandles | null>(null);
-  const liveRef = useRef<GeminiLiveConnection | null>(null);
+  const engineRef = useRef<PunchDetectionEngine | null>(null);
   const cleanupAudioRef = useRef<(() => void) | null>(null);
+  const lastGuardWarningRef = useRef<GuardState["warning"]>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const comboWindowRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -145,7 +148,7 @@ export function useBagDrill(): UseBagDrillResult {
   const cameraModeRef = useRef<BagCameraMode>("bag");
   const comboRetryRef = useRef(0);
   const comboResolvedRef = useRef(false);
-  const liveConnectedRef = useRef(false);
+  const poseDetectionRef = useRef(false);
   const strikeIndexRef = useRef(0);
   const lastAiHitRef = useRef<{ id: string; at: number } | null>(null);
   const finishComboRoundRef = useRef<(v: StrikeValidation) => void>(() => {});
@@ -157,11 +160,9 @@ export function useBagDrill(): UseBagDrillResult {
   const strikeLogRef = useRef<StrikeLogEntry[]>([]);
   const stanceRef = useRef<BagStance>("orthodox");
   const micThresholdRef = useRef<number | undefined>(undefined);
-  const pendingAiHitRef = useRef<{
-    id: string;
-    at: number;
-    count: number;
-  } | null>(null);
+  const registerAiHitRef = useRef<(id: string) => void>(() => {});
+  const registerImpactRef = useRef<() => void>(() => {});
+  const halfMilestoneSpokenRef = useRef(false);
 
   const clearTimers = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -179,9 +180,9 @@ export function useBagDrill(): UseBagDrillResult {
   const teardown = useCallback(() => {
     clearTimers();
     stopSpeech();
-    liveRef.current?.close();
-    liveRef.current = null;
-    liveConnectedRef.current = false;
+    engineRef.current?.stop();
+    engineRef.current = null;
+    poseDetectionRef.current = false;
     cleanupAudioRef.current?.();
     cleanupAudioRef.current = null;
     mediaRef.current?.stop();
@@ -193,7 +194,7 @@ export function useBagDrill(): UseBagDrillResult {
     comboRetryRef.current = 0;
     strikeIndexRef.current = 0;
     lastAiHitRef.current = null;
-    pendingAiHitRef.current = null;
+    lastGuardWarningRef.current = null;
     disputeUsedRef.current = false;
     strikeLogRef.current = [];
     if (micBackupTimerRef.current) clearTimeout(micBackupTimerRef.current);
@@ -231,7 +232,7 @@ export function useBagDrill(): UseBagDrillResult {
     micBackupTimerRef.current = setTimeout(() => {
       if (!inWindowRef.current || comboResolvedRef.current) return;
       const pending = strikeLogRef.current.some((e) => e.status === "pending");
-      if (pending && liveConnectedRef.current) {
+      if (pending && poseDetectionRef.current && cameraModeRef.current === "fighter") {
         setState((s) => ({ ...s, micBackupHint: true }));
       }
     }, 1200);
@@ -286,23 +287,6 @@ export function useBagDrill(): UseBagDrillResult {
   const scheduleNextComboRef = useRef<() => void>(() => {});
   const callCurrentComboRef = useRef<() => void>(() => {});
 
-  const cueExpectedStrike = useCallback((index: number) => {
-    const combo = currentComboRef.current;
-    const config = configRef.current;
-    if (!combo || !liveConnectedRef.current || config?.cameraMode !== "fighter") {
-      return;
-    }
-    const sequence = hitStrikes(combo);
-    const strike = sequence[index];
-    if (!strike) return;
-    liveRef.current?.watchStrike(
-      strike,
-      stanceRef.current,
-      index,
-      sequence.length
-    );
-  }, []);
-
   const registerAiHit = useCallback(
     (strikeId: string) => {
       const combo = currentComboRef.current;
@@ -349,95 +333,14 @@ export function useBagDrill(): UseBagDrillResult {
 
       scheduleMicBackupHint();
 
-      if (strikeIndexRef.current < sequence.length) {
-        cueExpectedStrike(strikeIndexRef.current);
-      }
-
       if (strikeIndexRef.current >= sequence.length) {
         finishComboRoundRef.current("correct");
       }
     },
-    [cueExpectedStrike, markStrikeHit, scheduleMicBackupHint, syncStrikeLog]
+    [markStrikeHit, scheduleMicBackupHint, syncStrikeLog]
   );
 
-  const handleLiveResult = useCallback(
-    (result: StrikeParseResult) => {
-      const combo = currentComboRef.current;
-      if (!combo || !inWindowRef.current || comboResolvedRef.current) return;
-
-      if (result.kind === "hit") {
-        const normalised = normaliseStrikeId(result.strikeId);
-        const now = Date.now();
-        const pending = pendingAiHitRef.current;
-        if (
-          pending &&
-          pending.id === normalised &&
-          now - pending.at < AI_CONFIRM_WINDOW_MS
-        ) {
-          const nextCount = pending.count + 1;
-          if (nextCount >= AI_CONFIRM_FRAMES) {
-            pendingAiHitRef.current = null;
-            registerAiHit(normalised);
-          } else {
-            pendingAiHitRef.current = { id: normalised, at: now, count: nextCount };
-          }
-        } else {
-          pendingAiHitRef.current = { id: normalised, at: now, count: 1 };
-        }
-        return;
-      }
-
-      if (result.kind === "confirmed") {
-        const validation = validateFighterComboResult(result, combo);
-        if (validation === "correct") {
-          const sequence = hitStrikes(combo);
-          strikeIndexRef.current = sequence.length;
-          hitsInComboRef.current = sequence.length;
-          setState((s) => ({ ...s, hitsInCombo: sequence.length }));
-        }
-        finishComboRoundRef.current(validation);
-        return;
-      }
-
-      if (result.kind === "wrong") {
-        finishComboRoundRef.current("wrong");
-        return;
-      }
-
-      if (result.kind === "miss") {
-        finishComboRoundRef.current("miss");
-      }
-    },
-    [registerAiHit]
-  );
-
-  const startLiveStream = useCallback(() => {
-    const session = liveRef.current?.session;
-    const video = videoRef.current;
-    const handles = mediaRef.current;
-    if (!session || !video) return;
-
-    if (streamIntervalRef.current) clearInterval(streamIntervalRef.current);
-    streamIntervalRef.current = setInterval(() => {
-      void captureVideoFrameAsync(video, LIVE_JPEG_QUALITY).then((blob) => {
-        if (blob && liveRef.current?.session) {
-          sendVideoFrame(liveRef.current.session, blob);
-        }
-      });
-    }, LIVE_FRAME_MS);
-
-    if (handles?.stream && handles.audioContext) {
-      cleanupAudioRef.current = createAudioProcessor(
-        handles.stream,
-        handles.audioContext,
-        (pcm) => {
-          if (liveRef.current?.session) {
-            sendAudioChunk(liveRef.current.session, pcm);
-          }
-        }
-      );
-    }
-  }, []);
+  registerAiHitRef.current = registerAiHit;
 
   const finishComboRound = useCallback(
     (validation: StrikeValidation) => {
@@ -452,7 +355,22 @@ export function useBagDrill(): UseBagDrillResult {
 
       const correct = validation === "correct";
       attemptedCombosRef.current += 1;
-      if (correct) correctCombosRef.current += 1;
+      if (correct) {
+        correctCombosRef.current += 1;
+        speakEncouragement();
+        const n = attemptedCombosRef.current;
+        if (n === 10) speakMilestone("10");
+        if (n === 20) speakMilestone("20");
+        const dur = config.timing.durationSeconds;
+        if (
+          !halfMilestoneSpokenRef.current &&
+          dur > 0 &&
+          elapsedRef.current >= dur / 2
+        ) {
+          halfMilestoneSpokenRef.current = true;
+          speakMilestone("half");
+        }
+      }
       updateAccuracy();
       totalPunchesRef.current += hitsInComboRef.current;
 
@@ -524,31 +442,22 @@ export function useBagDrill(): UseBagDrillResult {
     const config = configRef.current;
     if (!combo || !config || !inWindowRef.current || comboResolvedRef.current) return;
 
-    if (liveConnectedRef.current && cameraModeRef.current === "fighter") {
-      liveRef.current?.validateCombo(combo);
-      graceTimeoutRef.current = setTimeout(() => {
-        if (comboResolvedRef.current) return;
-        const sequence = hitStrikes(combo);
-        const landed = strikeIndexRef.current;
-        if (landed >= sequence.length) {
-          finishComboRound("correct");
-        } else if (landed > 0) {
-          finishComboRound("wrong");
-        } else {
-          finishComboRound("miss");
-        }
-      }, LIVE_GRACE_MS);
-      return;
-    }
-
-    const validation = validateBagComboHits(hitsInComboRef.current, combo);
+    const validation =
+      cameraModeRef.current === "fighter"
+        ? (() => {
+            const sequence = hitStrikes(combo);
+            const landed = strikeIndexRef.current;
+            if (landed >= sequence.length) return "correct" as const;
+            if (landed > 0) return "wrong" as const;
+            return "miss" as const;
+          })()
+        : validateBagComboHits(hitsInComboRef.current, combo);
     finishComboRound(validation);
   }, [finishComboRound]);
 
   const registerImpact = useCallback(() => {
     const combo = currentComboRef.current;
     if (!combo || !inWindowRef.current || comboResolvedRef.current) return;
-    if (liveConnectedRef.current && cameraModeRef.current === "fighter") return;
 
     const now = Date.now();
     if (now - lastPunchAtRef.current < PUNCH_DEBOUNCE_MS) return;
@@ -577,6 +486,8 @@ export function useBagDrill(): UseBagDrillResult {
       finishComboRound("correct");
     }
   }, [finishComboRound, markStrikeHit]);
+
+  registerImpactRef.current = registerImpact;
 
   const openComboWindow = useCallback(
     (combo: BagCombo) => {
@@ -609,19 +520,15 @@ export function useBagDrill(): UseBagDrillResult {
         nextStrikeLabel: sequence[0]?.label ?? null,
       }));
 
-      pendingAiHitRef.current = null;
-
-      if (liveConnectedRef.current && config.cameraMode === "fighter") {
+      if (poseDetectionRef.current && config.cameraMode === "fighter") {
         scheduleMicBackupHint();
-        liveRef.current?.watchCombo(combo);
-        cueExpectedStrike(0);
       }
 
       comboWindowRef.current = setTimeout(() => {
         closeComboWindow();
       }, windowMs);
     },
-    [closeComboWindow, cueExpectedStrike, initStrikeLog, scheduleMicBackupHint]
+    [closeComboWindow, initStrikeLog, scheduleMicBackupHint]
   );
 
   callCurrentComboRef.current = () => {
@@ -692,7 +599,7 @@ export function useBagDrill(): UseBagDrillResult {
   const micBackupPunch = useCallback(() => {
     const combo = currentComboRef.current;
     if (!combo || !inWindowRef.current || comboResolvedRef.current) return;
-    if (!liveConnectedRef.current) {
+    if (!poseDetectionRef.current || cameraModeRef.current !== "fighter") {
       registerImpact();
       return;
     }
@@ -779,90 +686,125 @@ export function useBagDrill(): UseBagDrillResult {
       attemptedCombosRef.current = 0;
       previousComboIdRef.current = null;
       sessionStartRef.current = Date.now();
+      halfMilestoneSpokenRef.current = false;
 
       const video = videoRef.current;
       let mode: DetectionMode = "timer-fallback";
       let status: string | null =
-        "Tap once per strike — mic will auto-count when it hears impacts";
+        "Tap once per strike — triple-signal detection loads with camera + mic";
       setState({
         ...INITIAL,
         isActive: true,
         cameraMode: config.cameraMode,
-        detectionMode: "audio-hybrid",
+        detectionMode: "pose-triple",
         statusMessage: status,
       });
 
       await prepareBagSpeech();
+      speakSessionStart();
 
       if (video) {
         const media = await startMediaCapture(video, {
           facingMode: config.cameraMode === "fighter" ? "user" : "environment",
-          highQuality: config.cameraMode === "fighter",
+          highQuality: false,
         });
         mediaRef.current = media.handles;
 
-        if (config.cameraMode === "fighter" && media.hasCamera && isPro()) {
+        if (media.hasCamera && media.hasMic && media.handles.stream) {
           try {
-            liveRef.current = await connectStrikeValidator(
-              "fighter",
-              handleLiveResult,
-              (err) => {
-                if (!mountedRef.current) return;
-                setState((s) => ({
-                  ...s,
-                  statusMessage: `AI offline — ${err}. Use tap or switch to bag mic mode.`,
-                  liveConnected: false,
-                }));
-                liveConnectedRef.current = false;
-              },
-              (liveStatus) => {
-                if (!mountedRef.current) return;
-                if (liveStatus === "connected") {
-                  liveConnectedRef.current = true;
-                  setState((s) => ({
-                    ...s,
-                    liveConnected: true,
-                    detectionMode: "live",
-                    statusMessage:
-                      "AI recognises your punches — keep hands and torso in frame",
-                  }));
-                  startLiveStream();
+            const engine = new PunchDetectionEngine({
+              video,
+              stream: media.handles.stream,
+              stance: stanceRef.current,
+              micThreshold: micThresholdRef.current,
+              guardBaseline: config.calibration?.guardBaseline,
+              devMode: process.env.NODE_ENV === "development",
+              onPunch: (punch) => {
+                if (cameraModeRef.current === "fighter") {
+                  registerAiHitRef.current(punch.strikeId);
+                } else {
+                  registerImpactRef.current();
                 }
               },
-              stanceRef.current
-            );
+              onComboComplete: (combo, guardDrops) => {
+                void fetchComboFeedback({
+                  combo,
+                  confidence: 85,
+                  guardDrops,
+                  stance: stanceRef.current,
+                }).then((fb) => {
+                  if (!mountedRef.current || !fb) return;
+                  const dropNote =
+                    guardDrops.length > 0
+                      ? ` (${guardDrops.join(", ")} dropped)`
+                      : "";
+                  setState((s) => ({
+                    ...s,
+                    comboCoachTip: fb.tip,
+                    statusMessage: `${combo.name}: ${fb.tip} — ${fb.hype}!${dropNote}`,
+                  }));
+                });
+              },
+              onGuardWarning: (guardState) => {
+                if (!mountedRef.current) return;
+                if (
+                  guardState.warning &&
+                  guardState.warning !== lastGuardWarningRef.current
+                ) {
+                  speakGuardWarning(guardState.warning);
+                }
+                lastGuardWarningRef.current = guardState.warning;
+                setState((s) => ({
+                  ...s,
+                  guardWarning: guardState.warning ? guardState : null,
+                  guardDropCount: engineRef.current?.getGuardDropCount() ?? 0,
+                }));
+              },
+              onGpuFallback: () => {
+                setState((s) => ({
+                  ...s,
+                  statusMessage:
+                    "For best accuracy use Chrome on a modern phone",
+                }));
+              },
+            });
+            engineRef.current = engine;
+            const { gpu } = await engine.start();
+            poseDetectionRef.current = true;
+            mode = "pose-triple";
+            status = gpu
+              ? config.cameraMode === "fighter"
+                ? "Pose + mic + velocity — jab, cross, hook recognition active"
+                : "Triple-signal punch detection active"
+              : "Detection active (CPU) — use Chrome on a modern phone for best results";
+            setState((s) => ({
+              ...s,
+              detectionMode: mode,
+              liveConnected: true,
+              statusMessage: status,
+            }));
           } catch {
-            liveConnectedRef.current = false;
+            poseDetectionRef.current = false;
           }
         }
 
-        if (!liveConnectedRef.current) {
+        if (!poseDetectionRef.current) {
           if (!media.hasMic && !media.hasCamera) {
             mode = "timer-fallback";
             status =
               config.cameraMode === "fighter"
-                ? "Camera needed for punch recognition — allow camera access"
+                ? "Camera + mic needed for punch recognition"
                 : "Tap for each hit in the combo";
-          } else if (config.cameraMode === "fighter" && !isPro()) {
-            mode = media.hasMic ? "audio-hybrid" : "visual-tap";
-            status =
-              "Fighter AI is Pro — mic counts hits only. Upgrade for jab, cross, hook recognition.";
           } else if (media.hasMic) {
             mode = "audio-hybrid";
-            status =
-              config.cameraMode === "fighter"
-                ? "Fighter AI unavailable — mic counts hits only, not punch type"
-                : "Mic counts hits — upgrade to Pro for Fighter cam punch recognition";
+            status = "Mic counts hits — enable camera for punch type recognition";
           } else {
             mode = "visual-tap";
             status = "Tap once per strike in the combo";
           }
           startStreaming(mode);
+          setState((s) => ({ ...s, detectionMode: mode, statusMessage: status }));
         }
-      }
-
-      if (status && !liveConnectedRef.current) {
-        setState((s) => ({ ...s, detectionMode: mode, statusMessage: status }));
       }
 
       scheduleNextComboRef.current();
@@ -872,13 +814,15 @@ export function useBagDrill(): UseBagDrillResult {
         setState((s) => ({ ...s, elapsedSeconds: elapsedRef.current }));
       }, 1000);
     },
-    [handleLiveResult, startLiveStream, startStreaming, teardown]
+    [startStreaming, teardown]
   );
 
   const stop = useCallback((): BagSessionRecord | null => {
     const config = configRef.current;
     if (!config) return null;
 
+    const guardDrops = engineRef.current?.getGuardDropCount() ?? 0;
+    speakSessionEnd();
     teardown();
 
     const duration = Math.min(
@@ -913,6 +857,7 @@ export function useBagDrill(): UseBagDrillResult {
       difficulty: config.difficulty,
       cameraMode: config.cameraMode,
       comboReactions,
+      guardDrops,
     };
 
     setState({ ...INITIAL, isActive: false });

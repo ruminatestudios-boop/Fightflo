@@ -107,6 +107,12 @@ export function BagSummaryScreen({
               <BagStatCard label="Avg reaction" value={`${session.avgReactionTime}s`} />
               <BagStatCard label="Accuracy" value={`${session.accuracyPercent}%`} accent />
               <BagStatCard label="Fastest" value={`${session.fastestReaction}s`} />
+              {session.guardDrops != null && session.guardDrops > 0 && (
+                <BagStatCard
+                  label="Guard drops"
+                  value={String(session.guardDrops)}
+                />
+              )}
             </>
           )}
         </div>

@@ -1,12 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { PunchDetectionEngine } from "@/lib/bag-drill/detection/punch-detection-engine";
 import {
   createAudioImpactDetector,
   startMediaCapture,
   type MediaCaptureHandles,
 } from "@/lib/bag-drill/media-capture";
-import { prepareBagSpeech, speakCombo, stopSpeech } from "@/lib/bag-drill/speech";
+import {
+  prepareBagSpeech,
+  speakCombo,
+  speakSessionEnd,
+  speakSessionStart,
+  stopSpeech,
+} from "@/lib/bag-drill/speech";
 import type {
   BagSessionRecord,
   BagTrainingConfig,
@@ -59,7 +66,9 @@ export function useBagFlurry(): UseBagFlurryResult {
 
   const configRef = useRef<BagTrainingConfig | null>(null);
   const mediaRef = useRef<MediaCaptureHandles | null>(null);
+  const engineRef = useRef<PunchDetectionEngine | null>(null);
   const cleanupAudioRef = useRef<(() => void) | null>(null);
+  const registerImpactRef = useRef<() => void>(() => {});
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const flurryRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const punchCountRef = useRef(0);
@@ -74,6 +83,8 @@ export function useBagFlurry(): UseBagFlurryResult {
 
   const stopScoring = useCallback(() => {
     scoringEnabledRef.current = false;
+    engineRef.current?.stop();
+    engineRef.current = null;
     cleanupAudioRef.current?.();
     cleanupAudioRef.current = null;
   }, []);
@@ -121,6 +132,8 @@ export function useBagFlurry(): UseBagFlurryResult {
       peakRate: peakRateRef.current,
     }));
   }, []);
+
+  registerImpactRef.current = registerImpact;
 
   const endFlurry = useCallback(() => {
     if (phaseRef.current === "done") return;
@@ -216,6 +229,7 @@ export function useBagFlurry(): UseBagFlurryResult {
       });
 
       await prepareBagSpeech();
+      speakSessionStart();
 
       const video = videoRef.current;
       let mode: DetectionMode = "timer-fallback";
@@ -224,11 +238,33 @@ export function useBagFlurry(): UseBagFlurryResult {
       if (video) {
         const media = await startMediaCapture(video, {
           facingMode: config.cameraMode === "fighter" ? "user" : "environment",
-          highQuality: config.cameraMode === "fighter",
+          highQuality: false,
         });
         mediaRef.current = media.handles;
 
-        if (media.hasMic && media.handles.stream && media.handles.audioContext) {
+        if (media.hasCamera && media.hasMic && media.handles.stream) {
+          try {
+            const engine = new PunchDetectionEngine({
+              video,
+              stream: media.handles.stream,
+              stance: config.stance ?? config.calibration?.stance ?? "orthodox",
+              micThreshold: config.calibration?.micThreshold,
+              guardBaseline: config.calibration?.guardBaseline,
+              devMode: process.env.NODE_ENV === "development",
+              onPunch: () => registerImpactRef.current(),
+              onComboComplete: () => {},
+              onGuardWarning: () => {},
+            });
+            engineRef.current = engine;
+            await engine.start();
+            mode = "pose-triple";
+            status = "Triple-signal punch counting active";
+          } catch {
+            engineRef.current = null;
+          }
+        }
+
+        if (!engineRef.current && media.hasMic && media.handles.stream && media.handles.audioContext) {
           mode = "audio-hybrid";
           status = "Mic counts hits — tap any strike the mic misses";
           cleanupAudioRef.current = createAudioImpactDetector(
@@ -241,7 +277,7 @@ export function useBagFlurry(): UseBagFlurryResult {
               threshold: config.calibration?.micThreshold,
             }
           );
-        } else {
+        } else if (!engineRef.current) {
           mode = "visual-tap";
           status = "Tap once per punch";
         }
@@ -267,6 +303,7 @@ export function useBagFlurry(): UseBagFlurryResult {
     const config = configRef.current;
     if (!config) return null;
     stopScoring();
+    speakSessionEnd();
     phaseRef.current = "done";
     teardown();
 

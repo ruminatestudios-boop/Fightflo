@@ -1,0 +1,257 @@
+FLOWBAG GYM COACH — ELEVENLABS VOICE SCRIPT
+================================================
+Tone: gritty gym owner / corner coach. Short. Direct. No fluff.
+Paste one line at a time into ElevenLabs TTS, or read aloud for voice clone.
+Save each clip as: public/audio/{id}.mp3 (id shown in brackets)
+
+================================================
+COMBO CALLOUTS (say when calling a combo)
+================================================
+
+[combo-1-2] One two
+[combo-1-2-3] One two three
+[combo-1-2-3-2] One two three two
+[combo-double-jab] Double jab
+[combo-jab-cross-hook] Jab cross hook
+[combo-power] Power combo
+[combo-flurry] Flurry — let it go
+[combo-body-shot] Body shot
+[combo-1-2-body] One two to the body
+[combo-cross-hook] Cross hook
+[combo-double-jab-cross] Double jab cross
+[combo-body-head] Body shot, head shot
+[combo-jab-slip-cross] Jab, slip, cross
+[combo-lead-hook-cross-hook] Lead hook, cross, hook
+[combo-1-2-3-kick] Jab, cross, hook, kick
+[combo-1-2-3-low-kick] Jab, cross, hook, low kick
+[combo-1-2-rear-kick] Jab, cross, rear kick
+[combo-freestyle] Freestyle — ten seconds, let it go
+[combo-jab-roll-cross-hook] Jab, roll, cross, hook
+[combo-slip-jab-cross] Slip, jab, cross
+[combo-duck-body-cross] Duck, body shot, cross
+[combo-go] Go
+[combo-again] Again
+
+================================================
+GUARD WARNINGS (urgent — short and sharp)
+================================================
+
+[guard-left-audio] Left hand up
+[guard-right-audio] Right hand up
+[guard-both-audio] Hands up — you're open
+[guard-tight] Keep that guard tight
+[guard-chin] Chin down, hands up
+
+================================================
+ENCOURAGEMENT (between combos)
+================================================
+
+[encourage-1] Good. Again.
+[encourage-2] Sharp. Keep moving.
+[encourage-3] That's it. Stay on it.
+[encourage-4] Nice combo. Reset.
+[encourage-5] Fast hands. Do it again.
+[encourage-6] Clean. Pick up the pace.
+
+================================================
+CORRECTIONS (wrong technique)
+================================================
+
+[correct-shoulder] Drop your shoulder on that cross
+[correct-snap] Snap it back faster
+[correct-telegraph] You're telegraphing that hook
+[correct-step] Step into it
+[correct-breathe] Breathe. Stay loose.
+
+================================================
+SESSION START / END
+================================================
+
+[session-start] Alright. Let's get to work.
+[session-ready] Hands up. Eyes forward. Go.
+[session-end] Good session. You put in work today.
+[session-wrap] That's a wrap. See you tomorrow.
+
+================================================
+MILESTONES (mid-session)
+================================================
+
+[milestone-10] Ten combos. Don't stop now.
+[milestone-half] Halfway. Keep the intensity.
+[milestone-20] That's twenty. You're in the zone.
+
+================================================
+CALIBRATION (setup — calm, instructional)
+================================================
+
+[cal-camera-title] Stand back — full body
+[cal-camera-hint-ok] Full body visible
+[cal-camera-hint-light] Improve lighting
+[cal-camera-hint-back] Step back a little, improve lighting
+[cal-stance-title] Hold your fighting stance
+[cal-stance-orthodox] Orthodox stance detected
+[cal-stance-southpaw] Southpaw stance detected
+[cal-stance-detecting] Detecting stance
+[cal-guard-title] Hold your guard up
+[cal-guard-ok] Guard calibrated
+[cal-guard-hold] Keep hands by your chin
+[cal-mic-title] Throw one punch at the bag
+[cal-mic-ok] Mic calibrated
+[cal-mic-hit] Hit the bag once
+[cal-done-title] Ready to train
+[cal-auto-hold] Auto-calibrating, hold still
+
+================================================
+SINGLE STRIKES (per-punch callouts)
+================================================
+
+[strike-speak-jab] Jab
+[strike-speak-cross] Cross
+[strike-speak-hook] Hook
+[strike-speak-body-shot] Body shot
+[strike-speak-head-shot] Head shot
+[strike-speak-lead-hook] Lead hook
+[strike-speak-slip] Slip
+[strike-speak-roll] Roll
+[strike-speak-duck] Duck
+[strike-speak-kick] Kick
+[strike-speak-low-kick] Low kick
+[strike-speak-rear-kick] Rear kick
+[strike-speak-freestyle] Freestyle
+
+================================================
+FLURRY MODE
+================================================
+
+[combo-speak-source-flurry-15] Flurry, fifteen seconds
+[combo-speak-source-flurry-30] Flurry, thirty seconds
+[combo-speak-source-flurry-60] Flurry, sixty seconds
+[ui-flurry-ready] Get ready
+[ui-flurry-go] Punch flurry
+
+================================================
+ROUND FEEDBACK (miss / complete)
+================================================
+
+[ui-listen] Listen
+[ui-go-throw] Go, throw the combo
+[ui-combo-complete] Combo complete
+[ui-not-enough-hits] Not enough hits
+[ui-missed] Missed
+
+================================================
+COACH HYPE WORDS (short)
+================================================
+
+[ai-fallback-hype-beast] Beast
+[ai-fallback-hype-fire] Fire
+[ai-fallback-hype-go] Go
+[ai-fallback-hype-champ] Champ
+
+================================================
+COACH TIPS (fallback lines)
+================================================
+
+[ai-fallback-tip-1] Keep your hands up.
+[ai-fallback-tip-2] Solid combo — reset your guard.
+[ai-fallback-tip-3] Keep throwing.
+[ai-fallback-tip-4] Nice work — hands up next time.
+
+================================================
+PLAIN TEXT ONLY — copy block below for bulk paste
+(one phrase per line, 88 lines)
+================================================
+
+One two
+One two three
+One two three two
+Double jab
+Jab cross hook
+Power combo
+Flurry — let it go
+Body shot
+One two to the body
+Cross hook
+Double jab cross
+Body shot, head shot
+Jab, slip, cross
+Lead hook, cross, hook
+Jab, cross, hook, kick
+Jab, cross, hook, low kick
+Jab, cross, rear kick
+Freestyle — ten seconds, let it go
+Jab, roll, cross, hook
+Slip, jab, cross
+Duck, body shot, cross
+Go
+Again
+Left hand up
+Right hand up
+Hands up — you're open
+Keep that guard tight
+Chin down, hands up
+Good. Again.
+Sharp. Keep moving.
+That's it. Stay on it.
+Nice combo. Reset.
+Fast hands. Do it again.
+Clean. Pick up the pace.
+Drop your shoulder on that cross
+Snap it back faster
+You're telegraphing that hook
+Step into it
+Breathe. Stay loose.
+Alright. Let's get to work.
+Hands up. Eyes forward. Go.
+Good session. You put in work today.
+That's a wrap. See you tomorrow.
+Ten combos. Don't stop now.
+Halfway. Keep the intensity.
+That's twenty. You're in the zone.
+Stand back — full body
+Full body visible
+Improve lighting
+Step back a little, improve lighting
+Hold your fighting stance
+Orthodox stance detected
+Southpaw stance detected
+Detecting stance
+Hold your guard up
+Guard calibrated
+Keep hands by your chin
+Throw one punch at the bag
+Mic calibrated
+Hit the bag once
+Ready to train
+Auto-calibrating, hold still
+Jab
+Cross
+Hook
+Body shot
+Head shot
+Lead hook
+Slip
+Roll
+Duck
+Kick
+Low kick
+Rear kick
+Freestyle
+Flurry, fifteen seconds
+Flurry, thirty seconds
+Flurry, sixty seconds
+Get ready
+Punch flurry
+Listen
+Go, throw the combo
+Combo complete
+Not enough hits
+Missed
+Beast
+Fire
+Go
+Champ
+Keep your hands up.
+Solid combo — reset your guard.
+Keep throwing.
+Nice work — hands up next time.

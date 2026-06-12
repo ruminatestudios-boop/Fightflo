@@ -26,9 +26,9 @@ const CAMERA_MODES: {
   {
     id: "fighter",
     label: "Fighter",
-    headline: "AI recognises your punches",
+    headline: "Pose + mic recognises your punches",
     bullets: [
-      "Front camera watches your upper body and arms",
+      "Front camera tracks shoulders, elbows, and wrists",
       "Scores jab, cross, hook, and correct order",
       "Best for technique and combo accuracy",
     ],
@@ -36,11 +36,11 @@ const CAMERA_MODES: {
   {
     id: "bag",
     label: "Bag",
-    headline: "Mic counts bag impacts",
+    headline: "Triple-signal bag detection",
     bullets: [
-      "Rear camera points at the heavy bag",
-      "Hears thuds — counts hits, not punch type",
-      "Won't know jab from cross — use Fighter for that",
+      "Rear camera + mic + motion fusion",
+      "Counts impacts with high accuracy",
+      "Use Fighter cam for jab/cross/hook scoring",
     ],
   },
 ];
@@ -54,9 +54,7 @@ export function BagSetupCameraScreen({
 }: BagSetupCameraScreenProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const stopRef = useRef<(() => void) | null>(null);
-  const [cameraMode, setCameraMode] = useState<BagCameraMode>(
-    !isProUser && initialMode === "fighter" ? "bag" : initialMode
-  );
+  const [cameraMode, setCameraMode] = useState<BagCameraMode>(initialMode);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [stance, setStance] = useState<BagStance>("orthodox");
 
@@ -64,18 +62,10 @@ export function BagSetupCameraScreen({
   const fighterCam = cameraMode === "fighter";
 
   const handleModeSelect = (mode: BagCameraMode) => {
-    if (mode === "fighter" && !isProUser) {
-      onUpgrade?.();
-      return;
-    }
     setCameraMode(mode);
   };
 
   const handleContinue = () => {
-    if (cameraMode === "fighter" && !isProUser) {
-      onUpgrade?.();
-      return;
-    }
     onContinue(cameraMode, stance);
   };
 
@@ -86,7 +76,7 @@ export function BagSetupCameraScreen({
     stopRef.current?.();
     void startMediaCapture(video, {
       facingMode: fighterCam ? "user" : "environment",
-      highQuality: fighterCam,
+      highQuality: false,
     }).then((result) => {
       stopRef.current = result.handles.stop;
       setPreviewError(result.error);
@@ -164,20 +154,9 @@ export function BagSetupCameraScreen({
                   onClick={() => handleModeSelect(m.id)}
                   className={`flex-1 rounded-xl border px-3 py-3 text-left backdrop-blur-sm transition-colors ${chipClass(cameraMode === m.id)}`}
                 >
-                  <span className="flex items-center gap-1.5 font-display text-sm">
-                    {m.label}
-                    {m.id === "fighter" && !isProUser && (
-                      <span className="rounded bg-[#fa4141]/20 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-[#fa4141]">
-                        Pro
-                      </span>
-                    )}
-                  </span>
+                  <span className="font-display text-sm">{m.label}</span>
                   <span className="mt-0.5 block text-[10px] normal-case tracking-normal text-white/45">
-                    {m.id === "fighter"
-                      ? isProUser
-                        ? "Punch recognition"
-                        : "Pro — punch recognition"
-                      : "Impact count"}
+                    {m.id === "fighter" ? "Punch recognition" : "Impact count"}
                   </span>
                 </button>
               ))}

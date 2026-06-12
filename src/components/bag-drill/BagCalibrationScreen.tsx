@@ -13,13 +13,21 @@ import {
   type BagCalibration,
   type BagStance,
 } from "@/lib/bag-drill/calibration";
+import { saveCalibration } from "@/lib/bag-drill/detection/calibration-store";
+import { MicPunchDetector } from "@/lib/bag-drill/detection/mic-punch-detector";
 import {
-  createAudioImpactDetector,
-  startMediaCapture,
-} from "@/lib/bag-drill/media-capture";
+  createPoseLandmarker,
+  detectPose,
+} from "@/lib/bag-drill/detection/pose-landmarker";
+import { bodyVisible, detectStance } from "@/lib/bag-drill/detection/landmarks";
+import { GuardMonitor } from "@/lib/bag-drill/detection/guard-monitor";
+import { startMediaCapture } from "@/lib/bag-drill/media-capture";
 import type { BagCameraMode } from "@/lib/bag-drill/types";
+import type { PoseLandmarker } from "@mediapipe/tasks-vision";
 
-type CalStep = "frame" | "light" | "punches" | "done";
+type CalStep = "camera" | "stance" | "guard" | "mic" | "done";
+
+const STEP_MS = 3000;
 
 interface BagCalibrationScreenProps {
   cameraMode: BagCameraMode;
@@ -28,8 +36,6 @@ interface BagCalibrationScreenProps {
   onBack: () => void;
   onComplete: (calibration: BagCalibration) => void;
 }
-
-const TEST_PUNCHES_NEEDED = 3;
 
 export function BagCalibrationScreen({
   cameraMode,
@@ -40,100 +46,193 @@ export function BagCalibrationScreen({
 }: BagCalibrationScreenProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const stopRef = useRef<(() => void) | null>(null);
-  const cleanupAudioRef = useRef<(() => void) | null>(null);
+  const landmarkerRef = useRef<PoseLandmarker | null>(null);
+  const micRef = useRef<MicPunchDetector | null>(null);
   const peaksRef = useRef<number[]>([]);
-  const punchesRef = useRef(0);
+  const guardMonitorRef = useRef(new GuardMonitor());
+  const guardBaselineRef = useRef<ReturnType<GuardMonitor["calibrateFromLandmarks"]> | null>(
+    null
+  );
+  const stepStartRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
 
-  const [step, setStep] = useState<CalStep>("frame");
-  const [frameOk, setFrameOk] = useState(false);
+  const [step, setStep] = useState<CalStep>("camera");
+  const [progress, setProgress] = useState(0);
+  const [detectedStance, setDetectedStance] = useState<BagStance | null>(null);
+  const [guardOk, setGuardOk] = useState(false);
+  const [micOk, setMicOk] = useState(false);
   const [brightness, setBrightness] = useState(0);
   const [lightOk, setLightOk] = useState(false);
-  const [punches, setPunches] = useState(0);
+  const [bodyOk, setBodyOk] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [gpuOk, setGpuOk] = useState(true);
 
   const fighterCam = cameraMode === "fighter";
   const mirrored = fighterCam;
 
-  const stepRef = useRef(step);
-  stepRef.current = step;
+  const finish = useCallback(() => {
+    const baseline = guardBaselineRef.current ?? {
+      left: 0,
+      right: 0,
+      chinY: 0,
+    };
+
+    const cal: BagCalibration = {
+      stance: detectedStance ?? stance,
+      micThreshold: micThresholdFromPeaks(peaksRef.current),
+      lightingOk: lightOk,
+      brightness,
+      testPunchesDetected: peaksRef.current.length,
+      frameConfirmed: bodyOk,
+      poseReady: bodyOk,
+      guardBaseline: baseline,
+      gpuDelegate: gpuOk,
+    };
+    saveCalibration(cal);
+    onComplete(cal);
+  }, [stance, detectedStance, lightOk, brightness, bodyOk, gpuOk, onComplete]);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    stopRef.current?.();
-    cleanupAudioRef.current?.();
+    let mounted = true;
 
-    void startMediaCapture(video, {
-      facingMode: fighterCam ? "user" : "environment",
-      highQuality: fighterCam,
-    }).then((result) => {
+    void (async () => {
+      const result = await startMediaCapture(video, {
+        facingMode: fighterCam ? "user" : "environment",
+        highQuality: false,
+      });
+      if (!mounted) return;
       stopRef.current = result.handles.stop;
       setPreviewError(result.error);
 
-      if (result.handles.stream && result.handles.audioContext) {
-        peaksRef.current = [];
-        punchesRef.current = 0;
-        cleanupAudioRef.current = createAudioImpactDetector(
-          result.handles.stream,
-          result.handles.audioContext,
-          () => {
-            if (stepRef.current !== "punches") return;
-            punchesRef.current += 1;
-            setPunches(punchesRef.current);
-          },
-          {
-            calibrateMs: 800,
-            cooldownMs: 280,
-            onPeak: (peak) => {
-              if (stepRef.current === "punches") peaksRef.current.push(peak);
-            },
-          }
-        );
+      try {
+        const { landmarker, gpu } = await createPoseLandmarker();
+        landmarkerRef.current = landmarker;
+        setGpuOk(gpu);
+      } catch {
+        setPreviewError("Pose model failed to load");
       }
-    });
+
+      if (result.handles.stream) {
+        micRef.current = new MicPunchDetector({
+          onSpike: (peak) => {
+            peaksRef.current.push(peak);
+            if (step === "mic") setMicOk(true);
+          },
+        });
+      }
+    })();
 
     return () => {
-      cleanupAudioRef.current?.();
+      mounted = false;
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      micRef.current?.stop();
+      landmarkerRef.current?.close();
       stopRef.current?.();
     };
-  }, [fighterCam]);
+  }, [fighterCam, step]);
 
   useEffect(() => {
-    if (step !== "light") return;
-    const id = window.setInterval(() => {
-      void sampleFrameBrightness(videoRef.current!).then((score) => {
-        setBrightness(score);
-        setLightOk(brightnessOk(score));
-      });
-    }, 400);
-    return () => clearInterval(id);
+    stepStartRef.current = Date.now();
+    setProgress(0);
+
+    if (step === "mic" && micRef.current) {
+      peaksRef.current = [];
+      const stream = videoRef.current?.srcObject as MediaStream | null;
+      if (stream) micRef.current.start(stream);
+    } else {
+      micRef.current?.stop();
+    }
   }, [step]);
 
-  const finish = useCallback(() => {
-    const cal: BagCalibration = {
-      stance,
-      micThreshold: micThresholdFromPeaks(peaksRef.current),
-      lightingOk: lightOk,
-      brightness,
-      testPunchesDetected: punchesRef.current,
-      frameConfirmed: frameOk,
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !landmarkerRef.current) return;
+
+    const tick = () => {
+      const lm = landmarkerRef.current;
+      const v = videoRef.current;
+      if (!lm || !v?.videoWidth) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      const now = performance.now();
+      const result = detectPose(lm, v, now);
+      const landmarks = result?.landmarks?.[0];
+      const elapsed = Date.now() - stepStartRef.current;
+      setProgress(Math.min(1, elapsed / STEP_MS));
+
+      if (landmarks) {
+        if (step === "camera") {
+          const visible = bodyVisible(landmarks);
+          setBodyOk(visible);
+          void sampleFrameBrightness(v).then((score) => {
+            setBrightness(score);
+            setLightOk(brightnessOk(score));
+          });
+          if (visible && lightOk && elapsed >= STEP_MS) {
+            setStep("stance");
+          }
+        }
+
+        if (step === "stance") {
+          const s = detectStance(landmarks);
+          setDetectedStance(s);
+          onStanceChange(s);
+          if (elapsed >= STEP_MS) setStep("guard");
+        }
+
+        if (step === "guard") {
+          guardBaselineRef.current = guardMonitorRef.current.calibrateFromLandmarks(
+            landmarks,
+            v.videoHeight
+          );
+          if (elapsed >= STEP_MS) {
+            setGuardOk(true);
+            setStep("mic");
+          }
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
     };
-    onComplete(cal);
-  }, [stance, lightOk, brightness, frameOk, onComplete]);
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [step, lightOk, onStanceChange]);
 
   useEffect(() => {
-    if (step === "punches" && punches >= TEST_PUNCHES_NEEDED) {
-      const t = window.setTimeout(() => setStep("done"), 400);
+    if (step === "mic" && micOk) {
+      const t = window.setTimeout(() => setStep("done"), 600);
       return () => clearTimeout(t);
     }
-  }, [punches, step]);
+  }, [micOk, step]);
 
   const stepTitle: Record<CalStep, string> = {
-    frame: fighterCam ? "Get in frame" : "Point at the bag",
-    light: "Check lighting",
-    punches: "Test punches",
+    camera: "Stand back — full body",
+    stance: "Hold your fighting stance",
+    guard: "Hold your guard up",
+    mic: "Throw one punch at the bag",
     done: "Ready to train",
+  };
+
+  const stepHint: Record<CalStep, string> = {
+    camera: bodyOk
+      ? lightOk
+        ? "Full body visible ✅"
+        : "Improve lighting"
+      : "Step back a little / improve lighting",
+    stance: detectedStance
+      ? `${stanceLabel(detectedStance)} stance detected ✅`
+      : "Detecting stance…",
+    guard: guardOk ? "Guard calibrated ✅" : "Keep hands by your chin…",
+    mic: micOk ? "Mic calibrated ✅" : "Hit the bag once",
+    done: `All systems go · ${stanceLabel(detectedStance ?? stance)}`,
   };
 
   return (
@@ -157,16 +256,18 @@ export function BagCalibrationScreen({
           className="border-white/20 bg-black/40 text-white backdrop-blur-sm"
         />
 
-        <div className="mt-4 flex gap-2">
-          {(["orthodox", "southpaw"] as const).map((s) => (
-            <button
+        <div className="mt-3 flex gap-2">
+          {(["camera", "stance", "guard", "mic"] as const).map((s, i) => (
+            <span
               key={s}
-              type="button"
-              onClick={() => onStanceChange(s)}
-              className={`rounded-full border px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider backdrop-blur-sm ${chipClass(stance === s)}`}
-            >
-              {stanceLabel(s)}
-            </button>
+              className={`h-1 flex-1 rounded-full ${
+                step === s || (step === "done" && i < 4)
+                  ? "bg-[#fa4141]"
+                  : ["camera", "stance", "guard", "mic"].indexOf(step) > i
+                    ? "bg-emerald-500"
+                    : "bg-white/15"
+              }`}
+            />
           ))}
         </div>
 
@@ -178,46 +279,27 @@ export function BagCalibrationScreen({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
             >
-              <p className="label text-white/45">Calibration</p>
+              <p className="label text-white/45">Calibration · step{" "}
+                {step === "done" ? 4 : ["camera", "stance", "guard", "mic"].indexOf(step) + 1}
+                /4
+              </p>
               <h1 className="font-display mt-1 text-2xl tracking-wide text-white">
                 {stepTitle[step]}
               </h1>
+              <p className="mt-3 text-sm text-white/70">{stepHint[step]}</p>
 
-              {step === "frame" && (
-                <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/65">
-                  {fighterCam
-                    ? "Centre your shoulders and hands in the guide. AI needs your full upper body."
-                    : "Frame the heavy bag. Mic will hear impacts from this angle."}
-                </p>
+              {step !== "done" && (
+                <div className="mt-4 h-1 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full bg-[#fa4141] transition-all duration-100"
+                    style={{ width: `${progress * 100}%` }}
+                  />
+                </div>
               )}
 
-              {step === "light" && (
-                <p className="mt-3 text-sm text-white/65">
-                  {lightOk
-                    ? "Lighting looks good."
-                    : brightness < 0.1
-                      ? "Too dark — add light or move closer to a window."
-                      : "Too bright — reduce backlight glare on the camera."}
-                  <span className="mt-1 block text-xs text-white/40">
-                    Level: {Math.round(brightness * 100)}%
-                  </span>
-                </p>
-              )}
-
-              {step === "punches" && (
-                <p className="mt-3 text-sm text-white/65">
-                  Throw {TEST_PUNCHES_NEEDED} test punches on the bag so we learn
-                  your impact sound.
-                  <span className="mt-2 block font-display text-lg text-white">
-                    {punches} / {TEST_PUNCHES_NEEDED}
-                  </span>
-                </p>
-              )}
-
-              {step === "done" && (
-                <p className="mt-3 text-sm text-emerald-400/90">
-                  Mic calibrated · {stanceLabel(stance)} stance ·{" "}
-                  {fighterCam ? "Fighter AI ready" : "Impact detection ready"}
+              {!gpuOk && (
+                <p className="mt-2 text-xs text-amber-400/90">
+                  For best accuracy use Chrome on a modern phone
                 </p>
               )}
 
@@ -228,33 +310,6 @@ export function BagCalibrationScreen({
           </AnimatePresence>
 
           <div className="mt-8">
-            {step === "frame" && (
-              <button
-                type="button"
-                onClick={() => {
-                  setFrameOk(true);
-                  setStep("light");
-                }}
-                className="font-display flex h-14 w-full items-center justify-center rounded-full bg-white text-[15px] tracking-[0.18em] text-black"
-              >
-                I&apos;m in frame
-              </button>
-            )}
-            {step === "light" && (
-              <button
-                type="button"
-                disabled={!lightOk}
-                onClick={() => setStep("punches")}
-                className="font-display flex h-14 w-full items-center justify-center rounded-full bg-white text-[15px] tracking-[0.18em] text-black disabled:opacity-40"
-              >
-                {lightOk ? "Continue" : "Fix lighting first"}
-              </button>
-            )}
-            {step === "punches" && (
-              <p className="text-center text-xs text-white/40">
-                Punch the bag — mic is listening
-              </p>
-            )}
             {step === "done" && (
               <button
                 type="button"
@@ -263,6 +318,11 @@ export function BagCalibrationScreen({
               >
                 Start session setup
               </button>
+            )}
+            {step !== "done" && (
+              <p className="text-center text-xs text-white/40">
+                Auto-calibrating… hold still
+              </p>
             )}
           </div>
         </div>

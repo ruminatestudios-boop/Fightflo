@@ -30,6 +30,7 @@ import {
 } from "@/lib/pro-sync";
 import { isPro } from "@/lib/subscription";
 import type { BagCalibration, BagStance } from "@/lib/bag-drill/calibration";
+import { loadStoredCalibration } from "@/lib/bag-drill/detection/calibration-store";
 import type {
   BagCameraMode,
   BagDrillMode,
@@ -240,7 +241,14 @@ export function BagDrillApp() {
             onContinue={(mode, stance) => {
               setCameraModeDraft(mode);
               setStanceDraft(stance);
-              setScreen("calibration");
+              const stored = loadStoredCalibration();
+              if (stored?.poseReady && stored.guardBaseline) {
+                setCalibrationDraft(stored);
+                setStanceDraft(stored.stance);
+                setScreen("setup-config");
+              } else {
+                setScreen("calibration");
+              }
             }}
             onUpgrade={() => setShowUpgrade(true)}
           />

@@ -8,6 +8,7 @@ import {
   tierColor,
   type UseBagDrillResult,
 } from "@/hooks/useBagDrill";
+import { GuardWarningOverlay } from "@/components/bag-drill/GuardWarningOverlay";
 import { StrikeLogStrip } from "@/components/bag-drill/StrikeLogStrip";
 import type { BagTrainingConfig } from "@/lib/bag-drill/types";
 
@@ -27,7 +28,9 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
   const { state, videoRef, start, tapPunch, disputeStrike, micBackupPunch } = drill;
   const tapOnly =
     state.detectionMode === "visual-tap" || state.detectionMode === "timer-fallback";
-  const aiMode = state.detectionMode === "live" && state.liveConnected;
+  const poseMode =
+    state.detectionMode === "pose-triple" && state.liveConnected;
+  const aiMode = poseMode && config.cameraMode === "fighter";
   const showTap =
     state.inComboWindow &&
     state.hitsExpected > 0 &&
@@ -95,9 +98,13 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
         ref={videoRef}
         playsInline
         muted
-        className="pointer-events-none fixed left-0 top-0 h-px w-px opacity-0"
-        aria-hidden
+        className={`pointer-events-none fixed inset-0 h-full w-full object-cover ${
+          config.cameraMode === "fighter" ? "scale-x-[-1] opacity-30" : "h-px w-px opacity-0"
+        }`}
+        aria-hidden={config.cameraMode !== "fighter"}
       />
+
+      <GuardWarningOverlay guard={state.guardWarning} />
 
       {/* Fixed top band — height never changes */}
       <div className="relative z-10 shrink-0 px-6 pt-[max(0.75rem,env(safe-area-inset-top))]">
@@ -114,7 +121,13 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
                   : "bg-white/10 text-white/45"
             }`}
           >
-            {aiMode ? "Live AI" : state.detectionMode === "audio-hybrid" ? "Mic" : "Tap"}
+            {poseMode
+              ? config.cameraMode === "fighter"
+                ? "Pose AI"
+                : "Triple"
+              : state.detectionMode === "audio-hybrid"
+                ? "Mic"
+                : "Tap"}
           </span>
         </div>
 

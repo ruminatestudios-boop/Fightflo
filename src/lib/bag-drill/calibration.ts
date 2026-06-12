@@ -1,6 +1,12 @@
 /** Fighter stance — drives jab/cross mapping in AI prompts. */
 export type BagStance = "orthodox" | "southpaw";
 
+export interface GuardBaselineCal {
+  left: number;
+  right: number;
+  chinY: number;
+}
+
 export interface BagCalibration {
   stance: BagStance;
   /** Passive + active mic calibration (0–1 peak threshold). */
@@ -10,6 +16,10 @@ export interface BagCalibration {
   brightness: number;
   testPunchesDetected: number;
   frameConfirmed: boolean;
+  /** Wrist height baseline from guard calibration step */
+  guardBaseline?: GuardBaselineCal;
+  poseReady?: boolean;
+  gpuDelegate?: boolean;
 }
 
 export const DEFAULT_CALIBRATION: BagCalibration = {

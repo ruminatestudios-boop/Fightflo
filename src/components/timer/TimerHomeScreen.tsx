@@ -1,15 +1,27 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { AppTopBar } from "@/components/ui/AppTopBar";
 import { chipClass } from "@/components/bag-drill/bag-ui";
+import { FlowBagSocialTooltip } from "@/components/timer/FlowBagSocialTooltip";
 import { TIMER_PRESETS, configFromPreset } from "@/lib/boxing-timer/presets";
+import {
+  loadTimerEmailStorage,
+  shouldShowEmailCapture,
+} from "@/lib/boxing-timer/email-capture-storage";
+import {
+  getFlowBagLinkCta,
+  loadTimerUpsellStats,
+  recordFlowBagClick,
+} from "@/lib/boxing-timer/upsell-storage";
 import type { TimerConfig } from "@/lib/boxing-timer/types";
 import { DEFAULT_TIMER_CONFIG } from "@/lib/boxing-timer/types";
 
 interface TimerHomeScreenProps {
+  isPro?: boolean;
   config: TimerConfig;
   onConfigChange: (patch: Partial<TimerConfig>) => void;
   onSelectPreset: (presetId: string) => void;
@@ -24,13 +36,27 @@ function formatWorkRest(c: TimerConfig): string {
 }
 
 export function TimerHomeScreen({
+  isPro = false,
   config,
   onConfigChange,
   onSelectPreset,
   onStart,
 }: TimerHomeScreenProps) {
+  const [flowBagCta, setFlowBagCta] = useState("Try FlowBag →");
+  const [bannerOffset, setBannerOffset] = useState(false);
+
+  useEffect(() => {
+    setFlowBagCta(getFlowBagLinkCta(loadTimerUpsellStats()));
+    const storage = loadTimerEmailStorage();
+    setBannerOffset(
+      shouldShowEmailCapture(isPro) && !storage.hasSeenBanner && !storage.emailCaptured
+    );
+  }, [isPro]);
+
   return (
-    <div className="app-shell relative flex h-dvh flex-col overflow-y-auto overscroll-y-contain bg-black px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
+    <div
+      className={`app-shell relative flex h-dvh flex-col overflow-y-auto overscroll-y-contain bg-black px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] ${bannerOffset ? "mt-[7.5rem]" : ""}`}
+    >
       <AppTopBar
         className="mb-6"
         trailing={
@@ -114,12 +140,20 @@ export function TimerHomeScreen({
 
         <div className="mt-10 space-y-3">
           <Button onClick={onStart}>Start workout</Button>
-          <p className="text-center text-[10px] leading-relaxed text-[#525252]">
-            Want AI punch scoring on the bag?{" "}
-            <Link href="/bag" className="text-[#fa4141]/90 hover:text-[#fa4141]">
-              Try FlowBag →
-            </Link>
-          </p>
+          {!isPro && (
+            <p className="text-center text-[10px] leading-relaxed text-[#525252]">
+              Want AI punch scoring on the bag?{" "}
+              <FlowBagSocialTooltip enabled={!isPro}>
+                <Link
+                  href="/bag"
+                  onClick={() => recordFlowBagClick()}
+                  className="text-[#fa4141]/90 hover:text-[#fa4141]"
+                >
+                  {flowBagCta}
+                </Link>
+              </FlowBagSocialTooltip>
+            </p>
+          )}
         </div>
       </motion.div>
     </div>

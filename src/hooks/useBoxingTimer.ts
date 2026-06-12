@@ -34,6 +34,8 @@ export interface BoxingTimerState {
   moveLabel: string | null;
   moveSublabel: string | null;
   restHint: string | null;
+  /** Round that just finished when entering rest (1 after round 1, etc.) */
+  restAfterRound: number | null;
   urgent: boolean;
   isPaused: boolean;
   comboPulses: boolean;
@@ -59,6 +61,7 @@ const INITIAL: BoxingTimerState = {
   moveLabel: null,
   moveSublabel: null,
   restHint: null,
+  restAfterRound: null,
   urgent: false,
   isPaused: false,
   comboPulses: true,
@@ -161,6 +164,7 @@ export function useBoxingTimer(): UseBoxingTimerResult {
         moveLabel: null,
         moveSublabel: null,
         restHint: null,
+        restAfterRound: null,
         urgent: false,
         isPaused: false,
         comboPulses: config.comboPulses,
@@ -198,6 +202,7 @@ export function useBoxingTimer(): UseBoxingTimerResult {
         moveLabel: null,
         moveSublabel: null,
         restHint: hint,
+        restAfterRound: afterRound,
         urgent: false,
         isPaused: false,
         comboPulses: config.comboPulses,
@@ -297,6 +302,7 @@ export function useBoxingTimer(): UseBoxingTimerResult {
       phaseLabel: null,
       moveLabel: null,
       restHint: null,
+      restAfterRound: null,
       urgent: false,
       isPaused: false,
     }));

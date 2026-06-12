@@ -21,6 +21,7 @@ export type BagScreen =
 export type BagCameraMode = "bag" | "fighter";
 
 export type DetectionMode =
+  | "pose-triple"
   | "audio-hybrid"
   | "audio-only"
   | "visual-tap"
@@ -77,6 +78,7 @@ export interface BagSessionRecord {
   flurryPeakRate?: number;
   /** Best single flurry count for this duration (personal best beat) */
   flurryPersonalBest?: boolean;
+  guardDrops?: number;
 }
 
 export interface BagUserMeta {
