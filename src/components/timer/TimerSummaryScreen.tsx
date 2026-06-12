@@ -20,7 +20,7 @@ export function TimerSummaryScreen({ stats, onAgain }: TimerSummaryScreenProps) 
   const finished = stats.roundsCompleted >= stats.totalRounds;
 
   return (
-    <div className="app-shell flex min-h-dvh flex-col bg-black px-5 pb-10 pt-16">
+    <div className="app-shell flex h-dvh flex-col overflow-y-auto overscroll-y-contain bg-black px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-16">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

@@ -30,7 +30,7 @@ export function TimerHomeScreen({
   onStart,
 }: TimerHomeScreenProps) {
   return (
-    <div className="app-shell relative flex min-h-dvh flex-col bg-black px-5 pb-10 pt-10">
+    <div className="app-shell relative flex h-dvh flex-col overflow-y-auto overscroll-y-contain bg-black px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
       <AppTopBar
         className="mb-6"
         trailing={
