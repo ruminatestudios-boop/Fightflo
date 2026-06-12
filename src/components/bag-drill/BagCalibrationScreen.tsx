@@ -5,6 +5,7 @@ import { BackButton } from "@/components/ui/BackButton";
 import { FighterFrameOverlay } from "@/components/bag-drill/FighterFrameOverlay";
 import {
   brightnessOk,
+  DEFAULT_CALIBRATION,
   micThresholdFromPeaks,
   sampleFrameBrightness,
   stanceLabel,
@@ -99,6 +100,16 @@ export function BagCalibrationScreen({
     saveCalibration(cal);
     onComplete(cal);
   }, [stance, detectedStance, lightOk, brightness, bodyOk, gpuOk, onComplete]);
+
+  const skipCalibration = useCallback(() => {
+    const cal: BagCalibration = {
+      ...DEFAULT_CALIBRATION,
+      stance: detectedStance ?? stance,
+      guardBaseline: { left: 0.5, right: 0.5, chinY: 0.35 },
+    };
+    saveCalibration(cal);
+    onComplete(cal);
+  }, [stance, detectedStance, onComplete]);
 
   const bootCamera = useCallback(async () => {
     const video = videoRef.current;
@@ -283,10 +294,19 @@ export function BagCalibrationScreen({
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
 
       <div className="relative z-10 px-5 pt-[max(1rem,env(safe-area-inset-top))]">
-        <BackButton
-          onClick={onBack}
-          className="border-white/20 bg-black/40 text-white backdrop-blur-sm"
-        />
+        <div className="flex items-center justify-between gap-3">
+          <BackButton
+            onClick={onBack}
+            className="border-white/20 bg-black/40 text-white backdrop-blur-sm"
+          />
+          <button
+            type="button"
+            onClick={skipCalibration}
+            className="rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[10px] font-medium uppercase tracking-[0.14em] text-white/55 backdrop-blur-sm hover:text-white"
+          >
+            Skip for now
+          </button>
+        </div>
 
         <div className="mt-3 flex gap-2">
           {(["camera", "stance", "guard", "mic"] as const).map((s, i) => (
