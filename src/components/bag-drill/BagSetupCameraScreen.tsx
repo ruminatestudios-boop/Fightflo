@@ -3,7 +3,6 @@
 import { useCallback, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { BackButton } from "@/components/ui/BackButton";
-import { FighterFrameOverlay } from "@/components/bag-drill/FighterFrameOverlay";
 import { chipClass } from "@/components/bag-drill/bag-ui";
 import type { BagStance } from "@/lib/bag-drill/calibration";
 import { startMediaCapture } from "@/lib/bag-drill/media-capture";
@@ -21,28 +20,6 @@ interface BagSetupCameraScreenProps {
   onUpgrade?: () => void;
 }
 
-const INSTRUCTIONS: Record<
-  BagCameraMode,
-  { title: string; steps: string[] }
-> = {
-  fighter: {
-    title: "Get in frame",
-    steps: [
-      "Prop your phone at chest height",
-      "Step back — shoulders and hands visible",
-      "Face the bag in your stance",
-    ],
-  },
-  bag: {
-    title: "Point at the bag",
-    steps: [
-      "Prop phone so it sees you and the bag",
-      "Stand in your fighting stance",
-      "Make sure there's enough light",
-    ],
-  },
-};
-
 export function BagSetupCameraScreen({
   initialMode = "fighter",
   onBack,
@@ -57,7 +34,6 @@ export function BagSetupCameraScreen({
   const [previewError, setPreviewError] = useState<string | null>(null);
 
   const fighterCam = cameraMode === "fighter";
-  const copy = INSTRUCTIONS[cameraMode];
 
   const releaseCamera = useCallback(() => {
     stopRef.current?.();
@@ -120,9 +96,7 @@ export function BagSetupCameraScreen({
         } ${cameraReady ? "opacity-100" : "opacity-0"}`}
       />
 
-      {fighterCam && cameraReady && <FighterFrameOverlay mirrored />}
-
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/75" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
         <div className="flex items-center justify-between gap-3">
@@ -144,35 +118,12 @@ export function BagSetupCameraScreen({
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col justify-end">
-          <motion.div
-            key={cameraMode}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-white/10 bg-black/50 px-5 py-4 backdrop-blur-md"
-          >
-            <h1 className="font-display text-xl tracking-wide text-white">
-              {copy.title}
-            </h1>
-            <ol className="mt-3 space-y-2">
-              {copy.steps.map((step, i) => (
-                <li
-                  key={step}
-                  className="flex gap-3 text-sm leading-snug text-white/75"
-                >
-                  <span className="font-display shrink-0 text-[#fa4141]">
-                    {i + 1}.
-                  </span>
-                  <span>{step}</span>
-                </li>
-              ))}
-            </ol>
-            {previewError && (
-              <p className="mt-3 text-xs leading-relaxed text-[#fa4141]/90">
-                {previewError}
-              </p>
-            )}
-          </motion.div>
+        <div className="mt-auto space-y-3">
+          {previewError && (
+            <p className="text-center text-xs leading-relaxed text-[#fa4141]/90">
+              {previewError}
+            </p>
+          )}
 
           {!cameraReady ? (
             <motion.button
@@ -180,7 +131,7 @@ export function BagSetupCameraScreen({
               whileTap={{ scale: 0.98 }}
               onClick={() => void startCamera()}
               disabled={starting}
-              className="font-display mt-4 flex h-14 w-full items-center justify-center rounded-full bg-[#fa4141] text-[15px] tracking-[0.14em] text-white disabled:opacity-60"
+              className="font-display flex h-14 w-full items-center justify-center rounded-full bg-[#fa4141] text-[15px] tracking-[0.14em] text-white disabled:opacity-60"
             >
               {starting ? "Opening camera…" : "Allow camera access"}
             </motion.button>
@@ -189,7 +140,7 @@ export function BagSetupCameraScreen({
               type="button"
               whileTap={{ scale: 0.98 }}
               onClick={handleContinue}
-              className="font-display mt-4 flex h-14 w-full items-center justify-center rounded-full bg-white text-[15px] tracking-[0.2em] text-black"
+              className="font-display flex h-14 w-full items-center justify-center rounded-full bg-white text-[15px] tracking-[0.2em] text-black"
             >
               Continue
             </motion.button>
@@ -199,7 +150,7 @@ export function BagSetupCameraScreen({
             <button
               type="button"
               onClick={() => void startCamera()}
-              className="mt-3 text-center text-xs text-white/40 hover:text-white/60"
+              className="w-full text-center text-xs text-white/40 hover:text-white/60"
             >
               Tap to retry
             </button>
