@@ -17,6 +17,8 @@ interface SessionTimerUIProps {
   isPaused?: boolean;
   urgent?: boolean;
   restHint?: string | null;
+  /** Work-round phase e.g. Championship minute */
+  phaseLabel?: string | null;
   onPause?: () => void;
   onResume?: () => void;
   onStop: () => void;
@@ -39,6 +41,7 @@ export function SessionTimerUI({
   isPaused = false,
   urgent = false,
   restHint,
+  phaseLabel,
   onPause,
   onResume,
   onStop,
@@ -113,13 +116,24 @@ export function SessionTimerUI({
           >
             {/* Round label */}
             {!isCountdown && (
-              <p className="mb-6 text-xs font-medium uppercase tracking-[0.2em] text-white/40">
-                {isRest ? (
-                  <span className="text-white/70">Rest</span>
-                ) : (
-                  roundLabel
+              <div className="mb-6 text-center">
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/40">
+                  {isRest ? (
+                    <span className="text-white/70">Rest</span>
+                  ) : (
+                    roundLabel
+                  )}
+                </p>
+                {!isRest && phaseLabel && (
+                  <p
+                    className={`mt-2 text-[10px] font-semibold uppercase tracking-[0.22em] ${
+                      urgent ? "text-[#fa4141]" : "text-white/35"
+                    }`}
+                  >
+                    {phaseLabel}
+                  </p>
                 )}
-              </p>
+              </div>
             )}
 
             {isRest && (
