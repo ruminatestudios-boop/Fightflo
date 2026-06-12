@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { BagHomeScreen } from "./BagHomeScreen";
@@ -56,6 +56,12 @@ export function BagDrillApp() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [pro, setProState] = useState(false);
   const [freeUsed, setFreeUsed] = useState(0);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+
+  const releaseMediaStream = useCallback(() => {
+    mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+    mediaStreamRef.current = null;
+  }, []);
 
   const drill = useBagDrill();
   const flurry = useBagFlurry();
@@ -237,12 +243,17 @@ export function BagDrillApp() {
             key="setup-camera"
             initialMode={cameraModeDraft}
             isPro={pro}
-            onBack={() => setScreen("home")}
-            onContinue={(mode, stance) => {
+            onBack={() => {
+              releaseMediaStream();
+              setScreen("home");
+            }}
+            onContinue={(mode, stance, stream) => {
               setCameraModeDraft(mode);
               setStanceDraft(stance);
+              mediaStreamRef.current = stream;
               const stored = loadStoredCalibration();
               if (stored?.poseReady && stored.guardBaseline) {
+                releaseMediaStream();
                 setCalibrationDraft(stored);
                 setStanceDraft(stored.stance);
                 setScreen("setup-config");
@@ -258,9 +269,14 @@ export function BagDrillApp() {
             key="calibration"
             cameraMode={cameraModeDraft}
             stance={stanceDraft}
+            existingStream={mediaStreamRef.current}
             onStanceChange={setStanceDraft}
-            onBack={() => setScreen("setup-camera")}
+            onBack={() => {
+              releaseMediaStream();
+              setScreen("setup-camera");
+            }}
             onComplete={(cal) => {
+              releaseMediaStream();
               setCalibrationDraft(cal);
               setStanceDraft(cal.stance);
               setScreen("setup-config");

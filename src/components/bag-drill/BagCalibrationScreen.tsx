@@ -21,7 +21,10 @@ import {
 } from "@/lib/bag-drill/detection/pose-landmarker";
 import { bodyVisible, detectStance } from "@/lib/bag-drill/detection/landmarks";
 import { GuardMonitor } from "@/lib/bag-drill/detection/guard-monitor";
-import { startMediaCapture } from "@/lib/bag-drill/media-capture";
+import {
+  attachExistingStream,
+  startMediaCapture,
+} from "@/lib/bag-drill/media-capture";
 import type { BagCameraMode } from "@/lib/bag-drill/types";
 import type { PoseLandmarker } from "@mediapipe/tasks-vision";
 
@@ -32,6 +35,7 @@ const STEP_MS = 3000;
 interface BagCalibrationScreenProps {
   cameraMode: BagCameraMode;
   stance: BagStance;
+  existingStream?: MediaStream | null;
   onStanceChange: (stance: BagStance) => void;
   onBack: () => void;
   onComplete: (calibration: BagCalibration) => void;
@@ -40,6 +44,7 @@ interface BagCalibrationScreenProps {
 export function BagCalibrationScreen({
   cameraMode,
   stance,
+  existingStream = null,
   onStanceChange,
   onBack,
   onComplete,
@@ -54,9 +59,11 @@ export function BagCalibrationScreen({
     null
   );
   const stepStartRef = useRef(0);
+  const stepRef = useRef<CalStep>("camera");
   const rafRef = useRef<number | null>(null);
 
   const [step, setStep] = useState<CalStep>("camera");
+  stepRef.current = step;
   const [progress, setProgress] = useState(0);
   const [detectedStance, setDetectedStance] = useState<BagStance | null>(null);
   const [guardOk, setGuardOk] = useState(false);
@@ -66,6 +73,9 @@ export function BagCalibrationScreen({
   const [bodyOk, setBodyOk] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [gpuOk, setGpuOk] = useState(true);
+  const [cameraReady, setCameraReady] = useState(Boolean(existingStream));
+  const [starting, setStarting] = useState(false);
+  const startingRef = useRef(false);
 
   const fighterCam = cameraMode === "fighter";
   const mirrored = fighterCam;
@@ -92,47 +102,61 @@ export function BagCalibrationScreen({
     onComplete(cal);
   }, [stance, detectedStance, lightOk, brightness, bodyOk, gpuOk, onComplete]);
 
-  useEffect(() => {
+  const bootCamera = useCallback(async () => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || startingRef.current) return;
 
-    let mounted = true;
+    startingRef.current = true;
+    setStarting(true);
+    setPreviewError(null);
 
-    void (async () => {
-      const result = await startMediaCapture(video, {
-        facingMode: fighterCam ? "user" : "environment",
-        highQuality: false,
-      });
-      if (!mounted) return;
-      stopRef.current = result.handles.stop;
-      setPreviewError(result.error);
-
-      try {
-        const { landmarker, gpu } = await createPoseLandmarker();
-        landmarkerRef.current = landmarker;
-        setGpuOk(gpu);
-      } catch {
-        setPreviewError("Pose model failed to load");
-      }
-
-      if (result.handles.stream) {
-        micRef.current = new MicPunchDetector({
-          onSpike: (peak) => {
-            peaksRef.current.push(peak);
-            if (step === "mic") setMicOk(true);
-          },
+    const result = existingStream
+      ? await attachExistingStream(video, existingStream)
+      : await startMediaCapture(video, {
+          facingMode: fighterCam ? "user" : "environment",
+          highQuality: false,
         });
-      }
-    })();
 
+    stopRef.current = result.handles.stop;
+    setCameraReady(result.hasCamera);
+    setPreviewError(
+      result.hasCamera
+        ? result.error
+        : result.error ?? "Camera blocked — tap Allow camera below"
+    );
+
+    try {
+      const { landmarker, gpu } = await createPoseLandmarker();
+      landmarkerRef.current = landmarker;
+      setGpuOk(gpu);
+    } catch {
+      setPreviewError("Pose model failed to load");
+    }
+
+    if (result.handles.stream) {
+      micRef.current = new MicPunchDetector({
+        onSpike: (peak) => {
+          peaksRef.current.push(peak);
+          if (stepRef.current === "mic") setMicOk(true);
+        },
+      });
+    }
+
+    startingRef.current = false;
+    setStarting(false);
+  }, [existingStream, fighterCam]);
+
+  useEffect(() => {
+    if (existingStream) {
+      void bootCamera();
+    }
     return () => {
-      mounted = false;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       micRef.current?.stop();
       landmarkerRef.current?.close();
       stopRef.current?.();
     };
-  }, [fighterCam, step]);
+  }, [existingStream, bootCamera]);
 
   useEffect(() => {
     stepStartRef.current = Date.now();
@@ -149,7 +173,7 @@ export function BagCalibrationScreen({
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !landmarkerRef.current) return;
+    if (!cameraReady || !video || !landmarkerRef.current) return;
 
     const tick = () => {
       const lm = landmarkerRef.current;
@@ -204,7 +228,7 @@ export function BagCalibrationScreen({
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [step, lightOk, onStanceChange]);
+  }, [cameraReady, step, lightOk, onStanceChange]);
 
   useEffect(() => {
     if (step === "mic" && micOk) {
@@ -241,12 +265,13 @@ export function BagCalibrationScreen({
         ref={videoRef}
         playsInline
         muted
+        autoPlay
         className={`absolute inset-0 h-full w-full object-cover ${
           mirrored ? "scale-x-[-1]" : ""
-        }`}
+        } ${cameraReady ? "opacity-100" : "opacity-0"}`}
       />
 
-      {fighterCam && <FighterFrameOverlay mirrored={mirrored} />}
+      {fighterCam && cameraReady && <FighterFrameOverlay mirrored={mirrored} />}
 
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-black/85" />
 
@@ -310,7 +335,17 @@ export function BagCalibrationScreen({
           </AnimatePresence>
 
           <div className="mt-8">
-            {step === "done" && (
+            {!cameraReady && (
+              <button
+                type="button"
+                onClick={() => void bootCamera()}
+                disabled={starting}
+                className="font-display flex h-14 w-full items-center justify-center rounded-full bg-[#fa4141] text-[15px] tracking-[0.14em] text-white disabled:opacity-60"
+              >
+                {starting ? "Opening camera…" : "Allow camera access"}
+              </button>
+            )}
+            {cameraReady && step === "done" && (
               <button
                 type="button"
                 onClick={finish}
@@ -319,7 +354,7 @@ export function BagCalibrationScreen({
                 Start session setup
               </button>
             )}
-            {step !== "done" && (
+            {cameraReady && step !== "done" && (
               <p className="text-center text-xs text-white/40">
                 Auto-calibrating… hold still
               </p>

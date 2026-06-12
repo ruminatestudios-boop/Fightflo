@@ -29,11 +29,78 @@ export interface MediaCaptureOptions {
   highQuality?: boolean;
 }
 
+type FacingMode = "environment" | "user";
+
+async function attachStreamToVideo(
+  videoEl: HTMLVideoElement,
+  stream: MediaStream
+): Promise<void> {
+  videoEl.srcObject = stream;
+  videoEl.muted = true;
+  videoEl.setAttribute("playsinline", "true");
+  videoEl.setAttribute("webkit-playsinline", "true");
+  await videoEl.play();
+}
+
+async function tryGetUserMedia(
+  constraints: MediaStreamConstraints
+): Promise<MediaStream | null> {
+  if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+    return null;
+  }
+  try {
+    return await navigator.mediaDevices.getUserMedia(constraints);
+  } catch {
+    return null;
+  }
+}
+
+/** Progressive constraint ladder — mobile Safari often rejects bundled A/V or HD requests. */
+async function openCameraStream(
+  facingMode: FacingMode,
+  highQuality: boolean
+): Promise<MediaStream | null> {
+  const audio: MediaTrackConstraints = {
+    echoCancellation: false,
+    noiseSuppression: false,
+    autoGainControl: false,
+  };
+
+  const attempts: MediaStreamConstraints[] = [
+    {
+      video: highQuality
+        ? { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        : { facingMode: { ideal: facingMode }, width: { ideal: 640 }, height: { ideal: 480 } },
+      audio,
+    },
+    {
+      video: { facingMode: { ideal: facingMode } },
+      audio,
+    },
+    { video: { facingMode: { ideal: facingMode } } },
+    { video: { facingMode: { exact: facingMode } } },
+    { video: true, audio },
+    { video: true },
+    {
+      video: { facingMode: { ideal: facingMode === "user" ? "environment" : "user" } },
+    },
+    { video: { facingMode: "user" } },
+  ];
+
+  for (const constraints of attempts) {
+    const stream = await tryGetUserMedia(constraints);
+    if (stream?.getVideoTracks().length) return stream;
+    stream?.getTracks().forEach((t) => t.stop());
+  }
+
+  return null;
+}
+
 export async function startMediaCapture(
   videoEl: HTMLVideoElement,
   options: MediaCaptureOptions = {}
 ): Promise<MediaCaptureResult> {
-  const facingMode = options.facingMode ?? "environment";
+  const facingMode = options.facingMode ?? "user";
   const highQuality = options.highQuality ?? facingMode === "user";
   const handles: MediaCaptureHandles = {
     stream: null,
@@ -46,52 +113,38 @@ export async function startMediaCapture(
   let hasMic = false;
   let error: string | null = null;
 
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: highQuality
-        ? {
-            facingMode: { ideal: facingMode },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          }
-        : {
-            facingMode: { ideal: facingMode },
-            width: { ideal: 640 },
-            height: { ideal: 480 },
-          },
-      audio: {
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false,
-      },
-    });
+  if (!navigator.mediaDevices?.getUserMedia) {
+    return {
+      handles,
+      hasCamera: false,
+      hasMic: false,
+      error: "Camera needs HTTPS — open fightflo.app in Safari or Chrome",
+    };
+  }
+
+  const stream = await openCameraStream(facingMode, highQuality);
+
+  if (stream) {
     handles.stream = stream;
     hasCamera = stream.getVideoTracks().length > 0;
     hasMic = stream.getAudioTracks().length > 0;
-    videoEl.srcObject = stream;
-    videoEl.muted = true;
-    await videoEl.play();
-  } catch (e) {
-    error = e instanceof Error ? e.message : "Camera and microphone unavailable";
     try {
-      const audioOnly = await navigator.mediaDevices.getUserMedia({ audio: true });
+      await attachStreamToVideo(videoEl, stream);
+    } catch {
+      error = "Camera on — tap the screen if preview is black";
+    }
+    if (!hasMic) {
+      error = "Microphone blocked — punch counting may be limited";
+    }
+  } else {
+    const audioOnly = await tryGetUserMedia({ audio: true });
+    if (audioOnly) {
       handles.stream = audioOnly;
       hasMic = true;
-      error = "Camera unavailable — audio-only mode";
-    } catch {
-      try {
-        const videoOnly = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: facingMode } },
-        });
-        handles.stream = videoOnly;
-        hasCamera = true;
-        videoEl.srcObject = videoOnly;
-        videoEl.muted = true;
-        await videoEl.play();
-        error = "Microphone unavailable — tap mode when you punch";
-      } catch {
-        error = "Camera and microphone unavailable — using timer fallback";
-      }
+      error = "Camera blocked — allow camera in browser settings, then tap Retry";
+    } else {
+      error =
+        "Camera unavailable — tap Allow camera below, or enable it in Settings → Safari → Camera";
     }
   }
 
@@ -107,6 +160,49 @@ export async function startMediaCapture(
     handles.stream?.getTracks().forEach((t) => t.stop());
     void handles.audioContext?.close();
     handles.stream = null;
+    handles.audioContext = null;
+    if (videoEl) videoEl.srcObject = null;
+  };
+
+  return { handles, hasCamera, hasMic, error };
+}
+
+/** Reuse an open stream on the next screen (avoids a second iOS permission prompt). */
+export async function attachExistingStream(
+  videoEl: HTMLVideoElement,
+  stream: MediaStream
+): Promise<MediaCaptureResult> {
+  const handles: MediaCaptureHandles = {
+    stream,
+    videoEl,
+    audioContext: null,
+    stop: () => {},
+  };
+
+  const hasCamera = stream.getVideoTracks().length > 0;
+  const hasMic = stream.getAudioTracks().length > 0;
+  let error: string | null = null;
+
+  try {
+    await attachStreamToVideo(videoEl, stream);
+  } catch {
+    error = "Camera on — tap the screen if preview is black";
+  }
+
+  if (hasCamera && !hasMic) {
+    error = "Microphone blocked — punch counting may be limited";
+  }
+
+  if (stream.getAudioTracks().length) {
+    try {
+      handles.audioContext = new AudioContext({ sampleRate: 16000 });
+    } catch {
+      handles.audioContext = new AudioContext();
+    }
+  }
+
+  handles.stop = () => {
+    void handles.audioContext?.close();
     handles.audioContext = null;
     if (videoEl) videoEl.srcObject = null;
   };
@@ -181,17 +277,12 @@ export function createAudioProcessor(
 }
 
 export interface AudioImpactDetectorOptions {
-  /** Min peak between impacts (ms). Match fast combos — default 130. */
   cooldownMs?: number;
-  /** Seconds to learn room noise before detecting. */
   calibrateMs?: number;
-  /** Pre-flight calibrated threshold (overrides auto noise floor). */
   threshold?: number;
-  /** Called with peak amplitude on each detected impact (for calibration UI). */
   onPeak?: (peak: number) => void;
 }
 
-/** Local mic impact detector — primary path for bag drill MVP. */
 export function createAudioImpactDetector(
   stream: MediaStream,
   audioContext: AudioContext,
