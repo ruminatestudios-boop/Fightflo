@@ -46,7 +46,7 @@ export function BagDrillApp() {
   const [data, setData] = useState<FightFloBagData>(() => loadBagData());
   const [config, setConfig] = useState<BagTrainingConfig | null>(null);
   const [lastSession, setLastSession] = useState<BagSessionRecord | null>(null);
-  const [cameraModeDraft, setCameraModeDraft] = useState<BagCameraMode>("bag");
+  const [cameraModeDraft, setCameraModeDraft] = useState<BagCameraMode>("fighter");
   const [stanceDraft, setStanceDraft] = useState<BagStance>("orthodox");
   const [calibrationDraft, setCalibrationDraft] = useState<BagCalibration | null>(
     null

@@ -100,7 +100,7 @@ const INITIAL: BagTrainingState = {
   accuracyPercent: 100,
   avgReactionSeconds: 0,
   detectionMode: "pose-triple",
-  cameraMode: "bag",
+  cameraMode: "fighter",
   statusMessage: null,
   nextStrikeLabel: null,
   liveConnected: false,
@@ -145,7 +145,7 @@ export function useBagDrill(): UseBagDrillResult {
   const startedRef = useRef(false);
   const correctCombosRef = useRef(0);
   const attemptedCombosRef = useRef(0);
-  const cameraModeRef = useRef<BagCameraMode>("bag");
+  const cameraModeRef = useRef<BagCameraMode>("fighter");
   const comboRetryRef = useRef(0);
   const comboResolvedRef = useRef(false);
   const poseDetectionRef = useRef(false);

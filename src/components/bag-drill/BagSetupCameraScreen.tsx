@@ -40,7 +40,7 @@ const INSTRUCTIONS: Record<
 };
 
 export function BagSetupCameraScreen({
-  initialMode = "bag",
+  initialMode = "fighter",
   onBack,
   onContinue,
 }: BagSetupCameraScreenProps) {

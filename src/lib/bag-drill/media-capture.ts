@@ -49,8 +49,16 @@ export async function startMediaCapture(
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: highQuality
-        ? { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } }
-        : { facingMode, width: { ideal: 640 }, height: { ideal: 480 } },
+        ? {
+            facingMode: { ideal: facingMode },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          }
+        : {
+            facingMode: { ideal: facingMode },
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+          },
       audio: {
         echoCancellation: false,
         noiseSuppression: false,
@@ -73,7 +81,7 @@ export async function startMediaCapture(
     } catch {
       try {
         const videoOnly = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
+          video: { facingMode: { ideal: facingMode } },
         });
         handles.stream = videoOnly;
         hasCamera = true;
