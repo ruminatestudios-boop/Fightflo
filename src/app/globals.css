@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+:root {
+  --background: #000000;
+  --foreground: #f5f5f5;
+  --muted: #8e9297;
+  --surface: #0a0a0a;
+  --surface-raised: #141414;
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #fa4141;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-display);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+html {
+  background: #000000;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+  overscroll-behavior: none;
+  height: 100%;
+}
+
+::selection {
+  background: rgba(250, 65, 65, 0.25);
+  color: white;
+}
+
+.font-display {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nike-card {
+  background: linear-gradient(180deg, #141414 0%, #0a0a0a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nike-card-selected {
+  background: linear-gradient(180deg, #1a1010 0%, #0d0a0a 100%);
+  border: 1.5px solid rgba(250, 65, 65, 0.9);
+  box-shadow: 0 0 0 1px rgba(250, 65, 65, 0.2);
+}
+
+.label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.surface {
+  background: linear-gradient(180deg, #141414 0%, #0a0a0a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.surface-raised {
+  background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.app-shell {
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: 28rem;
+}
+
+.premium-light-card {
+  background: #f5f5f5;
+  border: 1px solid #e5e5e5;
+  border-radius: 1rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+}

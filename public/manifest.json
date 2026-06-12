@@ -1,0 +1,19 @@
+{
+  "name": "FightFlo",
+  "short_name": "FightFlo",
+  "description": "Reactive fight training timer — shadowboxing that fights back.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "categories": ["fitness", "sports"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
