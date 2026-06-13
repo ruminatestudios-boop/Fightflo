@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   createMicLevelMonitor,
   hasLiveMicrophone,
+  iosMicSettingsSteps,
 } from "@/lib/bag-drill/media-capture";
 
 interface MicListenPanelProps {
@@ -15,6 +16,8 @@ interface MicListenPanelProps {
   onPeak?: () => void;
   onEnableMic?: () => void;
   enabling?: boolean;
+  /** Hide retry button when Safari has mic permanently denied. */
+  micPermissionDenied?: boolean;
   /** Compact bar for in-session overlay. */
   variant?: "setup" | "live";
 }
@@ -22,7 +25,7 @@ interface MicListenPanelProps {
 function micBlockedHint(): string {
   if (typeof navigator === "undefined") return "";
   return /iPhone|iPad|iPod/i.test(navigator.userAgent)
-    ? "Settings → Safari → Microphone → Allow for fightflo.app, then tap Enable below"
+    ? iosMicSettingsSteps().join(" · ")
     : "Allow mic when prompted, or check site permissions in browser settings";
 }
 
@@ -34,6 +37,7 @@ export function MicListenPanel({
   onPeak,
   onEnableMic,
   enabling = false,
+  micPermissionDenied = false,
   variant = "setup",
 }: MicListenPanelProps) {
   const micLive = hasLiveMicrophone(stream);
@@ -112,17 +116,32 @@ export function MicListenPanel({
         <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/45">
           Mic check
         </p>
-        <p className="mt-1 text-sm leading-relaxed text-white/70">
-          Prop phone on a ledge or bag stand — <span className="text-white">mic hole toward the bag</span>.
-          Throw one test punch and watch the bar spike.
-        </p>
+        {!micPermissionDenied && (
+          <p className="mt-1 text-sm leading-relaxed text-white/70">
+            Prop phone on a ledge or bag stand —{" "}
+            <span className="text-white">mic hole toward the bag</span>. Throw one test punch
+            and watch the bar spike.
+          </p>
+        )}
       </div>
 
-      {!micLive ? (
+          {!micLive ? (
         <div className="space-y-2">
-          <p className="text-sm text-[#fa4141]/90">Microphone blocked — punch timing won&apos;t work.</p>
-          <p className="text-xs leading-relaxed text-white/45">{micBlockedHint()}</p>
-          {onEnableMic && (
+          <p className="text-sm text-[#fa4141]/90">
+            {micPermissionDenied
+              ? "Microphone blocked in Safari — change Website Settings:"
+              : "Microphone blocked — punch timing won't work until Safari allows it."}
+          </p>
+          {micPermissionDenied ? (
+            <ol className="list-decimal space-y-1 pl-4 text-xs leading-relaxed text-white/55">
+              {iosMicSettingsSteps().map((step) => (
+                <li key={step}>{step}</li>
+              ))}
+            </ol>
+          ) : (
+            <p className="text-xs leading-relaxed text-white/45">{micBlockedHint()}</p>
+          )}
+          {onEnableMic && !micPermissionDenied && (
             <button
               type="button"
               onClick={onEnableMic}

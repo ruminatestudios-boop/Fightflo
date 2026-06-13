@@ -239,6 +239,19 @@ async function queryPermission(kind: "camera" | "microphone"): Promise<Permissio
   }
 }
 
+/** Safari mic permission — `denied` means Website Settings must be changed manually. */
+export async function queryMicPermissionState(): Promise<PermissionState | "unknown"> {
+  return (await queryPermission("microphone")) ?? "unknown";
+}
+
+export function iosMicSettingsSteps(): string[] {
+  return [
+    "Tap aA in the address bar (left of fightflo.app)",
+    "Website Settings → Microphone → Allow",
+    "Return here and tap I've allowed mic — retry",
+  ];
+}
+
 async function attachStreamToVideo(
   videoEl: HTMLVideoElement,
   stream: MediaStream
@@ -558,9 +571,8 @@ export async function startMediaCapture(
     } else if (requestMicrophone && hasMic) {
       handles.audioContext = await initAudioContext(stream);
     } else if (requestMicrophone && !hasMic && hasCamera) {
-      error = isIOSDevice()
-        ? "Mic blocked — tap the button below, or aA → Website Settings → Microphone → Allow"
-        : gumErrorMessage(null, "audio");
+      // Setup screen handles mic-blocked copy — avoid stacking red errors on camera preview.
+      error = isIOSDevice() ? null : gumErrorMessage(null, "audio");
     } else if (requestMicrophone && !hasMic) {
       error = gumErrorMessage(null, "audio");
     }

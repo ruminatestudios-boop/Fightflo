@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { BackButton } from "@/components/ui/BackButton";
 import { CAMERA_MODE_COPY } from "@/components/bag-drill/bag-ui";
@@ -10,6 +10,7 @@ import {
   appendMicrophoneToCapture,
   detachVideoPreview,
   isIOSDevice,
+  queryMicPermissionState,
   reacquireMediaWithMicrophone,
   releaseVideoPreview,
   retryVideoPlay,
@@ -52,6 +53,10 @@ export function BagSetupCameraScreen({
   const [starting, setStarting] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [displayStream, setDisplayStream] = useState<MediaStream | null>(null);
+  const [micPermission, setMicPermission] = useState<PermissionState | "unknown">(
+    "unknown"
+  );
+  const [micAttempted, setMicAttempted] = useState(false);
 
   const fighterCam = cameraMode === "fighter";
 
@@ -64,6 +69,17 @@ export function BagSetupCameraScreen({
     setDisplayStream(null);
     setCameraReady(false);
     setMicReady(false);
+  }, []);
+
+  useEffect(() => {
+    if (!cameraReady || micReady) return;
+    void queryMicPermissionState().then(setMicPermission);
+  }, [cameraReady, micReady, previewError, starting]);
+
+  const refreshMicPermission = useCallback(async () => {
+    const state = await queryMicPermissionState();
+    setMicPermission(state);
+    return state;
   }, []);
 
   const startAccess = useCallback(
@@ -91,16 +107,24 @@ export function BagSetupCameraScreen({
       setDisplayStream(result.handles.stream);
       setCameraReady(result.hasCamera);
       setMicReady(result.hasMic);
+      if (result.hasMic) {
+        setMicPermission("granted");
+        setMicAttempted(false);
+      } else if (result.hasCamera) {
+        void refreshMicPermission();
+      } else {
+        void refreshMicPermission();
+      }
       setPreviewError(
         result.hasCamera
           ? result.hasMic
             ? null
-            : result.error ?? "Allow microphone when your phone prompts you"
+            : null
           : result.error ?? "Allow camera when your phone prompts you"
       );
       setStarting(false);
     },
-    [cameraMode, releaseCamera, starting]
+    [cameraMode, refreshMicPermission, releaseCamera, starting]
   );
 
   const startMic = useCallback(async () => {
@@ -122,12 +146,14 @@ export function BagSetupCameraScreen({
       setDisplayStream(result.handles.stream);
       setCameraReady(result.hasCamera);
       setMicReady(result.hasMic);
-      setPreviewError(
-        result.hasMic
-          ? null
-          : result.error ??
-              "Tap Allow for microphone — or aA → Website Settings → Microphone → Allow"
-      );
+      if (result.hasMic) {
+        setMicPermission("granted");
+        setMicAttempted(false);
+      } else {
+        setMicAttempted(true);
+        void refreshMicPermission();
+      }
+      setPreviewError(null);
       setStarting(false);
       return;
     }
@@ -140,9 +166,16 @@ export function BagSetupCameraScreen({
 
     const mic = await appendMicrophoneToCapture(handles);
     setMicReady(mic.hasMic);
-    setPreviewError(mic.hasMic ? null : mic.error);
+    if (mic.hasMic) {
+      setMicPermission("granted");
+      setMicAttempted(false);
+    } else {
+      setMicAttempted(true);
+      void refreshMicPermission();
+    }
+    setPreviewError(null);
     setStarting(false);
-  }, [cameraMode, starting]);
+  }, [cameraMode, refreshMicPermission, starting]);
 
   const flipCamera = () => {
     const next: BagCameraMode = cameraMode === "fighter" ? "bag" : "fighter";
@@ -176,38 +209,42 @@ export function BagSetupCameraScreen({
     onBack();
   };
 
+  const micNeedsSafariSettings =
+    micPermission === "denied" ||
+    (cameraReady && !micReady && micAttempted && isIOSDevice());
+
   const primaryLabel = !cameraReady
     ? starting
       ? "Opening camera…"
       : "Allow camera & microphone"
-    : !micReady
-      ? starting
-        ? "Opening mic…"
-        : isIOSDevice()
-          ? "Allow camera & microphone"
-          : "Allow microphone"
-      : "Continue";
+    : micReady
+      ? "Continue"
+      : micNeedsSafariSettings
+        ? "Continue without mic — tap each punch"
+        : starting
+          ? "Opening mic…"
+          : "Enable microphone";
 
   const statusText = !cameraReady
     ? "Tap below — Safari will ask for camera and microphone"
     : micReady
-      ? "Camera & mic ready"
-      : isIOSDevice()
-        ? "Camera on — allow microphone next (aA → Website Settings if blocked)"
-        : "Camera ready — allow mic next";
+      ? "Camera & mic ready — throw a test punch below"
+      : micNeedsSafariSettings
+        ? "Camera on — mic blocked in Safari Website Settings"
+        : isIOSDevice()
+          ? "Camera on — tap Enable microphone when Safari asks"
+          : "Camera ready — allow mic next";
 
   const primaryAction = () => {
     if (!cameraReady) return void startAccess();
-    if (!micReady) {
-      if (micRequired) return void startMic();
-      return void startMic();
-    }
-    handleContinue();
+    if (micReady || (micRequired && micNeedsSafariSettings)) return handleContinue();
+    return void startMic();
   };
 
   const showSkipMic = cameraReady && !micReady && !micRequired;
-  const showRetry = Boolean(previewError);
-  const primaryReady = cameraReady && micReady;
+  const showMicRetry = cameraReady && !micReady && micNeedsSafariSettings;
+  const showRetry = Boolean(previewError) && !cameraReady;
+  const primaryReady = cameraReady && (micReady || (micRequired && micNeedsSafariSettings));
 
   const modeHint = CAMERA_MODE_COPY[cameraMode].flipHint;
 
@@ -252,15 +289,17 @@ export function BagSetupCameraScreen({
 
         <div className="min-h-0 flex-1" aria-hidden />
 
-        <div className="shrink-0 space-y-2 pt-4">
-          <div className="flex h-10 items-center justify-center px-1">
+        <div className="max-h-[46vh] shrink-0 space-y-2 overflow-y-auto pt-4">
+          <div className="flex min-h-10 items-center justify-center px-1">
             <p
-              className={`text-center text-xs ${
+              className={`text-center text-xs leading-relaxed ${
                 cameraReady && micReady
                   ? "text-emerald-400/90"
                   : previewError
                     ? "text-[#fa4141]/90"
-                    : "text-white/50"
+                    : micNeedsSafariSettings
+                      ? "text-amber-200/85"
+                      : "text-white/50"
               }`}
             >
               {previewError ?? statusText}
@@ -281,23 +320,39 @@ export function BagSetupCameraScreen({
             {primaryLabel}
           </motion.button>
 
-          {micRequired && cameraReady && (
-            <MicListenPanel
-              stream={displayStream}
-              onEnableMic={() => void startMic()}
-              enabling={starting}
-            />
+          {showMicRetry && (
+            <button
+              type="button"
+              onClick={() => void startMic()}
+              disabled={starting}
+              className="font-display flex h-11 w-full items-center justify-center rounded-full border border-white/20 text-[11px] tracking-[0.12em] text-white/75 disabled:opacity-60"
+            >
+              I&apos;ve allowed mic — retry
+            </button>
+          )}
+
+          {micRequired && cameraReady && !micReady && !micNeedsSafariSettings && (
+            <button
+              type="button"
+              onClick={handleContinue}
+              className="font-display flex h-11 w-full items-center justify-center rounded-full border border-white/20 text-[11px] tracking-[0.12em] text-white/75"
+            >
+              Continue without mic — tap each punch
+            </button>
+          )}
+
+          {micRequired && cameraReady && micReady && (
+            <MicListenPanel stream={displayStream} />
           )}
 
           {micRequired && cameraReady && !micReady && (
-            <p className="text-center text-xs text-amber-200/80">
-              {isIOSDevice()
-                ? "On iPhone, tap the red button — Safari must allow both camera and microphone together"
-                : "Microphone required for punch speed — allow mic to continue"}
-            </p>
+            <MicListenPanel
+              stream={displayStream}
+              micPermissionDenied={micNeedsSafariSettings}
+            />
           )}
 
-          <div className="flex h-10 items-center justify-center">
+          <div className="flex min-h-10 items-center justify-center">
             {showSkipMic ? (
               <button
                 type="button"
