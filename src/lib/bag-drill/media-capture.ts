@@ -43,6 +43,14 @@ export function isAndroidDevice(): boolean {
   return typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent);
 }
 
+export function isIOSDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return (
+    /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+}
+
 function isAndroid(): boolean {
   return isAndroidDevice();
 }
@@ -153,10 +161,14 @@ function gumErrorMessage(failure: GumFailure | null, kind: "video" | "audio"): s
     return kind === "video"
       ? isAndroid()
         ? "Camera blocked — tap Allow on the popup, or Chrome ⋮ → Site settings → Camera → Allow"
-        : "Camera blocked — tap Allow when prompted, or enable Camera for fightflo.app in Settings"
+        : isIOSDevice()
+          ? "Camera blocked — tap Allow on the popup, or aA → Website Settings → Camera → Allow"
+          : "Camera blocked — tap Allow when prompted, or enable Camera for fightflo.app in Settings"
       : isAndroid()
         ? "Mic blocked — tap Allow on the popup, or Chrome ⋮ → Site settings → Microphone → Allow"
-        : "Microphone blocked — tap Allow when prompted, or enable Mic for fightflo.app in Settings";
+        : isIOSDevice()
+          ? "Mic blocked — tap Allow on the popup, or aA → Website Settings → Microphone → Allow"
+          : "Microphone blocked — tap Allow when prompted, or enable Mic for fightflo.app in Settings";
   }
   if (failure.name === "NotFoundError" || failure.name === "DevicesNotFoundError") {
     return kind === "video"
@@ -348,6 +360,78 @@ async function openVideoStream(
   return { stream: null, videoFailure: pickVideoFailure(failures) };
 }
 
+/** iOS Safari needs camera + mic in one getUserMedia call — separate audio calls are blocked. */
+async function openCombinedAvStream(
+  facingMode: FacingMode,
+  highQuality: boolean
+): Promise<{ stream: MediaStream | null; failure: GumFailure | null }> {
+  const attempts: MediaStreamConstraints[] = [
+    {
+      video: { facingMode: { ideal: facingMode } },
+      audio: true,
+    },
+    {
+      video: { facingMode },
+      audio: true,
+    },
+    {
+      video: true,
+      audio: true,
+    },
+    {
+      video: highQuality
+        ? { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        : { facingMode: { ideal: facingMode }, width: { ideal: 640 }, height: { ideal: 480 } },
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    },
+  ];
+
+  const failures: GumFailure[] = [];
+
+  for (let i = 0; i < attempts.length; i++) {
+    const { stream, failure } = await tryGetUserMedia(attempts[i]);
+    if (failure) {
+      failures.push(failure);
+      if (
+        failure.name === "NotAllowedError" ||
+        failure.name === "PermissionDeniedError" ||
+        failure.name === "SecurityError"
+      ) {
+        break;
+      }
+    }
+    if (stream?.getVideoTracks().length) {
+      return { stream, failure: null };
+    }
+    stream?.getTracks().forEach((track) => track.stop());
+    if (i < attempts.length - 1) {
+      await delay(isAndroid() ? 200 : 80);
+    }
+  }
+
+  return { stream: null, failure: pickVideoFailure(failures) };
+}
+
+/** Re-open capture with mic — required on iOS when the first stream was video-only. */
+export async function reacquireMediaWithMicrophone(
+  videoEl: HTMLVideoElement,
+  facingMode: FacingMode = "user",
+  existingStream: MediaStream | null = null
+): Promise<MediaCaptureResult> {
+  existingStream?.getTracks().forEach((track) => track.stop());
+  releaseVideoPreview(videoEl);
+  await delay(isIOSDevice() ? 120 : 60);
+  return startMediaCapture(videoEl, {
+    facingMode,
+    highQuality: false,
+    requestMicrophone: true,
+  });
+}
+
 async function initAudioContext(
   stream: MediaStream
 ): Promise<AudioContext | null> {
@@ -416,11 +500,29 @@ export async function startMediaCapture(
   releaseVideoPreview(videoEl);
   await delay(isAndroid() ? 180 : 60);
 
-  const { stream, videoFailure } = await openVideoStream(facingMode, highQuality);
+  let stream: MediaStream | null = null;
+  let videoFailure: GumFailure | null = null;
+
+  if (requestMicrophone) {
+    const combined = await openCombinedAvStream(facingMode, highQuality);
+    stream = combined.stream;
+    videoFailure = combined.failure;
+
+    if (!stream && !isIOSDevice()) {
+      const videoOnly = await openVideoStream(facingMode, highQuality);
+      stream = videoOnly.stream;
+      videoFailure = videoOnly.videoFailure;
+    }
+  } else {
+    const videoOnly = await openVideoStream(facingMode, highQuality);
+    stream = videoOnly.stream;
+    videoFailure = videoOnly.videoFailure;
+  }
 
   if (stream) {
     handles.stream = stream;
     hasCamera = hasLiveVideo(stream);
+    hasMic = hasLiveAudio(stream);
 
     try {
       await attachStreamToVideo(videoEl, stream);
@@ -428,12 +530,16 @@ export async function startMediaCapture(
       error = "Camera on — tap the screen if preview is black";
     }
 
-    if (requestMicrophone) {
+    if (requestMicrophone && !hasMic && !isIOSDevice()) {
       const mic = await appendMicrophoneToCapture(handles);
       hasMic = mic.hasMic;
       if (hasCamera && !hasMic) {
         error = mic.error;
       }
+    } else if (requestMicrophone && hasMic) {
+      handles.audioContext = await initAudioContext(stream);
+    } else if (requestMicrophone && !hasMic) {
+      error = gumErrorMessage(null, "audio");
     }
   } else {
     const cameraPermission = await queryPermission("camera");

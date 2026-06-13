@@ -26,6 +26,8 @@ import {
   appendMicrophoneToCapture,
   attachExistingStream,
   detachVideoPreview,
+  isIOSDevice,
+  reacquireMediaWithMicrophone,
   releaseVideoPreview,
   startMediaCapture,
 } from "@/lib/bag-drill/media-capture";
@@ -216,26 +218,53 @@ export function BagCalibrationScreen({
 
   const enableMicrophone = useCallback(async () => {
     const video = videoRef.current;
-    const stream = video?.srcObject as MediaStream | null;
-    if (!stream || startingRef.current) return;
+    if (!video || startingRef.current) return;
 
     startingRef.current = true;
     setStarting(true);
     setPreviewError(null);
     void unlockBagAudio();
 
-    const handles = {
-      stream,
-      videoEl: video,
-      audioContext: null,
-      stop: stopRef.current ?? (() => {}),
-    };
-    const mic = await appendMicrophoneToCapture(handles);
-    stopRef.current = handles.stop;
-    setMicReady(mic.hasMic);
-    setPreviewError(mic.hasMic ? null : mic.error);
+    const facing = activeCameraMode === "fighter" ? "user" : "environment";
+    const stream = (video.srcObject as MediaStream | null) ?? captureStream;
 
-    if (mic.hasMic && stepRef.current === "mic") {
+    let result;
+    if (isIOSDevice()) {
+      result = await reacquireMediaWithMicrophone(video, facing, stream);
+    } else {
+      if (!stream) {
+        startingRef.current = false;
+        setStarting(false);
+        return;
+      }
+      const handles = {
+        stream,
+        videoEl: video,
+        audioContext: null,
+        stop: stopRef.current ?? (() => {}),
+      };
+      const mic = await appendMicrophoneToCapture(handles);
+      stopRef.current = handles.stop;
+      result = {
+        handles,
+        hasCamera: Boolean(stream.getVideoTracks().length),
+        hasMic: mic.hasMic,
+        error: mic.error,
+      };
+    }
+
+    stopRef.current = result.handles.stop;
+    if (result.handles.stream) {
+      setCaptureStream(result.handles.stream);
+      if (result.handles.stream !== existingStream) {
+        onStreamChange?.(result.handles.stream);
+      }
+    }
+    setCameraReady(result.hasCamera);
+    setMicReady(result.hasMic);
+    setPreviewError(result.hasMic ? null : result.error);
+
+    if (result.hasMic && stepRef.current === "mic") {
       peaksRef.current = [];
       setTestPunchCount(0);
       setMicOk(false);
@@ -247,12 +276,14 @@ export function BagCalibrationScreen({
           if (stepRef.current === "mic") setMicOk(true);
         },
       });
-      micRef.current.start(stream);
+      if (result.handles.stream) {
+        micRef.current.start(result.handles.stream);
+      }
     }
 
     startingRef.current = false;
     setStarting(false);
-  }, []);
+  }, [activeCameraMode, captureStream, existingStream, onStreamChange]);
 
   const switchToYou = useCallback(async () => {
     if (startingRef.current || activeCameraMode === "fighter") return;

@@ -9,12 +9,15 @@ import type { BagStance } from "@/lib/bag-drill/calibration";
 import {
   appendMicrophoneToCapture,
   detachVideoPreview,
+  isIOSDevice,
+  reacquireMediaWithMicrophone,
   releaseVideoPreview,
   retryVideoPlay,
   startMediaCapture,
   type MediaCaptureHandles,
 } from "@/lib/bag-drill/media-capture";
 import { unlockBagAudio } from "@/lib/bag-drill/audio-queue";
+import { MicListenPanel } from "@/components/bag-drill/MicListenPanel";
 import type { BagCameraMode } from "@/lib/bag-drill/types";
 import type { CalibrationPurpose } from "@/lib/bag-drill/calibration-purpose";
 
@@ -48,6 +51,7 @@ export function BagSetupCameraScreen({
   const [micReady, setMicReady] = useState(false);
   const [starting, setStarting] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [displayStream, setDisplayStream] = useState<MediaStream | null>(null);
 
   const fighterCam = cameraMode === "fighter";
 
@@ -57,6 +61,7 @@ export function BagSetupCameraScreen({
     streamRef.current?.getTracks().forEach((track) => track.stop());
     releaseVideoPreview(videoRef.current);
     streamRef.current = null;
+    setDisplayStream(null);
     setCameraReady(false);
     setMicReady(false);
   }, []);
@@ -83,6 +88,7 @@ export function BagSetupCameraScreen({
 
       handlesRef.current = result.handles;
       streamRef.current = result.handles.stream;
+      setDisplayStream(result.handles.stream);
       setCameraReady(result.hasCamera);
       setMicReady(result.hasMic);
       setPreviewError(
@@ -98,17 +104,45 @@ export function BagSetupCameraScreen({
   );
 
   const startMic = useCallback(async () => {
-    const handles = handlesRef.current;
-    if (!handles?.stream || starting) return;
+    const video = videoRef.current;
+    if (!video || starting) return;
 
     setStarting(true);
     setPreviewError(null);
+    void unlockBagAudio();
+
+    if (isIOSDevice()) {
+      const result = await reacquireMediaWithMicrophone(
+        video,
+        cameraMode === "fighter" ? "user" : "environment",
+        streamRef.current
+      );
+      handlesRef.current = result.handles;
+      streamRef.current = result.handles.stream;
+      setDisplayStream(result.handles.stream);
+      setCameraReady(result.hasCamera);
+      setMicReady(result.hasMic);
+      setPreviewError(
+        result.hasMic
+          ? null
+          : result.error ??
+              "Tap Allow for microphone — or aA → Website Settings → Microphone → Allow"
+      );
+      setStarting(false);
+      return;
+    }
+
+    const handles = handlesRef.current;
+    if (!handles?.stream) {
+      setStarting(false);
+      return;
+    }
 
     const mic = await appendMicrophoneToCapture(handles);
     setMicReady(mic.hasMic);
     setPreviewError(mic.hasMic ? null : mic.error);
     setStarting(false);
-  }, [starting]);
+  }, [cameraMode, starting]);
 
   const flipCamera = () => {
     const next: BagCameraMode = cameraMode === "fighter" ? "bag" : "fighter";
@@ -155,7 +189,9 @@ export function BagSetupCameraScreen({
     : !micReady
       ? starting
         ? "Opening mic…"
-        : "Allow microphone"
+        : isIOSDevice()
+          ? "Allow camera & microphone"
+          : "Allow microphone"
       : "Continue";
 
   const primaryAction = () => {
@@ -243,9 +279,19 @@ export function BagSetupCameraScreen({
             {primaryLabel}
           </motion.button>
 
+          {micRequired && cameraReady && (
+            <MicListenPanel
+              stream={displayStream}
+              onEnableMic={() => void startMic()}
+              enabling={starting}
+            />
+          )}
+
           {micRequired && cameraReady && !micReady && (
             <p className="text-center text-xs text-amber-200/80">
-              Microphone required for punch speed — allow mic to continue
+              {isIOSDevice()
+                ? "On iPhone, tap the red button — Safari must allow both camera and microphone together"
+                : "Microphone required for punch speed — allow mic to continue"}
             </p>
           )}
 
