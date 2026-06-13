@@ -10,9 +10,11 @@ import {
   appendMicrophoneToCapture,
   detachVideoPreview,
   releaseVideoPreview,
+  retryVideoPlay,
   startMediaCapture,
   type MediaCaptureHandles,
 } from "@/lib/bag-drill/media-capture";
+import { unlockBagAudio } from "@/lib/bag-drill/audio-queue";
 import type { BagCameraMode } from "@/lib/bag-drill/types";
 import type { CalibrationPurpose } from "@/lib/bag-drill/calibration-purpose";
 
@@ -69,6 +71,8 @@ export function BagSetupCameraScreen({
       setStarting(true);
       setPreviewError(null);
 
+      void unlockBagAudio();
+
       const result = await startMediaCapture(video, {
         facingMode,
         highQuality: false,
@@ -117,10 +121,18 @@ export function BagSetupCameraScreen({
   };
 
   const handleContinue = () => {
+    void unlockBagAudio();
     handlesRef.current = null;
     detachVideoPreview(videoRef.current);
     onContinue(cameraMode, "orthodox", streamRef.current);
     streamRef.current = null;
+  };
+
+  const handlePreviewTap = () => {
+    if (!cameraReady) return;
+    void retryVideoPlay(videoRef.current).then((ok) => {
+      if (ok) setPreviewError(null);
+    });
   };
 
   const handleBack = () => {
@@ -163,6 +175,7 @@ export function BagSetupCameraScreen({
         playsInline
         muted
         autoPlay
+        onClick={handlePreviewTap}
         className={`absolute inset-0 h-full w-full object-cover ${
           fighterCam ? "scale-x-[-1]" : ""
         } ${cameraReady ? "opacity-100" : "opacity-0"}`}

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PunchDetectionEngine } from "@/lib/bag-drill/detection/punch-detection-engine";
 import {
+  attachExistingStream,
   createAudioImpactDetector,
   startMediaCapture,
   type MediaCaptureHandles,
@@ -38,7 +39,10 @@ export interface BagFlurryState {
 export interface UseBagFlurryResult {
   state: BagFlurryState;
   videoRef: React.RefObject<HTMLVideoElement | null>;
-  start: (config: BagTrainingConfig) => Promise<void>;
+  start: (
+    config: BagTrainingConfig,
+    options?: { mediaStream?: MediaStream | null }
+  ) => Promise<void>;
   stop: () => BagSessionRecord | null;
   abort: () => void;
   tapPunch: () => void;
@@ -219,7 +223,10 @@ export function useBagFlurry(): UseBagFlurryResult {
   }, [beginFlurryWindow, clearTimers]);
 
   const start = useCallback(
-    async (config: BagTrainingConfig) => {
+    async (
+      config: BagTrainingConfig,
+      options?: { mediaStream?: MediaStream | null }
+    ) => {
       if (startedRef.current) return;
       teardown();
       startedRef.current = true;
@@ -247,10 +254,18 @@ export function useBagFlurry(): UseBagFlurryResult {
       let status = "Tap each hit if mic misses";
 
       if (video) {
-        const media = await startMediaCapture(video, {
-          facingMode: config.cameraMode === "fighter" ? "user" : "environment",
-          highQuality: false,
-        });
+        const existing = options?.mediaStream;
+        const liveStream = existing?.getVideoTracks().some(
+          (track) => track.readyState === "live"
+        )
+          ? existing
+          : null;
+        const media = liveStream
+          ? await attachExistingStream(video, liveStream)
+          : await startMediaCapture(video, {
+              facingMode: config.cameraMode === "fighter" ? "user" : "environment",
+              highQuality: false,
+            });
         mediaRef.current = media.handles;
 
         if (media.hasCamera && media.hasMic && media.handles.stream) {
@@ -319,7 +334,11 @@ export function useBagFlurry(): UseBagFlurryResult {
 
     const seconds = config.flurrySeconds ?? 30;
     const punches = punchCountRef.current;
-    const duration = seconds;
+    const elapsedMs =
+      windowStartRef.current > 0
+        ? Date.now() - windowStartRef.current
+        : seconds * 1000;
+    const duration = Math.max(1, Math.round(elapsedMs / 1000));
     const rate = duration > 0 ? punches / duration : 0;
 
     const record: BagSessionRecord = {

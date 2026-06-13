@@ -213,37 +213,12 @@ export function BagDrillApp() {
   );
 
   const startWorkoutDirect = useCallback(() => {
-    const mode = drillModeDraft;
-    gateComboStart(mode, () => {
-      if (mode === "combo" || mode === "speed") {
-        if (!isPro() && !BYPASS_FREE_TIER) {
-          consumeFreeComboSession();
-          setFreeUsed(resetFreeSessionsIfNewDay().count);
-        }
-      }
+    gateComboStart(drillModeDraft, () => {
       setSkippedCalibration(true);
       setCalibrationDraft(null);
-      releaseMediaStream();
-      const workoutConfig = buildQuickStartConfig(
-        mode,
-        {
-          ...configDraft,
-          cameraMode: cameraModeDraft,
-          stance: stanceDraft,
-        },
-        cameraModeDraft
-      );
-      setConfig(workoutConfig);
-      setScreen(mode === "flurry" ? "flurry" : "training");
+      setScreen("setup-camera");
     });
-  }, [
-    cameraModeDraft,
-    configDraft,
-    drillModeDraft,
-    gateComboStart,
-    releaseMediaStream,
-    stanceDraft,
-  ]);
+  }, [drillModeDraft, gateComboStart]);
 
   const handleStopCombo = useCallback(() => {
     const record = drill.stop();
@@ -265,10 +240,11 @@ export function BagDrillApp() {
       setScreen("home");
     }
     setConfig(null);
-  }, [drill]);
+  }, [drill, releaseMediaStream]);
 
   const handleStopFlurry = useCallback(() => {
     const record = flurry.stop();
+    releaseMediaStream();
     if (record) {
       const updated = saveSession(record);
       setData(updated);
@@ -279,7 +255,7 @@ export function BagDrillApp() {
       setScreen("home");
     }
     setConfig(null);
-  }, [flurry]);
+  }, [flurry, releaseMediaStream]);
 
   const handleStartRecommended = useCallback(
     (partial: Partial<BagTrainingConfig>) => {
@@ -539,6 +515,7 @@ export function BagDrillApp() {
             config={config}
             flurry={flurry}
             data={data}
+            mediaStream={mediaStreamRef.current}
             onStop={handleStopFlurry}
           />
         )}

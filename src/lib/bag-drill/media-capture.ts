@@ -133,6 +133,19 @@ export function releaseVideoPreview(videoEl: HTMLVideoElement | null): void {
   }
 }
 
+/** Retry playback after iOS blocks autoplay — call from a tap handler. */
+export async function retryVideoPlay(
+  videoEl: HTMLVideoElement | null
+): Promise<boolean> {
+  if (!videoEl?.srcObject) return false;
+  try {
+    await videoEl.play();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Detach preview without stopping tracks — safe when reusing a shared MediaStream. */
 export function detachVideoPreview(videoEl: HTMLVideoElement | null): void {
   if (videoEl) {
@@ -223,6 +236,7 @@ async function openVideoStream(
 ): Promise<{ stream: MediaStream | null; videoFailure: GumFailure | null }> {
   const androidAttempts: MediaStreamConstraints[] = [
     { video: { facingMode: { ideal: facingMode } } },
+    { video: { facingMode: facingMode } },
     { video: true },
   ];
   const desktopAttempts: MediaStreamConstraints[] = [

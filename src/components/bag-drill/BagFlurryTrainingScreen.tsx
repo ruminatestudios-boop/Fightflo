@@ -13,6 +13,7 @@ interface BagFlurryTrainingScreenProps {
   config: BagTrainingConfig;
   flurry: UseBagFlurryResult;
   data: FightFloBagData;
+  mediaStream?: MediaStream | null;
   onStop: () => void;
 }
 
@@ -20,6 +21,7 @@ export function BagFlurryTrainingScreen({
   config,
   flurry,
   data,
+  mediaStream,
   onStop,
 }: BagFlurryTrainingScreenProps) {
   const { state, videoRef, start, abort, tapPunch } = flurry;
@@ -32,7 +34,7 @@ export function BagFlurryTrainingScreen({
       state.detectionMode === "audio-hybrid");
 
   useEffect(() => {
-    void start(config);
+    void start(config, { mediaStream });
     return () => {
       abort();
     };

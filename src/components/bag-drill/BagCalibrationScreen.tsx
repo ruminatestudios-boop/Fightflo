@@ -28,6 +28,7 @@ import {
   releaseVideoPreview,
   startMediaCapture,
 } from "@/lib/bag-drill/media-capture";
+import { unlockBagAudio } from "@/lib/bag-drill/audio-queue";
 import type { BagCameraMode } from "@/lib/bag-drill/types";
 import type { CalibrationPurpose } from "@/lib/bag-drill/calibration-purpose";
 import { isMicOnlyCalibration } from "@/lib/bag-drill/calibration-purpose";
@@ -140,6 +141,7 @@ export function BagCalibrationScreen({
     startingRef.current = true;
     setStarting(true);
     setPreviewError(null);
+    void unlockBagAudio();
     landmarkerRef.current?.close();
     landmarkerRef.current = null;
 
@@ -238,14 +240,19 @@ export function BagCalibrationScreen({
   ]);
 
   useEffect(() => {
-    void bootCamera();
+    const hasLiveStream = existingStream?.getVideoTracks().some(
+      (track) => track.readyState === "live"
+    );
+    if (hasLiveStream) {
+      void bootCamera();
+    }
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       micRef.current?.stop();
       landmarkerRef.current?.close();
       stopRef.current?.();
     };
-  }, [bootCamera]);
+  }, [bootCamera, existingStream]);
 
   useEffect(() => {
     if (step === "camera" && poseCalibration && cameraReady && !guideShownRef.current) {
