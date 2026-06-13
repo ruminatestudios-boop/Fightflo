@@ -37,6 +37,7 @@ type FlowStep = Exclude<CalStep, "done">;
 const STEP_MS = 3000;
 
 interface BagCalibrationScreenProps {
+  purpose?: "combo" | "speed";
   cameraMode: BagCameraMode;
   stance: BagStance;
   existingStream?: MediaStream | null;
@@ -48,6 +49,7 @@ interface BagCalibrationScreenProps {
 }
 
 export function BagCalibrationScreen({
+  purpose = "combo",
   cameraMode,
   stance,
   existingStream = null,
@@ -73,7 +75,7 @@ export function BagCalibrationScreen({
   const guideShownRef = useRef(false);
 
   const [activeCameraMode, setActiveCameraMode] = useState(cameraMode);
-  const [step, setStep] = useState<CalStep>("camera");
+  const [step, setStep] = useState<CalStep>(purpose === "speed" ? "mic" : "camera");
   stepRef.current = step;
   const [guideOpen, setGuideOpen] = useState(false);
   const [detectedStance, setDetectedStance] = useState<BagStance | null>(null);
@@ -92,10 +94,11 @@ export function BagCalibrationScreen({
   const startingRef = useRef(false);
 
   const fighterCam = activeCameraMode === "fighter";
-  const poseCalibration = fighterCam;
+  const poseCalibration = fighterCam && purpose !== "speed";
   const flowSteps: readonly FlowStep[] = poseCalibration
     ? ["camera", "stance", "guard", "mic"]
     : ["mic"];
+  const speedCopy = BAG_COPY.speedCalibration;
 
   const finish = useCallback(() => {
     const baseline = guardBaselineRef.current ?? {
@@ -167,7 +170,7 @@ export function BagCalibrationScreen({
     );
 
     try {
-      if (useFighterCam) {
+      if (useFighterCam && purpose !== "speed") {
         const { landmarker, gpu } = await createPoseLandmarker();
         landmarkerRef.current = landmarker;
         setGpuOk(gpu);
@@ -191,7 +194,7 @@ export function BagCalibrationScreen({
     startingRef.current = false;
     setStarting(false);
   },
-    [activeCameraMode, existingStream, onStreamChange]
+    [activeCameraMode, existingStream, onStreamChange, purpose]
   );
 
   const switchToYou = useCallback(async () => {
@@ -561,9 +564,18 @@ export function BagCalibrationScreen({
                   {stepStatus[step]} · step {stepIndex}/{totalSteps}
                 </p>
                 <h1 className="font-display mt-2 text-[1.65rem] leading-tight tracking-wide text-white">
-                  {steps[step]}
+                  {purpose === "speed"
+                    ? step === "done"
+                      ? speedCopy.done
+                      : speedCopy.step
+                    : steps[step]}
                 </h1>
-                {!poseCalibration && step === "mic" && (
+                {purpose === "speed" && step === "mic" && (
+                  <p className="mt-2 text-xs leading-relaxed text-white/45">
+                    {fighterCam ? speedCopy.fighterNote : speedCopy.bagNote}
+                  </p>
+                )}
+                {!poseCalibration && step === "mic" && purpose !== "speed" && (
                   <p className="mt-2 text-xs leading-relaxed text-white/45">
                     {BAG_COPY.calibrationBagNote}
                   </p>

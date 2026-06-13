@@ -25,15 +25,16 @@ export function buildQuickStartConfig(
     weaknessFocus: isFlurry || isSpeed ? false : (partial.weaknessFocus ?? false),
     flurrySeconds: isFlurry ? flurrySeconds : undefined,
     weeklyPlanId: partial.weeklyPlanId,
-    calibration: undefined,
+    calibration: partial.calibration,
     timing: {
       ...timing,
       durationSeconds: isFlurry
         ? flurrySeconds
         : isSpeed
-          ? 180
+          ? 0
           : Math.max(60, timing.durationSeconds || 300),
-      restBetweenCombosMs: isSpeed ? 3_000 : timing.restBetweenCombosMs,
+      restBetweenCombosMs: isSpeed ? 900 : timing.restBetweenCombosMs,
+      comboWindowScale: isSpeed ? 0.65 : timing.comboWindowScale,
     },
   };
 }

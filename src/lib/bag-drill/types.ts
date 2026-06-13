@@ -14,6 +14,7 @@ export type BagScreen =
   | "calibration"
   | "setup-config"
   | "training"
+  | "speed"
   | "flurry"
   | "summary"
   | "progress";

@@ -289,6 +289,7 @@ export function useBagDrill(): UseBagDrillResult {
   }, [teardown]);
 
   const isSessionTimeUp = useCallback(() => {
+    if (speedModeRef.current) return false;
     const config = configRef.current;
     if (!config) return true;
     return elapsedRef.current >= config.timing.durationSeconds;
@@ -401,18 +402,20 @@ export function useBagDrill(): UseBagDrillResult {
       attemptedCombosRef.current += 1;
       if (correct) {
         correctCombosRef.current += 1;
-        speakEncouragement();
-        const n = attemptedCombosRef.current;
-        if (n === 10) speakMilestone("10");
-        if (n === 20) speakMilestone("20");
-        const dur = config.timing.durationSeconds;
-        if (
-          !halfMilestoneSpokenRef.current &&
-          dur > 0 &&
-          elapsedRef.current >= dur / 2
-        ) {
-          halfMilestoneSpokenRef.current = true;
-          speakMilestone("half");
+        if (!speedModeRef.current) {
+          speakEncouragement();
+          const n = attemptedCombosRef.current;
+          if (n === 10) speakMilestone("10");
+          if (n === 20) speakMilestone("20");
+          const dur = config.timing.durationSeconds;
+          if (
+            !halfMilestoneSpokenRef.current &&
+            dur > 0 &&
+            elapsedRef.current >= dur / 2
+          ) {
+            halfMilestoneSpokenRef.current = true;
+            speakMilestone("half");
+          }
         }
       }
       updateAccuracy();
@@ -442,7 +445,7 @@ export function useBagDrill(): UseBagDrillResult {
         previousComboLabel: correct ? combo.label : s.previousComboLabel,
       }));
 
-      if (!correct && comboRetryRef.current < 1) {
+      if (!correct && !speedModeRef.current && comboRetryRef.current < 1) {
         comboRetryRef.current += 1;
         isRepeatRef.current = true;
         window.setTimeout(() => callCurrentComboRef.current(), 500);
@@ -762,7 +765,9 @@ export function useBagDrill(): UseBagDrillResult {
       });
 
       await prepareBagSpeech();
-      speakSessionStart();
+      if (!speedModeRef.current) {
+        speakSessionStart();
+      }
 
       if (video) {
         const existing = options?.mediaStream;
@@ -891,13 +896,18 @@ export function useBagDrill(): UseBagDrillResult {
     if (!config) return null;
 
     const guardDrops = engineRef.current?.getGuardDropCount() ?? 0;
-    speakSessionEnd();
+    if (config.drillMode !== "speed") {
+      speakSessionEnd();
+    }
     teardown();
 
-    const duration = Math.min(
-      config.timing.durationSeconds,
-      Math.round((Date.now() - sessionStartRef.current) / 1000)
-    );
+    const duration =
+      config.drillMode === "speed"
+        ? Math.round((Date.now() - sessionStartRef.current) / 1000)
+        : Math.min(
+            config.timing.durationSeconds,
+            Math.round((Date.now() - sessionStartRef.current) / 1000)
+          );
     const reactions = reactionsRef.current;
     const avg =
       reactions.length > 0

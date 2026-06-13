@@ -14,9 +14,12 @@ import {
 } from "@/lib/bag-drill/media-capture";
 import type { BagCameraMode } from "@/lib/bag-drill/types";
 
+import { BAG_COPY } from "@/lib/bag-drill/copy";
+
 interface BagSetupCameraScreenProps {
   initialMode?: BagCameraMode;
   isPro?: boolean;
+  speedDrill?: boolean;
   onBack: () => void;
   onContinue: (
     cameraMode: BagCameraMode,
@@ -28,6 +31,7 @@ interface BagSetupCameraScreenProps {
 
 export function BagSetupCameraScreen({
   initialMode = "fighter",
+  speedDrill = false,
   onBack,
   onContinue,
 }: BagSetupCameraScreenProps) {
@@ -175,7 +179,11 @@ export function BagSetupCameraScreen({
               ))}
             </div>
             <p className="text-right text-[11px] text-white/55">
-              {CAMERA_MODE_COPY[cameraMode].description}
+              {speedDrill
+                ? cameraMode === "fighter"
+                  ? BAG_COPY.speedCalibration.fighterNote
+                  : BAG_COPY.speedCalibration.bagNote
+                : CAMERA_MODE_COPY[cameraMode].description}
             </p>
           </div>
         </div>

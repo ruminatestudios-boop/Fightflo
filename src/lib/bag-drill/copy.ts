@@ -55,9 +55,18 @@ export const BAG_COPY = {
     speed: {
       label: "Punch timing",
       title: "Punch speed",
-      detail: "Single punches called one at a time — see if your jab is faster than your cross.",
+      detail:
+        "One punch at a time — throw on go, see your speed instantly. Camera on you checks the punch; bag cam times the hit.",
       cta: "Start speed drill",
     },
+  },
+  speedCalibration: {
+    title: "Tune punch detection",
+    subtitle: "Hit the bag once — we time your reaction from go to impact.",
+    step: "Throw one punch at the bag",
+    done: "Ready — throw when you hear go",
+    bagNote: "Bag cam times impact only — we call which punch to throw.",
+    fighterNote: "You cam checks punch type and times your reaction.",
   },
   calibrationPermission:
     "Camera and mic needed to count punches and check your combos",
