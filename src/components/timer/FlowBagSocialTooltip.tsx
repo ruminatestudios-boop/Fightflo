@@ -44,7 +44,7 @@ export function FlowBagSocialTooltip({
             transition={{ duration: 0.2 }}
             className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-[min(16rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-center text-[11px] leading-snug text-white/90 shadow-lg"
           >
-            👆 This is how serious fighters use FightFlo
+            👆 This is how serious fighters use fightflo
           </motion.span>
         )}
       </AnimatePresence>

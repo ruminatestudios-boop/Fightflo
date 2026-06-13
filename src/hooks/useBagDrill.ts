@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   pickNextCombo,
-  pickSpeedCombo,
   pickWeaknessFocusedCombo,
   shouldChampionMidSwap,
+  speedComboForPunch,
 } from "@/lib/bag-drill/combo-picker";
 import { fetchComboFeedback } from "@/lib/bag-drill/detection/fetch-combo-feedback";
 import type { GuardState } from "@/lib/bag-drill/detection/guard-monitor";
@@ -43,6 +43,8 @@ import {
   fastestStrikeId,
   recordStrikeSpeed,
   strikeLabel,
+  summariseStrikeSpeeds,
+  type StrikeSpeedSummary,
 } from "@/lib/bag-drill/strike-speed";
 import { loadBagData } from "@/lib/bag-drill/storage";
 import type { BagStance } from "@/lib/bag-drill/calibration";
@@ -53,6 +55,8 @@ import type {
   BagTrainingConfig,
   DetectionMode,
   ReactionTier,
+  SpeedPhase,
+  SpeedPunchId,
   StrikeLogEntry,
   StrikeValidation,
 } from "@/lib/bag-drill/types";
@@ -85,6 +89,14 @@ export interface BagTrainingState {
   /** Punch-speed drill: time for the last logged strike */
   lastStrikeSpeedSeconds: number | null;
   lastStrikeSpeedLabel: string | null;
+  speedPunchId: SpeedPunchId | null;
+  speedStats: StrikeSpeedSummary[];
+  /** Punch-speed: one punch thrown, show results */
+  speedComplete: boolean;
+  speedPhase: SpeedPhase | null;
+  /** Frozen result shown on the stats screen */
+  speedResultSeconds: number | null;
+  speedResultTier: ReactionTier | null;
 }
 
 export interface UseBagDrillResult {
@@ -98,6 +110,8 @@ export interface UseBagDrillResult {
   tapPunch: () => void;
   disputeStrike: () => void;
   micBackupPunch: () => void;
+  selectSpeedPunch: (punchId: SpeedPunchId) => void;
+  retrySpeedPunch: () => void;
 }
 
 const INITIAL: BagTrainingState = {
@@ -127,9 +141,17 @@ const INITIAL: BagTrainingState = {
   guardDropCount: 0,
   lastStrikeSpeedSeconds: null,
   lastStrikeSpeedLabel: null,
+  speedPunchId: null,
+  speedStats: [],
+  speedComplete: false,
+  speedPhase: null,
+  speedResultSeconds: null,
+  speedResultTier: null,
 };
 
 const PUNCH_DEBOUNCE_MS = 110;
+const SPEED_ARM_MS = 1_400;
+const SPEED_MISS_RETRY_MS = 2_000;
 
 export function useBagDrill(): UseBagDrillResult {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -169,6 +191,7 @@ export function useBagDrill(): UseBagDrillResult {
   const finishComboRoundRef = useRef<(v: StrikeValidation) => void>(() => {});
   const weaknessFocusRef = useRef(false);
   const speedModeRef = useRef(false);
+  const speedStrikeIdRef = useRef<SpeedPunchId>("jab");
   const strikeSpeedsRef = useRef<Record<string, number[]>>({});
   const lastHitTimeRef = useRef(0);
   const disputeUsedRef = useRef(false);
@@ -181,6 +204,9 @@ export function useBagDrill(): UseBagDrillResult {
   const registerAiHitRef = useRef<(id: string) => void>(() => {});
   const registerImpactRef = useRef<() => void>(() => {});
   const halfMilestoneSpokenRef = useRef(false);
+  const speedArmTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const speedMissTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const speedCompleteRef = useRef(false);
 
   const clearTimers = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -188,11 +214,15 @@ export function useBagDrill(): UseBagDrillResult {
     if (comboWindowRef.current) clearTimeout(comboWindowRef.current);
     if (graceTimeoutRef.current) clearTimeout(graceTimeoutRef.current);
     if (restTimeoutRef.current) clearTimeout(restTimeoutRef.current);
+    if (speedArmTimeoutRef.current) clearTimeout(speedArmTimeoutRef.current);
+    if (speedMissTimeoutRef.current) clearTimeout(speedMissTimeoutRef.current);
     timerRef.current = null;
     streamIntervalRef.current = null;
     comboWindowRef.current = null;
     graceTimeoutRef.current = null;
     restTimeoutRef.current = null;
+    speedArmTimeoutRef.current = null;
+    speedMissTimeoutRef.current = null;
   }, []);
 
   const teardown = useCallback(() => {
@@ -217,6 +247,7 @@ export function useBagDrill(): UseBagDrillResult {
     lastGuardWarningRef.current = null;
     disputeUsedRef.current = false;
     strikeLogRef.current = [];
+    speedCompleteRef.current = false;
     if (micBackupTimerRef.current) clearTimeout(micBackupTimerRef.current);
     micBackupTimerRef.current = null;
   }, [clearTimers]);
@@ -245,6 +276,7 @@ export function useBagDrill(): UseBagDrillResult {
       ...s,
       lastStrikeSpeedSeconds: deltaSec,
       lastStrikeSpeedLabel: strikeLabel(strikeId),
+      speedStats: summariseStrikeSpeeds(strikeSpeedsRef.current),
     }));
   }, []);
 
@@ -445,7 +477,57 @@ export function useBagDrill(): UseBagDrillResult {
         previousComboLabel: correct ? combo.label : s.previousComboLabel,
       }));
 
-      if (!correct && !speedModeRef.current && comboRetryRef.current < 1) {
+      if (speedModeRef.current) {
+        comboRetryRef.current = 0;
+        isRepeatRef.current = false;
+
+        if (correct) {
+          const strikeId = speedStrikeIdRef.current;
+          const times = strikeSpeedsRef.current[strikeId] ?? [];
+          const resultSec = times.at(-1) ?? null;
+          const resultTier = resultSec != null ? reactionTier(resultSec) : null;
+          speedCompleteRef.current = true;
+          setState((s) => ({
+            ...s,
+            currentCombo: null,
+            hitsInCombo: 0,
+            nextStrikeLabel: null,
+            strikeLog: [],
+            canDispute: false,
+            micBackupHint: false,
+            previousComboLabel: combo.label,
+            speedComplete: true,
+            speedPhase: "result",
+            speedResultSeconds: resultSec,
+            speedResultTier: resultTier,
+            inComboWindow: false,
+          }));
+          return;
+        }
+
+        setState((s) => ({
+          ...s,
+          currentCombo: null,
+          hitsInCombo: 0,
+          nextStrikeLabel: null,
+          strikeLog: [],
+          canDispute: false,
+          micBackupHint: false,
+          previousComboLabel: combo.label,
+          lastValidation: validation,
+          speedPhase: "miss",
+          inComboWindow: false,
+        }));
+
+        if (speedMissTimeoutRef.current) clearTimeout(speedMissTimeoutRef.current);
+        speedMissTimeoutRef.current = setTimeout(() => {
+          if (!mountedRef.current || !startedRef.current || speedCompleteRef.current) return;
+          callCurrentComboRef.current();
+        }, SPEED_MISS_RETRY_MS);
+        return;
+      }
+
+      if (!correct && comboRetryRef.current < 1) {
         comboRetryRef.current += 1;
         isRepeatRef.current = true;
         window.setTimeout(() => callCurrentComboRef.current(), 500);
@@ -591,6 +673,36 @@ export function useBagDrill(): UseBagDrillResult {
     const combo = currentComboRef.current;
     if (!config || !combo || !mountedRef.current || !startedRef.current) return;
     if (isSessionTimeUp()) return;
+    if (speedModeRef.current && speedCompleteRef.current) return;
+
+    if (speedModeRef.current) {
+      if (speedArmTimeoutRef.current) clearTimeout(speedArmTimeoutRef.current);
+      if (speedMissTimeoutRef.current) clearTimeout(speedMissTimeoutRef.current);
+
+      comboResolvedRef.current = false;
+      setState((s) => ({
+        ...s,
+        speedPhase: "arming",
+        currentCombo: combo,
+        hitsInCombo: 0,
+        hitsExpected: expectedHits(combo),
+        lastValidation: null,
+        inComboWindow: false,
+        statusMessage: null,
+      }));
+
+      speedArmTimeoutRef.current = setTimeout(() => {
+        if (!mountedRef.current || !startedRef.current || speedCompleteRef.current) return;
+        speakCombo("Go", config.difficulty, {
+          onEnd: () => {
+            if (!mountedRef.current || !startedRef.current || speedCompleteRef.current) return;
+            setState((s) => ({ ...s, speedPhase: "go" }));
+            openComboWindow(combo);
+          },
+        });
+      }, SPEED_ARM_MS);
+      return;
+    }
 
     if (combo.isFreestyle) {
       speakCombo(combo.speak, config.difficulty, {
@@ -623,11 +735,12 @@ export function useBagDrill(): UseBagDrillResult {
     const config = configRef.current;
     if (!config || !mountedRef.current || !startedRef.current) return;
     if (isSessionTimeUp()) return;
+    if (speedModeRef.current && speedCompleteRef.current) return;
 
     const bagData = loadBagData();
     const weaknesses = bagData.weaknesses;
     const combo = speedModeRef.current
-      ? pickSpeedCombo(previousComboIdRef.current)
+      ? speedComboForPunch(speedStrikeIdRef.current)
       : weaknessFocusRef.current
         ? pickWeaknessFocusedCombo(
             config.difficulty,
@@ -739,6 +852,7 @@ export function useBagDrill(): UseBagDrillResult {
       micThresholdRef.current = config.calibration?.micThreshold;
       weaknessFocusRef.current = config.weaknessFocus ?? false;
       speedModeRef.current = config.drillMode === "speed";
+      speedStrikeIdRef.current = config.speedStrikeId ?? "jab";
       strikeSpeedsRef.current = {};
       lastHitTimeRef.current = 0;
       sessionStartedAtRef.current = new Date().toISOString();
@@ -762,6 +876,8 @@ export function useBagDrill(): UseBagDrillResult {
         cameraMode: config.cameraMode,
         detectionMode: "pose-triple",
         statusMessage: status,
+        speedPunchId: config.drillMode === "speed" ? speedStrikeIdRef.current : null,
+        speedPhase: config.drillMode === "speed" ? "arming" : null,
       });
 
       await prepareBagSpeech();
@@ -950,7 +1066,69 @@ export function useBagDrill(): UseBagDrillResult {
     return record;
   }, [teardown]);
 
-  return { state, videoRef, start, stop, tapPunch, disputeStrike, micBackupPunch };
+  const selectSpeedPunch = useCallback((punchId: SpeedPunchId) => {
+    if (!speedModeRef.current || !startedRef.current) return;
+    if (speedStrikeIdRef.current === punchId && !inWindowRef.current) return;
+
+    speedStrikeIdRef.current = punchId;
+    const config = configRef.current;
+    if (config) {
+      configRef.current = { ...config, speedStrikeId: punchId };
+    }
+
+    if (restTimeoutRef.current) clearTimeout(restTimeoutRef.current);
+    if (comboWindowRef.current) clearTimeout(comboWindowRef.current);
+    if (graceTimeoutRef.current) clearTimeout(graceTimeoutRef.current);
+    inWindowRef.current = false;
+    comboResolvedRef.current = false;
+
+    setState((s) => ({
+      ...s,
+      speedPunchId: punchId,
+      inComboWindow: false,
+      currentCombo: null,
+      hitsInCombo: 0,
+      lastValidation: null,
+      statusMessage: null,
+    }));
+
+    restTimeoutRef.current = setTimeout(() => {
+      if (!mountedRef.current || !startedRef.current) return;
+      scheduleNextComboRef.current();
+    }, 350);
+  }, []);
+
+  const retrySpeedPunch = useCallback(() => {
+    if (!speedModeRef.current || !startedRef.current) return;
+    if (restTimeoutRef.current) clearTimeout(restTimeoutRef.current);
+    if (speedArmTimeoutRef.current) clearTimeout(speedArmTimeoutRef.current);
+    if (speedMissTimeoutRef.current) clearTimeout(speedMissTimeoutRef.current);
+    speedCompleteRef.current = false;
+    setState((s) => ({
+      ...s,
+      speedComplete: false,
+      speedPhase: "arming",
+      speedResultSeconds: null,
+      speedResultTier: null,
+      lastValidation: null,
+      inComboWindow: false,
+      currentCombo: null,
+    }));
+    comboResolvedRef.current = false;
+    window.setTimeout(() => scheduleNextComboRef.current(), 300);
+  }, []);
+
+  return {
+    state,
+    videoRef,
+    start,
+    stop,
+    tapPunch,
+    disputeStrike,
+    micBackupPunch,
+    selectSpeedPunch,
+    retrySpeedPunch,
+  };
 }
 
 export { formatReaction, tierColor, reactionTier };

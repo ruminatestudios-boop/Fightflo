@@ -24,6 +24,7 @@ interface BagHomeScreenProps {
   freeSessionsLeft?: number | null;
   onStart: (mode: BagDrillMode, options?: BagHomeStartOptions) => void;
   onUpgrade?: () => void;
+  onHome?: () => void;
 }
 
 export function BagHomeScreen({
@@ -32,6 +33,7 @@ export function BagHomeScreen({
   freeSessionsLeft = null,
   onStart,
   onUpgrade,
+  onHome,
 }: BagHomeScreenProps) {
   const last = getLastSession(data);
   const showLastSession = hasMeaningfulSessionHistory(data);
@@ -51,7 +53,7 @@ export function BagHomeScreen({
   );
 
   return (
-    <BagScreenWrapper hubScreen className="overflow-y-auto">
+    <BagScreenWrapper hubScreen onHome={onHome} className="overflow-y-auto">
       <div className="flex min-h-0 flex-1 flex-col gap-7">
         <motion.div
           initial={{ opacity: 0, y: 12 }}

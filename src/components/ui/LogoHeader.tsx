@@ -6,6 +6,7 @@ interface LogoHeaderProps {
   align?: "left" | "center";
   /** Light text on dark video overlays */
   variant?: "dark" | "light";
+  onHome?: () => void;
 }
 
 const SIZE_CLASS = {
@@ -14,24 +15,38 @@ const SIZE_CLASS = {
   lg: "text-4xl tracking-[0.22em] sm:text-[2.5rem]",
 };
 
-/** Placeholder wordmark — swap for image logo later */
 export function LogoHeader({
   size = "md",
   className = "",
   align = "left",
   variant = "dark",
+  onHome,
 }: LogoHeaderProps) {
-  return (
-    <div
-      className={`flex ${align === "center" ? "w-full justify-center" : "justify-start"} ${className}`}
+  const alignClass =
+    align === "center" ? "w-full justify-center" : "justify-start";
+
+  const wordmark = (
+    <span
+      className={`font-display font-semibold ${SIZE_CLASS[size]} ${
+        variant === "light" ? "text-white" : "text-white"
+      }`}
     >
-      <span
-        className={`font-display font-semibold ${SIZE_CLASS[size]} ${
-          variant === "light" ? "text-white" : "text-white"
-        }`}
-      >
-        FIGHTFLO
-      </span>
-    </div>
+      FIGHTFLO
+    </span>
+  );
+
+  if (!onHome) {
+    return <div className={`flex ${alignClass} ${className}`}>{wordmark}</div>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onHome}
+      aria-label="Go to homepage"
+      className={`flex ${alignClass} ${className} transition-opacity hover:opacity-80 active:opacity-65`}
+    >
+      {wordmark}
+    </button>
   );
 }

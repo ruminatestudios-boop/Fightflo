@@ -57,7 +57,7 @@ export const PLANS: {
   },
 ];
 
-/** FlowBag /bag pricing (USD) */
+/** fightflo /bag pricing (USD) */
 export const FLOWBAG_PLANS: {
   id: SubscriptionPlan;
   label: string;

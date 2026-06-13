@@ -267,7 +267,7 @@ export class PunchDetectionEngine {
         guardRight: guardState.right,
       };
       if (allThree || punchLogged) {
-        console.debug("[FlowBag]", log);
+        console.debug("[fightflo]", log);
       }
     }
   }

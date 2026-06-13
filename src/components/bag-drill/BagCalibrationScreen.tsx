@@ -29,6 +29,8 @@ import {
   startMediaCapture,
 } from "@/lib/bag-drill/media-capture";
 import type { BagCameraMode } from "@/lib/bag-drill/types";
+import type { CalibrationPurpose } from "@/lib/bag-drill/calibration-purpose";
+import { isMicOnlyCalibration } from "@/lib/bag-drill/calibration-purpose";
 import type { PoseLandmarker } from "@mediapipe/tasks-vision";
 
 type CalStep = "camera" | "stance" | "guard" | "mic" | "done";
@@ -37,7 +39,7 @@ type FlowStep = Exclude<CalStep, "done">;
 const STEP_MS = 3000;
 
 interface BagCalibrationScreenProps {
-  purpose?: "combo" | "speed";
+  purpose?: CalibrationPurpose;
   cameraMode: BagCameraMode;
   stance: BagStance;
   existingStream?: MediaStream | null;
@@ -75,7 +77,9 @@ export function BagCalibrationScreen({
   const guideShownRef = useRef(false);
 
   const [activeCameraMode, setActiveCameraMode] = useState(cameraMode);
-  const [step, setStep] = useState<CalStep>(purpose === "speed" ? "mic" : "camera");
+  const [step, setStep] = useState<CalStep>(
+    isMicOnlyCalibration(purpose) ? "mic" : "camera"
+  );
   stepRef.current = step;
   const [guideOpen, setGuideOpen] = useState(false);
   const [detectedStance, setDetectedStance] = useState<BagStance | null>(null);
@@ -94,11 +98,14 @@ export function BagCalibrationScreen({
   const startingRef = useRef(false);
 
   const fighterCam = activeCameraMode === "fighter";
-  const poseCalibration = fighterCam && purpose !== "speed";
+  const poseCalibration = fighterCam && !isMicOnlyCalibration(purpose);
   const flowSteps: readonly FlowStep[] = poseCalibration
     ? ["camera", "stance", "guard", "mic"]
     : ["mic"];
-  const speedCopy = BAG_COPY.speedCalibration;
+  const drillCopy = BAG_COPY.drillCalibration[purpose];
+  const micCopy = isMicOnlyCalibration(purpose)
+    ? BAG_COPY.drillCalibration[purpose as "speed" | "flurry"].mic
+    : null;
 
   const finish = useCallback(() => {
     const baseline = guardBaselineRef.current ?? {
@@ -170,7 +177,7 @@ export function BagCalibrationScreen({
     );
 
     try {
-      if (useFighterCam && purpose !== "speed") {
+      if (useFighterCam && !isMicOnlyCalibration(purpose)) {
         const { landmarker, gpu } = await createPoseLandmarker();
         landmarkerRef.current = landmarker;
         setGpuOk(gpu);
@@ -561,21 +568,27 @@ export function BagCalibrationScreen({
             <>
               <div>
                 <p className="label text-white/45">
-                  {stepStatus[step]} · step {stepIndex}/{totalSteps}
+                  {drillCopy.eyebrow} · {stepStatus[step]} · step {stepIndex}/{totalSteps}
                 </p>
                 <h1 className="font-display mt-2 text-[1.65rem] leading-tight tracking-wide text-white">
-                  {purpose === "speed"
+                  {micCopy
                     ? step === "done"
-                      ? speedCopy.done
-                      : speedCopy.step
+                      ? micCopy.done
+                      : micCopy.step
                     : steps[step]}
                 </h1>
-                {purpose === "speed" && step === "mic" && (
+                {micCopy && step === "mic" && (
                   <p className="mt-2 text-xs leading-relaxed text-white/45">
-                    {fighterCam ? speedCopy.fighterNote : speedCopy.bagNote}
+                    {"fighterNote" in micCopy && fighterCam
+                      ? micCopy.fighterNote
+                      : "bagNote" in micCopy
+                        ? micCopy.bagNote
+                        : "note" in micCopy
+                          ? micCopy.note
+                          : null}
                   </p>
                 )}
-                {!poseCalibration && step === "mic" && purpose !== "speed" && (
+                {!poseCalibration && step === "mic" && !micCopy && (
                   <p className="mt-2 text-xs leading-relaxed text-white/45">
                     {BAG_COPY.calibrationBagNote}
                   </p>
@@ -635,6 +648,19 @@ export function BagCalibrationScreen({
                 >
                   Continue
                 </button>
+              ) : isMicOnlyCalibration(purpose) && cameraReady ? (
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={finish}
+                    className="font-display flex h-11 w-full items-center justify-center rounded-full border border-white/15 text-[11px] tracking-[0.14em] text-white/70"
+                  >
+                    {micCopy?.skip ?? "Skip calibration"}
+                  </button>
+                  <p className="text-center text-[11px] leading-relaxed text-white/35">
+                    {micCopy?.skipHint ?? "Counts may be less accurate."}
+                  </p>
+                </div>
               ) : null}
             </>
           ) : (

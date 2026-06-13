@@ -11,6 +11,7 @@ import { BagSetupCameraScreen } from "./BagSetupCameraScreen";
 import { BagSetupConfigScreen } from "./BagSetupConfigScreen";
 import { BagTrainingScreen } from "./BagTrainingScreen";
 import { BagSpeedTrainingScreen } from "./BagSpeedTrainingScreen";
+import { BagSpeedPunchScreen } from "./BagSpeedPunchScreen";
 import { BagFlurryTrainingScreen } from "./BagFlurryTrainingScreen";
 import { BagSummaryScreen } from "./BagSummaryScreen";
 import { BagProgressScreen } from "./BagProgressScreen";
@@ -39,6 +40,10 @@ import {
   shouldShowComingSoonModal,
 } from "@/lib/bag-drill/coming-soon-storage";
 import { buildQuickStartConfig } from "@/lib/bag-drill/quick-start-config";
+import {
+  resolveCalibrationPurpose,
+  type CalibrationPurpose,
+} from "@/lib/bag-drill/calibration-purpose";
 import { BagDrillProSync } from "@/components/bag-drill/BagDrillProSync";
 import type {
   BagCameraMode,
@@ -47,17 +52,11 @@ import type {
   BagSessionRecord,
   BagTrainingConfig,
   FightFloBagData,
+  SpeedPunchId,
 } from "@/lib/bag-drill/types";
 
-const INTRO_SEEN_KEY = "flowbag-intro-seen";
-
-function readInitialScreen(): BagScreen {
-  if (typeof window === "undefined") return "intro";
-  return sessionStorage.getItem(INTRO_SEEN_KEY) ? "home" : "intro";
-}
-
 export function BagDrillApp() {
-  const [screen, setScreen] = useState<BagScreen>(readInitialScreen);
+  const [screen, setScreen] = useState<BagScreen | null>("intro");
   const [data, setData] = useState<FightFloBagData>(() => loadBagData());
   const [config, setConfig] = useState<BagTrainingConfig | null>(null);
   const [lastSession, setLastSession] = useState<BagSessionRecord | null>(null);
@@ -73,6 +72,7 @@ export function BagDrillApp() {
   const [freeUsed, setFreeUsed] = useState(0);
   const [skippedCalibration, setSkippedCalibration] = useState(false);
   const [comingSoonOpen, setComingSoonOpen] = useState(false);
+  const [speedPunchDraft, setSpeedPunchDraft] = useState<SpeedPunchId>("jab");
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
   const releaseMediaStream = useCallback(() => {
@@ -94,7 +94,6 @@ export function BagDrillApp() {
   }, [refreshProAndUsage]);
 
   const enterBagFlow = useCallback(() => {
-    sessionStorage.setItem(INTRO_SEEN_KEY, "1");
     setScreen("home");
   }, []);
 
@@ -136,6 +135,11 @@ export function BagDrillApp() {
     []
   );
 
+  const calibrationPurpose = resolveCalibrationPurpose(
+    drillModeDraft,
+    configDraft.weaknessFocus
+  );
+
   const handleStartFromHome = useCallback(
     (mode: BagDrillMode, options?: BagHomeStartOptions) => {
       gateComboStart(mode, () => {
@@ -150,6 +154,13 @@ export function BagDrillApp() {
           setScreen("setup-camera");
           return;
         }
+        if (mode === "flurry") {
+          setCameraModeDraft("bag");
+          setSkippedCalibration(false);
+          setCalibrationDraft(null);
+          setScreen("setup-intro");
+          return;
+        }
         setScreen("setup-intro");
       });
     },
@@ -157,8 +168,7 @@ export function BagDrillApp() {
   );
 
   const startSpeedDrill = useCallback(
-    (calibration: BagCalibration | null) => {
-      releaseMediaStream();
+    (calibration: BagCalibration | null, punchId: SpeedPunchId = speedPunchDraft) => {
       const workoutConfig = buildQuickStartConfig(
         "speed",
         {
@@ -166,6 +176,7 @@ export function BagDrillApp() {
           cameraMode: cameraModeDraft,
           stance: stanceDraft,
           calibration: calibration ?? undefined,
+          speedStrikeId: punchId,
         },
         cameraModeDraft
       );
@@ -176,7 +187,7 @@ export function BagDrillApp() {
       setConfig(workoutConfig);
       setScreen("speed");
     },
-    [cameraModeDraft, configDraft, releaseMediaStream, stanceDraft]
+    [cameraModeDraft, configDraft, speedPunchDraft, stanceDraft]
   );
 
   const handleReady = useCallback(
@@ -298,6 +309,24 @@ export function BagDrillApp() {
     setScreen("home");
   }, []);
 
+  const handleGoHome = useCallback(() => {
+    if (screen === "home") return;
+    releaseMediaStream();
+    flurry.abort();
+    void drill.stop();
+    setConfig(null);
+    refreshData();
+    refreshProAndUsage();
+    setScreen("home");
+  }, [
+    screen,
+    releaseMediaStream,
+    flurry,
+    drill,
+    refreshData,
+    refreshProAndUsage,
+  ]);
+
   const showHubTabs = screen === "home" || screen === "progress";
 
   return (
@@ -339,12 +368,15 @@ export function BagDrillApp() {
             }
             onStart={handleStartFromHome}
             onUpgrade={() => setShowUpgrade(true)}
+            onHome={handleGoHome}
           />
         )}
         {screen === "setup-intro" && (
           <BagSetupIntroScreen
             key="setup-intro"
+            purpose={calibrationPurpose}
             onBack={() => setScreen("home")}
+            onHome={handleGoHome}
             onStartCalibration={() => {
               setSkippedCalibration(false);
               setCalibrationDraft(null);
@@ -358,16 +390,20 @@ export function BagDrillApp() {
             key="setup-camera"
             initialMode={cameraModeDraft}
             isPro={pro}
-            speedDrill={drillModeDraft === "speed"}
+            calibrationPurpose={calibrationPurpose}
             onBack={() => {
               releaseMediaStream();
-              setScreen(drillModeDraft === "speed" ? "home" : "setup-intro");
+              if (drillModeDraft === "speed") {
+                setScreen("home");
+                return;
+              }
+              setScreen("setup-intro");
             }}
             onContinue={(mode, stance, stream) => {
               setCameraModeDraft(mode);
               setStanceDraft(stance);
               mediaStreamRef.current = stream;
-              if (drillModeDraft === "speed") {
+              if (drillModeDraft === "speed" || drillModeDraft === "flurry") {
                 setSkippedCalibration(false);
                 setScreen("calibration");
                 return;
@@ -406,7 +442,7 @@ export function BagDrillApp() {
         {screen === "calibration" && (
           <BagCalibrationScreen
             key="calibration"
-            purpose={drillModeDraft === "speed" ? "speed" : "combo"}
+            purpose={calibrationPurpose}
             cameraMode={cameraModeDraft}
             stance={stanceDraft}
             existingStream={mediaStreamRef.current}
@@ -424,6 +460,10 @@ export function BagDrillApp() {
                 setScreen("setup-camera");
                 return;
               }
+              if (drillModeDraft === "flurry") {
+                setScreen("setup-intro");
+                return;
+              }
               setScreen(skippedCalibration ? "setup-camera" : "setup-intro");
             }}
             onComplete={(cal) => {
@@ -431,7 +471,15 @@ export function BagDrillApp() {
               setCalibrationDraft(cal);
               setStanceDraft(cal.stance);
               if (drillModeDraft === "speed") {
-                startSpeedDrill(cal);
+                setCalibrationDraft(cal);
+                setStanceDraft(cal.stance);
+                setScreen("speed-pick");
+                return;
+              }
+              if (drillModeDraft === "flurry") {
+                setCalibrationDraft(cal);
+                setStanceDraft(cal.stance);
+                setScreen("setup-config");
                 return;
               }
               setScreen("setup-config");
@@ -452,7 +500,19 @@ export function BagDrillApp() {
             onBack={() =>
               setScreen(skippedCalibration ? "setup-camera" : "calibration")
             }
+            onHome={handleGoHome}
             onReady={handleReady}
+          />
+        )}
+        {screen === "speed-pick" && (
+          <BagSpeedPunchScreen
+            key="speed-pick"
+            onBack={() => setScreen("calibration")}
+            onHome={handleGoHome}
+            onStart={(punchId) => {
+              setSpeedPunchDraft(punchId);
+              startSpeedDrill(calibrationDraft, punchId);
+            }}
           />
         )}
         {screen === "speed" && config && (
@@ -490,15 +550,11 @@ export function BagDrillApp() {
             isPro={pro}
             onTrainAgain={() => setScreen("setup-intro")}
             onStartRecommended={handleStartRecommended}
-            onHome={() => {
-              refreshData();
-              refreshProAndUsage();
-              setScreen("home");
-            }}
+            onHome={handleGoHome}
           />
         )}
         {screen === "progress" && (
-          <BagProgressScreen key="progress" data={data} />
+          <BagProgressScreen key="progress" data={data} onHome={handleGoHome} />
         )}
       </AnimatePresence>
       {showHubTabs && (

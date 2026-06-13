@@ -31,6 +31,7 @@ interface BagSetupConfigScreenProps {
   initialDrillMode?: BagDrillMode;
   initialConfig?: Partial<BagTrainingConfig>;
   onBack: () => void;
+  onHome?: () => void;
   onReady: (config: BagTrainingConfig) => void;
 }
 
@@ -45,6 +46,7 @@ export function BagSetupConfigScreen({
   initialDrillMode = "combo",
   initialConfig,
   onBack,
+  onHome,
   onReady,
 }: BagSetupConfigScreenProps) {
   const [drillMode, setDrillMode] = useState<BagDrillMode>(
@@ -87,7 +89,7 @@ export function BagSetupConfigScreen({
     initialDrillMode !== "combo" || Boolean(initialConfig?.weaknessFocus);
 
   return (
-    <BagScreenWrapper onBack={onBack} className="overflow-y-auto pb-10">
+    <BagScreenWrapper onBack={onBack} onHome={onHome} className="overflow-y-auto pb-10">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}

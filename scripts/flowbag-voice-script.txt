@@ -1,4 +1,4 @@
-FLOWBAG GYM COACH — ELEVENLABS VOICE SCRIPT
+FIGHTFLO GYM COACH — ELEVENLABS VOICE SCRIPT
 ================================================
 Tone: gritty gym owner / corner coach. Short. Direct. No fluff.
 Paste one line at a time into ElevenLabs TTS, or read aloud for voice clone.

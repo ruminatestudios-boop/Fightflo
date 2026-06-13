@@ -21,7 +21,7 @@ export function TimerEmailCaptureFields({
   onSubmit,
   onFocus,
   compact = false,
-  ctaLabel = "Get Free FlowBag Access →",
+  ctaLabel = "Get Free fightflo Access →",
 }: TimerEmailCaptureFieldsProps) {
   const inputClass = compact
     ? "h-9 min-w-0 flex-1 rounded-lg border border-white/10 bg-black px-3 text-xs text-white placeholder:text-white/30 focus:border-[#fa4141]/50 focus:outline-none"
@@ -34,11 +34,11 @@ export function TimerEmailCaptureFields({
           You&apos;re in 👊
         </p>
         <p className="mt-2 text-sm leading-relaxed text-[#a3a3a3]">
-          Check your email for free FlowBag access
+          Check your email for free fightflo access
         </p>
         <div className="mt-6">
           <Link href="/" className="block">
-            <Button variant="secondary">Try FlowBag now →</Button>
+            <Button variant="secondary">Try fightflo now →</Button>
           </Link>
         </div>
       </div>
@@ -52,7 +52,7 @@ export function TimerEmailCaptureFields({
         <div className="mt-4">
           <Link href="/" className="block">
             <Button variant="secondary" size={compact ? "sm" : "lg"}>
-              Try FlowBag now →
+              Try fightflo now →
             </Button>
           </Link>
         </div>

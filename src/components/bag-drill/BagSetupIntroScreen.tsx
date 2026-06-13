@@ -4,21 +4,27 @@ import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { AppTopBar } from "@/components/ui/AppTopBar";
 import { BAG_COPY } from "@/lib/bag-drill/copy";
+import type { CalibrationPurpose } from "@/lib/bag-drill/calibration-purpose";
 
 const STEP_MS = 4500;
 
 interface BagSetupIntroScreenProps {
+  purpose: CalibrationPurpose;
   onBack: () => void;
+  onHome?: () => void;
   onStartCalibration: () => void;
   onSkipCalibration: () => void;
 }
 
 export function BagSetupIntroScreen({
+  purpose,
   onBack,
+  onHome,
   onStartCalibration,
   onSkipCalibration,
 }: BagSetupIntroScreenProps) {
-  const copy = BAG_COPY.calibrationIntro;
+  const drill = BAG_COPY.drillCalibration[purpose];
+  const copy = drill.intro;
   const stepCount = copy.steps.length;
   const [activeIndex, setActiveIndex] = useState(0);
   const [cycleKey, setCycleKey] = useState(0);
@@ -39,14 +45,14 @@ export function BagSetupIntroScreen({
   return (
     <div className="fixed inset-0 z-20 flex flex-col bg-black">
       <div className="relative z-10 flex min-h-0 flex-1 flex-col px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
-        <AppTopBar onBack={onBack} className="mb-2" />
+        <AppTopBar onBack={onBack} onHome={onHome} className="mb-2" />
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex min-h-0 flex-1 flex-col"
         >
-          <p className="label text-[#fa4141]">Before you train</p>
+          <p className="label text-[#fa4141]">{drill.eyebrow}</p>
           <h1 className="font-display mt-2 text-[1.75rem] leading-tight tracking-wide text-white">
             {copy.title}
           </h1>

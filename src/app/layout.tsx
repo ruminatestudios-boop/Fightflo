@@ -15,14 +15,14 @@ const barlow = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "FlowBag — Boxing Heavy Bag Trainer",
+  title: "fightflo — Boxing Heavy Bag Trainer",
   description:
     "Boxing heavy bag trainer with called combos, punch counting, combo checks, and guard alerts.",
-  applicationName: "FlowBag",
+  applicationName: "fightflo",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "FlowBag",
+    title: "fightflo",
   },
   formatDetection: {
     telephone: false,
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     apple: "/icon.svg",
   },
   openGraph: {
-    title: "FlowBag — Boxing Heavy Bag Trainer",
+    title: "fightflo — Boxing Heavy Bag Trainer",
     description:
       "Boxing combos called in your ear — punches counted, sequences checked, guard flagged.",
     type: "website",

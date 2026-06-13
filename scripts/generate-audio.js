@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Pre-generate FlowBag coach audio via ElevenLabs.
+ * Pre-generate fightflo coach audio via ElevenLabs.
  *
  * Usage:
  *   ELEVENLABS_API_KEY=... ELEVENLABS_VOICE_ID=... node scripts/generate-audio.js
@@ -81,7 +81,7 @@ async function main() {
   let failed = 0;
   let charsBilled = 0;
 
-  console.log(`FlowBag audio generation — ${total} phrases\n`);
+  console.log(`fightflo audio generation — ${total} phrases\n`);
 
   for (let i = 0; i < phrases.length; i++) {
     const { id, text } = phrases[i];

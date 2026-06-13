@@ -118,13 +118,13 @@ export function TimerSummaryScreen({
             <div className="mx-auto mt-10 w-full max-w-xs space-y-3">
               {!isPro && skipped && (
                 <Link href="/" onClick={() => recordFlowBagClick()} className="block">
-                  <Button variant="secondary">Try FlowBag free</Button>
+                  <Button variant="secondary">Try fightflo free</Button>
                 </Link>
               )}
               <Button onClick={onAgain}>New session</Button>
               {isPro && (
                 <Link href="/" className="block">
-                  <Button variant="secondary">Open FlowBag</Button>
+                  <Button variant="secondary">Open fightflo</Button>
                 </Link>
               )}
             </div>
@@ -143,7 +143,7 @@ export function TimerSummaryScreen({
             href="/"
             className="text-xs uppercase tracking-[0.14em] text-[#525252] hover:text-white"
           >
-            Full FightFlo app
+            Full fightflo app
           </Link>
         </div>
       </motion.div>

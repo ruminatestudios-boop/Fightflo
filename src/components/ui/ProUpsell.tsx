@@ -22,7 +22,7 @@ export function ProUpsell({ onUpgrade, compact = false }: ProUpsellProps) {
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-[#fa4141]/20 bg-gradient-to-br from-[#fa4141]/10 to-transparent p-5">
-      <p className="font-display text-lg tracking-wide text-white">FightFlo Pro</p>
+      <p className="font-display text-lg tracking-wide text-white">fightflo Pro</p>
       <p className="mt-2 text-sm text-[#8e9297]">
         Stadium mode, advanced signals, all rhythm archetypes, gym ambience.
       </p>

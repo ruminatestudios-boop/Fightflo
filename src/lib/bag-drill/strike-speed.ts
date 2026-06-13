@@ -29,6 +29,7 @@ export interface StrikeSpeedSummary {
   strikeId: string;
   label: string;
   avgSeconds: number;
+  bestSeconds: number;
   count: number;
 }
 
@@ -40,6 +41,7 @@ export function summariseStrikeSpeeds(
       strikeId,
       label: strikeLabel(strikeId),
       avgSeconds: averageStrikeSpeed(times),
+      bestSeconds: times.length > 0 ? Math.min(...times) : 0,
       count: times.length,
     }))
     .filter((s) => s.count > 0)

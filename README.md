@@ -1,4 +1,4 @@
-# FightFlo
+# fightflo
 
 Reactive fight training timer for Muay Thai, boxing, kickboxing and MMA.
 

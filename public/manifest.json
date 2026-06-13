@@ -1,6 +1,6 @@
 {
-  "name": "FlowBag — Boxing Bag Trainer",
-  "short_name": "FlowBag",
+  "name": "fightflo — Boxing Bag Trainer",
+  "short_name": "fightflo",
   "description": "Boxing heavy bag trainer with called combos, punch counting, and combo checks.",
   "start_url": "/",
   "display": "standalone",

@@ -43,7 +43,7 @@ export function TimerHomeScreen({
   onSelectPreset,
   onStart,
 }: TimerHomeScreenProps) {
-  const [flowBagCta, setFlowBagCta] = useState("Try FlowBag →");
+  const [flowBagCta, setFlowBagCta] = useState("Try fightflo →");
   const [bannerOffset, setBannerOffset] = useState(false);
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export function TimerHomeScreen({
             href="/"
             className="text-xs uppercase tracking-[0.14em] text-[#525252] hover:text-white"
           >
-            FightFlo
+            fightflo
           </Link>
         }
       />

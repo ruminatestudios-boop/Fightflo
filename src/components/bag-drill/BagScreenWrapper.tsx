@@ -9,6 +9,7 @@ interface BagScreenWrapperProps {
   children: ReactNode;
   className?: string;
   onBack?: () => void;
+  onHome?: () => void;
   hideLogo?: boolean;
   /** Hub screens with sticky Train / Progress tab bar */
   hubScreen?: boolean;
@@ -19,6 +20,7 @@ export function BagScreenWrapper({
   children,
   className = "",
   onBack,
+  onHome,
   hideLogo = false,
   hubScreen = false,
 }: BagScreenWrapperProps) {
@@ -32,7 +34,13 @@ export function BagScreenWrapper({
         hubScreen ? BAG_TAB_BAR_PAD : "pb-[max(1.25rem,env(safe-area-inset-bottom))]"
       } ${className}`}
     >
-      {!hideLogo && <AppTopBar onBack={hubScreen ? undefined : onBack} className="mb-4 shrink-0" />}
+      {!hideLogo && (
+        <AppTopBar
+          onBack={hubScreen ? undefined : onBack}
+          onHome={onHome}
+          className="mb-4 shrink-0"
+        />
+      )}
       {children}
     </motion.div>
   );

@@ -54,7 +54,7 @@ export function TimerFirstVisitBanner({ isPro = false }: TimerFirstVisitBannerPr
           exit={{ y: -32, opacity: 0 }}
           className="fixed inset-x-0 top-0 z-50 border-b border-[#fa4141]/20 bg-[#0a0a0a]/98 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md"
           role="region"
-          aria-label="FlowBag free access"
+          aria-label="fightflo free access"
         >
           <div className="mx-auto flex max-w-lg items-start gap-3">
             <div className="min-w-0 flex-1">

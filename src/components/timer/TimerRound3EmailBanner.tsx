@@ -47,7 +47,7 @@ export function TimerRound3EmailBanner({
           transition={{ type: "spring", damping: 26, stiffness: 320 }}
           className="pointer-events-auto fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 px-4"
           role="region"
-          aria-label="FlowBag email capture"
+          aria-label="fightflo email capture"
         >
           <div className="mx-auto flex w-full max-w-md items-center gap-3 rounded-xl border border-[#fa4141]/25 bg-[#141414]/95 px-4 py-3 shadow-lg backdrop-blur-sm">
             <button

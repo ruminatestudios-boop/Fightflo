@@ -49,7 +49,7 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("push", (event) => {
-  let payload = { title: "FlowBag", body: "Time to train.", url: "/" };
+  let payload = { title: "fightflo", body: "Time to train.", url: "/" };
   try {
     if (event.data) {
       payload = { ...payload, ...event.data.json() };
@@ -64,7 +64,7 @@ self.addEventListener("push", (event) => {
       icon: "/manifest.json",
       badge: "/manifest.json",
       data: { url: payload.url || "/" },
-      tag: "flowbag-reminder",
+      tag: "fightflo-reminder",
     })
   );
 });

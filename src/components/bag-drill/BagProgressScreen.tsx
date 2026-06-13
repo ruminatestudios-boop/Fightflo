@@ -24,9 +24,10 @@ import {
 
 interface BagProgressScreenProps {
   data: FightFloBagData;
+  onHome?: () => void;
 }
 
-export function BagProgressScreen({ data }: BagProgressScreenProps) {
+export function BagProgressScreen({ data, onHome }: BagProgressScreenProps) {
   const weekly = weeklyImprovementPercent(data);
   const weaknessBars = topWeaknesses(data.weaknesses, 6).map((combo) => ({
     combo: combo.length > 12 ? `${combo.slice(0, 10)}…` : combo,
@@ -49,7 +50,7 @@ export function BagProgressScreen({ data }: BagProgressScreenProps) {
   const { allTimeStats } = data;
 
   return (
-    <BagScreenWrapper hubScreen className="overflow-y-auto">
+    <BagScreenWrapper hubScreen onHome={onHome} className="overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}

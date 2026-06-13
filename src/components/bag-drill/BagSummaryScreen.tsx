@@ -70,7 +70,7 @@ export function BagSummaryScreen({
     : [];
 
   return (
-    <BagScreenWrapper className="overflow-y-auto pb-10">
+    <BagScreenWrapper onHome={onHome} className="overflow-y-auto pb-10">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

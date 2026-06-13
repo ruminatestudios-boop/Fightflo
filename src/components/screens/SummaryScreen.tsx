@@ -45,11 +45,11 @@ export function SummaryScreen({
         : "STEADY";
 
   const handleShare = async () => {
-    const text = `FightFlo — ${message}\nReaction Score: ${stats.reactionScore}\nTotal Output: ${outputLabel}\n#FightFlo`;
+    const text = `fightflo — ${message}\nReaction Score: ${stats.reactionScore}\nTotal Output: ${outputLabel}\n#fightflo`;
 
     if (navigator.share) {
       try {
-        await navigator.share({ title: "FightFlo", text });
+        await navigator.share({ title: "fightflo", text });
         return;
       } catch {
         /* cancelled */

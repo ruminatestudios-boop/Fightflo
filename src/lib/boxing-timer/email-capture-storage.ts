@@ -52,7 +52,7 @@ export function markBannerDismissed(): TimerEmailStorage {
   return saveTimerEmailStorage({ hasSeenBanner: true });
 }
 
-/** Skip email prompts for fighters already on FlowBag */
+/** Skip email prompts for fighters already on fightflo */
 export function hasUsedFlowBag(): boolean {
   if (typeof window === "undefined") return false;
 

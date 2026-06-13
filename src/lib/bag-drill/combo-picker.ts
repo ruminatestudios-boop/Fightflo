@@ -6,7 +6,31 @@ import {
 } from "./combos";
 import { expectedHits } from "./strike-validator";
 import { pickWeightedCombo, topWeaknesses, weaknessWeights } from "./weakness";
-import type { BagCombo, BagDifficulty } from "./types";
+import type { BagCombo, BagDifficulty, SpeedPunchId } from "./types";
+
+const SPEED_COMBO_BY_PUNCH: Record<SpeedPunchId, string> = {
+  jab: "speed-jab",
+  cross: "speed-cross",
+  hook: "speed-hook",
+  "body-shot": "speed-body",
+};
+
+/** Fixed single punch for speed drill — no rotation. */
+export function speedComboForPunch(punchId: SpeedPunchId): BagCombo {
+  const comboId = SPEED_COMBO_BY_PUNCH[punchId];
+  const combo = SPEED_COMBOS.find((c) => c.id === comboId);
+  if (!combo) return SPEED_COMBOS[0];
+  return combo;
+}
+
+/** @deprecated Use speedComboForPunch with explicit punch selection. */
+export function pickSpeedCombo(previousId: string | null): BagCombo {
+  let pool = SPEED_COMBOS.filter(
+    (c) => expectedHits(c) === 1 && c.id !== previousId
+  );
+  if (pool.length === 0) pool = SPEED_COMBOS.filter((c) => expectedHits(c) === 1);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
 
 export function buildComboPool(
   difficulty: BagDifficulty,
@@ -75,15 +99,4 @@ export function pickWeaknessFocusedCombo(
   }
   const weights = weaknessWeights(pool, weaknesses);
   return pickWeightedCombo(pool, weights);
-}
-
-/** Rotate single punches for punch-speed drill. */
-export function pickSpeedCombo(previousId: string | null): BagCombo {
-  let pool = SPEED_COMBOS.filter(
-    (c) => expectedHits(c) === 1 && c.id !== previousId
-  );
-  if (pool.length === 0) {
-    pool = SPEED_COMBOS.filter((c) => expectedHits(c) === 1);
-  }
-  return pool[Math.floor(Math.random() * pool.length)];
 }

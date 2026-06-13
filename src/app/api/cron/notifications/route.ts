@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     if (daysSinceSignup === 1 && !last && !notif.day1Sent) {
       const n = await sendPushToDevice(user.deviceId, {
         title: "Your bag is waiting 👊",
-        body: "5 minutes is enough. Open FlowBag.",
+        body: "5 minutes is enough. Open fightflo.",
         url: "/",
       });
       if (n > 0) {
@@ -95,7 +95,7 @@ export async function GET(request: Request) {
       const topPct = await getWeeklyComboPercentile(user.weeklyCombos);
       const n = await sendPushToDevice(user.deviceId, {
         title: "Your week on the bag 🔥",
-        body: `You threw ${user.weeklyCombos} combos. Top ${topPct}% of FlowBag.`,
+        body: `You threw ${user.weeklyCombos} combos. Top ${topPct}% of fightflo.`,
         url: "/",
       });
       if (n > 0) {

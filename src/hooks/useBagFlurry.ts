@@ -11,7 +11,6 @@ import {
   prepareBagSpeech,
   speakCombo,
   speakSessionEnd,
-  speakSessionStart,
   stopSpeech,
 } from "@/lib/bag-drill/speech";
 import type {
@@ -41,10 +40,12 @@ export interface UseBagFlurryResult {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   start: (config: BagTrainingConfig) => Promise<void>;
   stop: () => BagSessionRecord | null;
+  abort: () => void;
   tapPunch: () => void;
 }
 
 const PUNCH_DEBOUNCE_MS = 90;
+const FLURRY_TICK_MS = 250;
 
 const INITIAL: BagFlurryState = {
   phase: "idle",
@@ -70,7 +71,8 @@ export function useBagFlurry(): UseBagFlurryResult {
   const cleanupAudioRef = useRef<(() => void) | null>(null);
   const registerImpactRef = useRef<() => void>(() => {});
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const flurryRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const flurryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flurryEndsAtRef = useRef(0);
   const punchCountRef = useRef(0);
   const lastPunchAtRef = useRef(0);
   const windowStartRef = useRef(0);
@@ -91,9 +93,10 @@ export function useBagFlurry(): UseBagFlurryResult {
 
   const clearTimers = useCallback(() => {
     if (countdownRef.current) clearInterval(countdownRef.current);
-    if (flurryRef.current) clearInterval(flurryRef.current);
+    if (flurryRef.current) clearTimeout(flurryRef.current);
     countdownRef.current = null;
     flurryRef.current = null;
+    flurryEndsAtRef.current = 0;
   }, []);
 
   const teardown = useCallback(() => {
@@ -155,6 +158,7 @@ export function useBagFlurry(): UseBagFlurryResult {
     scoringEnabledRef.current = true;
     phaseRef.current = "go";
     windowStartRef.current = Date.now();
+    flurryEndsAtRef.current = windowStartRef.current + seconds * 1000;
     punchCountRef.current = 0;
     peakRateRef.current = 0;
 
@@ -169,17 +173,18 @@ export function useBagFlurry(): UseBagFlurryResult {
 
     void speakCombo("Go", config.difficulty, { prefix: undefined });
 
-    let left = seconds;
-    flurryRef.current = setInterval(() => {
-      left -= 1;
+    const tick = () => {
+      if (!mountedRef.current || phaseRef.current !== "go") return;
+
+      const leftMs = flurryEndsAtRef.current - Date.now();
+      const left = Math.max(0, Math.ceil(leftMs / 1000));
       const elapsed = seconds - left;
       const rate = elapsed > 0 ? punchCountRef.current / elapsed : 0;
       if (rate > peakRateRef.current) peakRateRef.current = rate;
 
-      if (!mountedRef.current) return;
       setState((s) => ({
         ...s,
-        secondsLeft: Math.max(0, left),
+        secondsLeft: left,
         punchesPerSecond: rate,
         peakRate: peakRateRef.current,
       }));
@@ -187,8 +192,13 @@ export function useBagFlurry(): UseBagFlurryResult {
       if (left <= 0) {
         stopScoring();
         endFlurry();
+        return;
       }
-    }, 1000);
+
+      flurryRef.current = setTimeout(tick, FLURRY_TICK_MS);
+    };
+
+    tick();
   }, [endFlurry, stopScoring]);
 
   const startCountdown = useCallback(() => {
@@ -225,11 +235,12 @@ export function useBagFlurry(): UseBagFlurryResult {
         isActive: true,
         flurrySeconds: seconds,
         secondsLeft: seconds,
-        statusMessage: "Mic counts every hit — tap if the bag is quiet",
+        statusMessage: "Get ready — flurry starts after the countdown",
       });
 
       await prepareBagSpeech();
-      speakSessionStart();
+      void speakCombo(`Flurry — ${seconds} seconds`, config.difficulty);
+      startCountdown();
 
       const video = videoRef.current;
       let mode: DetectionMode = "timer-fallback";
@@ -288,16 +299,15 @@ export function useBagFlurry(): UseBagFlurryResult {
         detectionMode: mode,
         statusMessage: status,
       }));
-
-      void speakCombo(`Flurry — ${seconds} seconds`, config.difficulty, {
-        onEnd: () => {
-          if (!mountedRef.current) return;
-          startCountdown();
-        },
-      });
     },
     [registerImpact, startCountdown, teardown]
   );
+
+  const abort = useCallback(() => {
+    teardown();
+    setState({ ...INITIAL, isActive: false });
+    configRef.current = null;
+  }, [teardown]);
 
   const stop = useCallback((): BagSessionRecord | null => {
     const config = configRef.current;
@@ -338,5 +348,5 @@ export function useBagFlurry(): UseBagFlurryResult {
     registerImpact();
   }, [registerImpact]);
 
-  return { state, videoRef, start, stop, tapPunch };
+  return { state, videoRef, start, stop, abort, tapPunch };
 }

@@ -15,6 +15,7 @@ export type BagScreen =
   | "setup-config"
   | "training"
   | "speed"
+  | "speed-pick"
   | "flurry"
   | "summary"
   | "progress";
@@ -31,6 +32,9 @@ export type DetectionMode =
   | "live";
 
 export type ReactionTier = "elite" | "good" | "slow";
+
+/** Punch-speed drill UI phases — avoids flashing between GO and punch name. */
+export type SpeedPhase = "arming" | "go" | "miss" | "result";
 
 export type StrikeValidation = "correct" | "wrong" | "miss" | null;
 
@@ -135,7 +139,12 @@ export interface BagTrainingConfig {
   stance?: BagStance;
   /** Pre-flight mic + lighting calibration */
   calibration?: BagCalibration;
+  /** Punch-speed drill: which single punch to time */
+  speedStrikeId?: SpeedPunchId;
 }
+
+export const SPEED_PUNCH_IDS = ["jab", "cross", "hook", "body-shot"] as const;
+export type SpeedPunchId = (typeof SPEED_PUNCH_IDS)[number];
 
 export const FLURRY_DURATION_OPTIONS = [15, 30, 60] as const;
 export type FlurryDuration = (typeof FLURRY_DURATION_OPTIONS)[number];

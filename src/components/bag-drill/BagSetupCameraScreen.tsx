@@ -3,7 +3,8 @@
 import { useCallback, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { BackButton } from "@/components/ui/BackButton";
-import { chipClass, CAMERA_MODE_COPY } from "@/components/bag-drill/bag-ui";
+import { CAMERA_MODE_COPY } from "@/components/bag-drill/bag-ui";
+import { CameraFlipButton } from "@/components/bag-drill/CameraFlipButton";
 import type { BagStance } from "@/lib/bag-drill/calibration";
 import {
   appendMicrophoneToCapture,
@@ -13,13 +14,12 @@ import {
   type MediaCaptureHandles,
 } from "@/lib/bag-drill/media-capture";
 import type { BagCameraMode } from "@/lib/bag-drill/types";
-
-import { BAG_COPY } from "@/lib/bag-drill/copy";
+import type { CalibrationPurpose } from "@/lib/bag-drill/calibration-purpose";
 
 interface BagSetupCameraScreenProps {
   initialMode?: BagCameraMode;
   isPro?: boolean;
-  speedDrill?: boolean;
+  calibrationPurpose?: CalibrationPurpose;
   onBack: () => void;
   onContinue: (
     cameraMode: BagCameraMode,
@@ -31,10 +31,11 @@ interface BagSetupCameraScreenProps {
 
 export function BagSetupCameraScreen({
   initialMode = "fighter",
-  speedDrill = false,
+  calibrationPurpose = "combo",
   onBack,
   onContinue,
 }: BagSetupCameraScreenProps) {
+  const bagOnly = calibrationPurpose === "flurry";
   const videoRef = useRef<HTMLVideoElement>(null);
   const handlesRef = useRef<MediaCaptureHandles | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -56,33 +57,39 @@ export function BagSetupCameraScreen({
     setMicReady(false);
   }, []);
 
-  const startAccess = useCallback(async () => {
-    const video = videoRef.current;
-    if (!video || starting) return;
+  const startAccess = useCallback(
+    async (modeOverride?: BagCameraMode) => {
+      const video = videoRef.current;
+      if (!video || starting) return;
 
-    releaseCamera();
-    setStarting(true);
-    setPreviewError(null);
+      const mode = modeOverride ?? cameraMode;
+      const facingMode = mode === "fighter" ? "user" : "environment";
 
-    const result = await startMediaCapture(video, {
-      facingMode: fighterCam ? "user" : "environment",
-      highQuality: false,
-      requestMicrophone: true,
-    });
+      releaseCamera();
+      setStarting(true);
+      setPreviewError(null);
 
-    handlesRef.current = result.handles;
-    streamRef.current = result.handles.stream;
-    setCameraReady(result.hasCamera);
-    setMicReady(result.hasMic);
-    setPreviewError(
-      result.hasCamera
-        ? result.hasMic
-          ? null
-          : result.error ?? "Allow microphone when your phone prompts you"
-        : result.error ?? "Allow camera when your phone prompts you"
-    );
-    setStarting(false);
-  }, [fighterCam, releaseCamera, starting]);
+      const result = await startMediaCapture(video, {
+        facingMode,
+        highQuality: false,
+        requestMicrophone: true,
+      });
+
+      handlesRef.current = result.handles;
+      streamRef.current = result.handles.stream;
+      setCameraReady(result.hasCamera);
+      setMicReady(result.hasMic);
+      setPreviewError(
+        result.hasCamera
+          ? result.hasMic
+            ? null
+            : result.error ?? "Allow microphone when your phone prompts you"
+          : result.error ?? "Allow camera when your phone prompts you"
+      );
+      setStarting(false);
+    },
+    [cameraMode, releaseCamera, starting]
+  );
 
   const startMic = useCallback(async () => {
     const handles = handlesRef.current;
@@ -97,11 +104,16 @@ export function BagSetupCameraScreen({
     setStarting(false);
   }, [starting]);
 
-  const switchMode = (mode: BagCameraMode) => {
-    if (mode === cameraMode) return;
-    releaseCamera();
-    setCameraMode(mode);
+  const flipCamera = () => {
+    const next: BagCameraMode = cameraMode === "fighter" ? "bag" : "fighter";
+    const wasActive = cameraReady;
+    setCameraMode(next);
     setPreviewError(null);
+    if (wasActive) {
+      void startAccess(next);
+    } else {
+      releaseCamera();
+    }
   };
 
   const handleContinue = () => {
@@ -142,6 +154,8 @@ export function BagSetupCameraScreen({
   const showRetry = Boolean(previewError);
   const primaryReady = cameraReady && micReady;
 
+  const modeHint = CAMERA_MODE_COPY[cameraMode].flipHint;
+
   return (
     <div className="fixed inset-0 z-20 flex flex-col bg-black">
       <video
@@ -157,35 +171,27 @@ export function BagSetupCameraScreen({
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50" />
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <BackButton
             onClick={handleBack}
             className="border-white/20 bg-black/40 text-white backdrop-blur-sm"
           />
-          <div className="flex flex-col items-end gap-1.5">
-            <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-white/40">
-              Point camera at
+          {bagOnly ? (
+            <p className="pt-2 text-right text-[10px] font-semibold uppercase tracking-wide text-white/70">
+              Mic on bag
             </p>
-            <div className="flex gap-1 rounded-full border border-white/15 bg-black/40 p-0.5 backdrop-blur-sm">
-              {(["fighter", "bag"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => switchMode(mode)}
-                  className={`rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide ${chipClass(cameraMode === mode)}`}
-                >
-                  {CAMERA_MODE_COPY[mode].toggleLabel}
-                </button>
-              ))}
+          ) : (
+            <div className="flex flex-col items-end gap-2">
+              <CameraFlipButton
+                onClick={flipCamera}
+                disabled={starting}
+                label={`Flip to ${cameraMode === "fighter" ? "bag" : "you"} camera`}
+              />
+              <p className="max-w-[11rem] text-right text-[11px] leading-snug text-white/55">
+                {modeHint}
+              </p>
             </div>
-            <p className="text-right text-[11px] text-white/55">
-              {speedDrill
-                ? cameraMode === "fighter"
-                  ? BAG_COPY.speedCalibration.fighterNote
-                  : BAG_COPY.speedCalibration.bagNote
-                : CAMERA_MODE_COPY[cameraMode].description}
-            </p>
-          </div>
+          )}
         </div>
 
         <div className="min-h-0 flex-1" aria-hidden />

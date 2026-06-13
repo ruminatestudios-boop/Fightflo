@@ -137,7 +137,7 @@ function AdvancedDashboard({
     if (!isPro) {
       slides.push({
         id: "pro",
-        eyebrow: "FightFlo Pro",
+        eyebrow: "fightflo Pro",
         title: "All rhythms.\nStadium mode.",
         gradient: "bg-gradient-to-br from-[#fa4141]/25 via-[#1a0808] to-[#050505]",
         actions: [{ label: "View Pro", onClick: onPro, primary: true }],

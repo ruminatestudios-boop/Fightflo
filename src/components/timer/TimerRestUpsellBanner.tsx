@@ -47,7 +47,7 @@ export function TimerRestUpsellBanner({
           transition={{ type: "spring", damping: 26, stiffness: 320 }}
           className="pointer-events-auto fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 px-4"
           role="region"
-          aria-label="FlowBag suggestion"
+          aria-label="fightflo suggestion"
         >
           <button
             type="button"

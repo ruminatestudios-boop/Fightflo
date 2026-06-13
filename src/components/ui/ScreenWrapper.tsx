@@ -9,6 +9,7 @@ interface ScreenWrapperProps {
   className?: string;
   hideLogo?: boolean;
   onBack?: () => void;
+  onHome?: () => void;
   topBarTrailing?: ReactNode;
 }
 
@@ -17,6 +18,7 @@ export function ScreenWrapper({
   className = "",
   hideLogo = false,
   onBack,
+  onHome,
   topBarTrailing,
 }: ScreenWrapperProps) {
   return (
@@ -27,7 +29,7 @@ export function ScreenWrapper({
       transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
       className={`app-shell relative z-10 flex min-h-dvh flex-col bg-black px-5 pb-8 pt-10 ${className}`}
     >
-      {!hideLogo && <AppTopBar onBack={onBack} trailing={topBarTrailing} />}
+      {!hideLogo && <AppTopBar onBack={onBack} onHome={onHome} trailing={topBarTrailing} />}
       {children}
     </motion.div>
   );

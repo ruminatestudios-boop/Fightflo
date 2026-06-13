@@ -22,7 +22,7 @@ export function BagFlurryTrainingScreen({
   data,
   onStop,
 }: BagFlurryTrainingScreenProps) {
-  const { state, videoRef, start, tapPunch } = flurry;
+  const { state, videoRef, start, abort, tapPunch } = flurry;
   const seconds = config.flurrySeconds ?? 30;
   const personalBest = getBestFlurryForDuration(data, seconds);
   const showTap =
@@ -33,6 +33,9 @@ export function BagFlurryTrainingScreen({
 
   useEffect(() => {
     void start(config);
+    return () => {
+      abort();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -42,14 +45,27 @@ export function BagFlurryTrainingScreen({
     }
   }, [state.phase, onStop]);
 
+  const clockSeconds =
+    state.phase === "countdown"
+      ? state.countdown
+      : state.phase === "go"
+        ? state.secondsLeft
+        : state.flurrySeconds;
+
+  const clockVariant =
+    state.phase === "countdown" ? "countdown" : "short";
+
   const phaseLabel =
     state.phase === "countdown"
       ? "Get ready"
       : state.phase === "go"
         ? "Punch flurry"
-        : "Flurry";
+        : state.phase === "idle"
+          ? "Starting"
+          : "Flurry";
 
-  const showStatus = state.statusMessage && state.phase !== "go";
+  const showStatus =
+    state.statusMessage && state.phase !== "go" && state.phase !== "countdown";
   const showBest = personalBest != null && state.phase !== "go";
 
   return (
@@ -90,15 +106,9 @@ export function BagFlurryTrainingScreen({
 
       <div className="relative z-10 flex flex-1 items-center justify-center px-6">
         <BigClock
-          seconds={
-            state.phase === "countdown"
-              ? state.countdown
-              : state.phase === "go"
-                ? state.secondsLeft
-                : seconds
-          }
+          seconds={clockSeconds}
           totalSeconds={state.phase === "go" ? seconds : undefined}
-          variant={state.phase === "countdown" ? "countdown" : "short"}
+          variant={clockVariant}
           active={state.phase === "go"}
           running={state.phase === "go"}
           label={state.phase === "go" ? "Flurry" : undefined}

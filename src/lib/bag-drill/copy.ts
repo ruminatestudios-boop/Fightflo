@@ -60,13 +60,20 @@ export const BAG_COPY = {
       cta: "Start speed drill",
     },
   },
-  speedCalibration: {
-    title: "Tune punch detection",
-    subtitle: "Hit the bag once — we time your reaction from go to impact.",
-    step: "Throw one punch at the bag",
-    done: "Ready — throw when you hear go",
-    bagNote: "Bag cam times impact only — we call which punch to throw.",
-    fighterNote: "You cam checks punch type and times your reaction.",
+  speedPick: {
+    title: "Which punch?",
+    subtitle: "One throw on go — then see your speed.",
+    cta: "Ready",
+  },
+  speedTraining: {
+    arming: "Get ready — throw when you hear GO",
+    go: "Throw now!",
+    miss: "Missed — get ready for another GO",
+    wrong: "Wrong punch — get ready for another GO",
+    resultEyebrow: "Your speed",
+    resultLabel: "Go to impact",
+    tryAgain: "Try again",
+    done: "Done",
   },
   calibrationPermission:
     "Camera and mic needed to count punches and check your combos",
@@ -114,28 +121,127 @@ export const BAG_COPY = {
     skipWarning: "No calibration — punch counts and combo checks won't be as accurate. Camera and mic will still be requested when the round starts.",
     timeEstimate: "~30 sec",
   },
+  drillCalibration: {
+    combo: {
+      eyebrow: "Called combos",
+      intro: {
+        title: "Quick calibration",
+        subtitle:
+          "4 steps — camera, stance, guard, test punch. Needed for combo checks.",
+        steps: [
+          {
+            title: "Camera angle",
+            detail: "Phone to your side at 45° — chest height, 2–3m back",
+          },
+          { title: "Your stance", detail: "Hold your fighting stance" },
+          { title: "Guard up", detail: "Hands by your chin" },
+          { title: "One test punch", detail: "Hit the bag once" },
+        ],
+        timeEstimate: "~30 sec",
+        cta: "Start calibration",
+        skip: "Skip to workout",
+        skipWarning:
+          "Combo checks and punch counts will be less accurate without calibration.",
+      },
+      cameraNote: "You cam checks combos. Bag cam counts hits only.",
+    },
+    flurry: {
+      eyebrow: "Flurry",
+      intro: {
+        title: "Mic tune-up",
+        subtitle: "One test punch — then a 30 second non-stop sprint on the bag.",
+        steps: [
+          {
+            title: "Test punch",
+            detail: "Hit the bag once — we tune impact detection for your sprint",
+          },
+        ],
+        timeEstimate: "~5 sec",
+        cta: "Start mic test",
+        skip: "Skip to flurry",
+        skipWarning: "Hit counts may be off without tuning the mic to your bag.",
+      },
+      mic: {
+        step: "Hit the bag hard once",
+        done: "Ready — 30 second flurry",
+        note: "Mic counts every hit. Point camera at the bag or keep phone nearby.",
+        skip: "Skip mic test",
+        skipHint: "Flurry hit counts may be less accurate.",
+      },
+      cameraNote: "Mic on the bag — we count every punch in your sprint.",
+    },
+    weakness: {
+      eyebrow: "Weakness drill",
+      intro: {
+        title: "Quick calibration",
+        subtitle:
+          "Same setup as combos — we track which calls you hesitate on and need extra reps.",
+        steps: [
+          {
+            title: "Camera angle",
+            detail: "Phone to your side at 45° — chest height, 2–3m back",
+          },
+          { title: "Your stance", detail: "Hold your fighting stance" },
+          { title: "Guard up", detail: "Hands by your chin" },
+          { title: "One test punch", detail: "Hit the bag once" },
+        ],
+        timeEstimate: "~30 sec",
+        cta: "Start calibration",
+        skip: "Skip to workout",
+        skipWarning:
+          "Weakness tracking works best with calibration — combo checks may be off.",
+      },
+      cameraNote: "You cam checks combos — we flag your slowest calls.",
+    },
+    speed: {
+      eyebrow: "Punch speed",
+      intro: {
+        title: "Tune punch detection",
+        subtitle: "One test punch — we time your reaction from go to impact.",
+        steps: [
+          {
+            title: "Test punch",
+            detail: "Hit the bag once so we can hear impact timing",
+          },
+        ],
+        timeEstimate: "~5 sec",
+        cta: "Start mic test",
+        skip: "Skip calibration",
+        skipWarning: "Punch timing may be less accurate without a test hit.",
+      },
+      mic: {
+        step: "Throw one punch at the bag",
+        done: "Ready — throw when you hear go",
+        bagNote: "Bag cam times impact only — we call which punch to throw.",
+        fighterNote: "Your camera checks punch type and times your reaction.",
+        skip: "Skip calibration",
+        skipHint: "Punch timing may be less accurate without a test hit.",
+      },
+      cameraNote: "You cam checks the punch. Bag cam times the hit.",
+    },
+  },
   upgradeBody:
     "Unlimited rounds, full history, progress charts, and corner feedback. Cancel anytime.",
   timerUpsellTitle: "Want boxing combos called on the bag?",
   timerUpsellBody:
-    "FlowBag calls jab-cross-hook in your ear, counts punches, checks your combo, and flags dropped hands.",
+    "fightflo calls jab-cross-hook in your ear, counts punches, checks your combo, and flags dropped hands.",
   timerBanner:
-    "Free boxing bag trainer → FlowBag calls combos and counts your punches",
+    "Free boxing bag trainer → fightflo calls combos and counts your punches",
   timerHomeTeaser: "Want boxing combos called on the bag?",
   timerRestTitle: "Know if you landed that combo",
-  timerRestSubtitle: "FlowBag counts punches and checks your boxing sequence",
+  timerRestSubtitle: "fightflo counts punches and checks your boxing sequence",
   timerRound3Title: "Still training without combo checks?",
-  timerRound3Subtitle: "FlowBag boxing drills are free to try 👇",
+  timerRound3Subtitle: "fightflo boxing drills are free to try 👇",
   timerUpsellCtaAfter3:
-    "Want combo checks on the bag? FlowBag boxing is free to try →",
-  pageTitle: "FlowBag — Boxing Heavy Bag Trainer",
+    "Want combo checks on the bag? fightflo boxing is free to try →",
+  pageTitle: "fightflo — Boxing Heavy Bag Trainer",
   pageDescription:
     "Boxing heavy bag trainer with called combos, punch counting, combo checks, and guard alerts.",
   hubLabel: "Boxing bag training",
   gettingStartedScored:
     "Three steps before your first scored boxing round on the bag.",
   streakLine: "bag streak — don't break the chain.",
-  installTitle: "Install FlowBag on this device",
+  installTitle: "Install fightflo on this device",
   installBody:
     "Open from your dock or home screen — faster launch, full-screen training, works offline.",
   installCta: "Install app",
@@ -165,11 +271,12 @@ export const COMING_SOON_COPY = {
 /** Camera angle — what the app can score from that view. */
 export const CAMERA_MODE_COPY: Record<
   BagCameraMode,
-  { toggleLabel: string; flipLabel: string; description: string; summary: string; calibrationNote: string }
+  { toggleLabel: string; flipLabel: string; flipHint: string; description: string; summary: string; calibrationNote: string }
 > = {
   fighter: {
     toggleLabel: "You",
     flipLabel: "You",
+    flipHint: "You — checks your punch",
     description: "Front camera on you — counts punches and checks your combo.",
     summary: "Camera on you — full scoring.",
     calibrationNote: "Combo check uses this mode — 45° side angle works best.",
@@ -177,6 +284,7 @@ export const CAMERA_MODE_COPY: Record<
   bag: {
     toggleLabel: "Bag",
     flipLabel: "Bag",
+    flipHint: "Bag — times the hit",
     description: "Back camera on the bag — counts hits only, no combo check.",
     summary: "Camera on bag — hit count only.",
     calibrationNote: "Mic-only calibration — no body pose needed.",

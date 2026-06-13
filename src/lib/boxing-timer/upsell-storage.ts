@@ -4,7 +4,7 @@ const KEY = "fightflo-timer-upsell";
 
 export interface TimerUpsellStats {
   timerSessionsCompleted: number;
-  /** First-visit FlowBag link tooltip (moment 3) */
+  /** First-visit fightflo link tooltip (moment 3) */
   hasSeenUpsell: boolean;
   clickedFlowBag: boolean;
 }
@@ -51,12 +51,12 @@ export function markUpsellTooltipSeen(): TimerUpsellStats {
 
 /** Progressive home-link CTA based on session count */
 export function getFlowBagLinkCta(stats = loadTimerUpsellStats()): string {
-  if (stats.clickedFlowBag) return "Try FlowBag →";
+  if (stats.clickedFlowBag) return "Try fightflo →";
   if (stats.timerSessionsCompleted >= 7) {
     return "You've done 7 sessions. See what you've been missing →";
   }
   if (stats.timerSessionsCompleted >= 3) {
     return BAG_COPY.timerUpsellCtaAfter3;
   }
-  return "Try FlowBag →";
+  return "Try fightflo →";
 }
