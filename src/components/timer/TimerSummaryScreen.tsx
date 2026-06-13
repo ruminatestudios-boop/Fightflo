@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { TimerEmailCaptureFields } from "@/components/timer/TimerEmailCaptureFields";
 import { useTimerEmailCapture } from "@/hooks/useTimerEmailCapture";
+import { BAG_COPY } from "@/lib/bag-drill/copy";
 import { shouldShowEmailCapture } from "@/lib/boxing-timer/email-capture-storage";
 import { recordFlowBagClick } from "@/lib/boxing-timer/upsell-storage";
 import type { TimerSessionStats } from "@/lib/boxing-timer/types";
@@ -47,7 +48,7 @@ export function TimerSummaryScreen({
         className="flex flex-1 flex-col"
       >
         <div className="text-center">
-          <p className="label text-[#ff0000]">
+          <p className="label text-[#fa4141]">
             {finished ? "Session complete" : "Session ended"}
           </p>
           <h1 className="font-display mt-3 text-3xl tracking-wide text-white">
@@ -74,11 +75,10 @@ export function TimerSummaryScreen({
         {showCaptureBlock && (
           <div className="mx-auto mt-10 w-full max-w-sm flex-1 text-center">
             <h2 className="font-display text-2xl leading-tight tracking-wide text-white">
-              Want AI to score your bag work?
+              {BAG_COPY.timerUpsellTitle}
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-[#a3a3a3]">
-              Get free access to FlowBag — AI that watches you on the bag,
-              detects combos and catches when your guard drops.
+              {BAG_COPY.timerUpsellBody}
             </p>
             <div className="mt-8">
               <TimerEmailCaptureFields
@@ -117,13 +117,13 @@ export function TimerSummaryScreen({
           capture.status !== "already" && (
             <div className="mx-auto mt-10 w-full max-w-xs space-y-3">
               {!isPro && skipped && (
-                <Link href="/bag" onClick={() => recordFlowBagClick()} className="block">
+                <Link href="/" onClick={() => recordFlowBagClick()} className="block">
                   <Button variant="secondary">Try FlowBag free</Button>
                 </Link>
               )}
               <Button onClick={onAgain}>New session</Button>
               {isPro && (
-                <Link href="/bag" className="block">
+                <Link href="/" className="block">
                   <Button variant="secondary">Open FlowBag</Button>
                 </Link>
               )}

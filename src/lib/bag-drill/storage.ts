@@ -150,6 +150,17 @@ export function getLastSession(data: FightFloBagData): BagSessionRecord | null {
   return data.sessions[data.sessions.length - 1] ?? null;
 }
 
+/** Enough data for last-session stats to be useful — not a partial or test round. */
+export function hasMeaningfulSessionHistory(data: FightFloBagData): boolean {
+  if (data.sessions.length >= 2) return true;
+  const last = getLastSession(data);
+  if (!last) return false;
+  if (last.sessionType === "flurry") {
+    return last.totalPunches >= 12;
+  }
+  return last.totalPunches >= 8 && last.duration >= 45;
+}
+
 export function getSessionsLast7Days(data: FightFloBagData): BagSessionRecord[] {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 7);

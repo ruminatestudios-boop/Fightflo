@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   pickNextCombo,
+  pickSpeedCombo,
   pickWeaknessFocusedCombo,
   shouldChampionMidSwap,
 } from "@/lib/bag-drill/combo-picker";
@@ -10,6 +11,7 @@ import { fetchComboFeedback } from "@/lib/bag-drill/detection/fetch-combo-feedba
 import type { GuardState } from "@/lib/bag-drill/detection/guard-monitor";
 import { PunchDetectionEngine } from "@/lib/bag-drill/detection/punch-detection-engine";
 import {
+  attachExistingStream,
   createAudioImpactDetector,
   startMediaCapture,
   type MediaCaptureHandles,
@@ -37,6 +39,11 @@ import {
   validateBagComboHits,
 } from "@/lib/bag-drill/strike-validator";
 import { computeSessionWeaknesses } from "@/lib/bag-drill/weakness";
+import {
+  fastestStrikeId,
+  recordStrikeSpeed,
+  strikeLabel,
+} from "@/lib/bag-drill/strike-speed";
 import { loadBagData } from "@/lib/bag-drill/storage";
 import type { BagStance } from "@/lib/bag-drill/calibration";
 import type {
@@ -75,12 +82,18 @@ export interface BagTrainingState {
   guardWarning: GuardState | null;
   comboCoachTip: string | null;
   guardDropCount: number;
+  /** Punch-speed drill: time for the last logged strike */
+  lastStrikeSpeedSeconds: number | null;
+  lastStrikeSpeedLabel: string | null;
 }
 
 export interface UseBagDrillResult {
   state: BagTrainingState;
   videoRef: React.RefObject<HTMLVideoElement | null>;
-  start: (config: BagTrainingConfig) => Promise<void>;
+  start: (
+    config: BagTrainingConfig,
+    options?: { mediaStream?: MediaStream | null }
+  ) => Promise<void>;
   stop: () => BagSessionRecord | null;
   tapPunch: () => void;
   disputeStrike: () => void;
@@ -112,6 +125,8 @@ const INITIAL: BagTrainingState = {
   guardWarning: null,
   comboCoachTip: null,
   guardDropCount: 0,
+  lastStrikeSpeedSeconds: null,
+  lastStrikeSpeedLabel: null,
 };
 
 const PUNCH_DEBOUNCE_MS = 110;
@@ -153,6 +168,9 @@ export function useBagDrill(): UseBagDrillResult {
   const lastAiHitRef = useRef<{ id: string; at: number } | null>(null);
   const finishComboRoundRef = useRef<(v: StrikeValidation) => void>(() => {});
   const weaknessFocusRef = useRef(false);
+  const speedModeRef = useRef(false);
+  const strikeSpeedsRef = useRef<Record<string, number[]>>({});
+  const lastHitTimeRef = useRef(0);
   const disputeUsedRef = useRef(false);
   const totalPunchesRef = useRef(0);
   const sessionStartedAtRef = useRef("");
@@ -185,7 +203,9 @@ export function useBagDrill(): UseBagDrillResult {
     poseDetectionRef.current = false;
     cleanupAudioRef.current?.();
     cleanupAudioRef.current = null;
+    const stream = mediaRef.current?.stream;
     mediaRef.current?.stop();
+    stream?.getTracks().forEach((track) => track.stop());
     mediaRef.current = null;
     inWindowRef.current = false;
     comboResolvedRef.current = false;
@@ -204,6 +224,28 @@ export function useBagDrill(): UseBagDrillResult {
   const syncStrikeLog = useCallback((log: StrikeLogEntry[], extra?: Partial<BagTrainingState>) => {
     strikeLogRef.current = log;
     setState((s) => ({ ...s, strikeLog: log, ...extra }));
+  }, []);
+
+  const logStrikeSpeed = useCallback((strikeId: string, now: number) => {
+    if (!speedModeRef.current) return;
+
+    let deltaSec = 0;
+    if (strikeIndexRef.current === 0 && timerStartedRef.current) {
+      deltaSec = (now - timerStartedRef.current) / 1000;
+    } else if (lastHitTimeRef.current > 0) {
+      deltaSec = (now - lastHitTimeRef.current) / 1000;
+    }
+    lastHitTimeRef.current = now;
+    strikeSpeedsRef.current = recordStrikeSpeed(
+      strikeSpeedsRef.current,
+      strikeId,
+      deltaSec
+    );
+    setState((s) => ({
+      ...s,
+      lastStrikeSpeedSeconds: deltaSec,
+      lastStrikeSpeedLabel: strikeLabel(strikeId),
+    }));
   }, []);
 
   const initStrikeLog = useCallback((combo: BagCombo) => {
@@ -314,6 +356,8 @@ export function useBagDrill(): UseBagDrillResult {
 
       markStrikeHit(strikeIndexRef.current, false);
 
+      logStrikeSpeed(expected.id, now);
+
       if (strikeIndexRef.current === 0 && timerStartedRef.current) {
         const sec = (now - timerStartedRef.current) / 1000;
         setState((s) => ({
@@ -337,7 +381,7 @@ export function useBagDrill(): UseBagDrillResult {
         finishComboRoundRef.current("correct");
       }
     },
-    [markStrikeHit, scheduleMicBackupHint, syncStrikeLog]
+    [markStrikeHit, scheduleMicBackupHint, syncStrikeLog, logStrikeSpeed]
   );
 
   registerAiHitRef.current = registerAiHit;
@@ -463,6 +507,10 @@ export function useBagDrill(): UseBagDrillResult {
     if (now - lastPunchAtRef.current < PUNCH_DEBOUNCE_MS) return;
     lastPunchAtRef.current = now;
 
+    const idx = hitsInComboRef.current;
+    const sequence = hitStrikes(combo);
+    const expected = sequence[idx];
+
     if (hitsInComboRef.current === 0 && timerStartedRef.current) {
       const sec = (now - timerStartedRef.current) / 1000;
       setState((s) => ({
@@ -472,20 +520,23 @@ export function useBagDrill(): UseBagDrillResult {
       }));
     }
 
-    const idx = hitsInComboRef.current;
+    if (expected) {
+      logStrikeSpeed(expected.id, now);
+    }
+
     hitsInComboRef.current += 1;
     markStrikeHit(idx, false);
     setState((s) => ({ ...s, hitsInCombo: hitsInComboRef.current }));
 
-    const expected = expectedHits(combo);
+    const expectedCount = expectedHits(combo);
     if (
       cameraModeRef.current === "bag" &&
-      hitsInComboRef.current >= expected &&
-      expected > 0
+      hitsInComboRef.current >= expectedCount &&
+      expectedCount > 0
     ) {
       finishComboRound("correct");
     }
-  }, [finishComboRound, markStrikeHit]);
+  }, [finishComboRound, logStrikeSpeed, markStrikeHit]);
 
   registerImpactRef.current = registerImpact;
 
@@ -501,6 +552,7 @@ export function useBagDrill(): UseBagDrillResult {
       lastAiHitRef.current = null;
       timerStartedRef.current = Date.now();
       lastPunchAtRef.current = 0;
+      lastHitTimeRef.current = 0;
 
       const windowMs = comboWindowMs(
         combo,
@@ -571,13 +623,15 @@ export function useBagDrill(): UseBagDrillResult {
 
     const bagData = loadBagData();
     const weaknesses = bagData.weaknesses;
-    const combo = weaknessFocusRef.current
-      ? pickWeaknessFocusedCombo(
-          config.difficulty,
-          weaknesses,
-          previousComboIdRef.current
-        )
-      : pickNextCombo(config.difficulty, weaknesses, previousComboIdRef.current);
+    const combo = speedModeRef.current
+      ? pickSpeedCombo(previousComboIdRef.current)
+      : weaknessFocusRef.current
+        ? pickWeaknessFocusedCombo(
+            config.difficulty,
+            weaknesses,
+            previousComboIdRef.current
+          )
+        : pickNextCombo(config.difficulty, weaknesses, previousComboIdRef.current);
     previousComboIdRef.current = combo.id;
     currentComboRef.current = combo;
     comboRetryRef.current = 0;
@@ -612,6 +666,7 @@ export function useBagDrill(): UseBagDrillResult {
     lastPunchAtRef.current = now;
 
     markStrikeHit(idx, true);
+    logStrikeSpeed(expected.id, now);
     strikeIndexRef.current += 1;
     hitsInComboRef.current = strikeIndexRef.current;
     const sequence = hitStrikes(combo);
@@ -627,7 +682,7 @@ export function useBagDrill(): UseBagDrillResult {
     } else {
       scheduleMicBackupHint();
     }
-  }, [finishComboRound, markStrikeHit, registerImpact, scheduleMicBackupHint]);
+  }, [finishComboRound, logStrikeSpeed, markStrikeHit, registerImpact, scheduleMicBackupHint]);
 
   const disputeStrike = useCallback(() => {
     if (disputeUsedRef.current || comboResolvedRef.current) return;
@@ -668,7 +723,10 @@ export function useBagDrill(): UseBagDrillResult {
   );
 
   const start = useCallback(
-    async (config: BagTrainingConfig) => {
+    async (
+      config: BagTrainingConfig,
+      options?: { mediaStream?: MediaStream | null }
+    ) => {
       if (startedRef.current) return;
       teardown();
       startedRef.current = true;
@@ -677,6 +735,9 @@ export function useBagDrill(): UseBagDrillResult {
       stanceRef.current = config.stance ?? config.calibration?.stance ?? "orthodox";
       micThresholdRef.current = config.calibration?.micThreshold;
       weaknessFocusRef.current = config.weaknessFocus ?? false;
+      speedModeRef.current = config.drillMode === "speed";
+      strikeSpeedsRef.current = {};
+      lastHitTimeRef.current = 0;
       sessionStartedAtRef.current = new Date().toISOString();
       totalPunchesRef.current = 0;
       elapsedRef.current = 0;
@@ -704,10 +765,18 @@ export function useBagDrill(): UseBagDrillResult {
       speakSessionStart();
 
       if (video) {
-        const media = await startMediaCapture(video, {
-          facingMode: config.cameraMode === "fighter" ? "user" : "environment",
-          highQuality: false,
-        });
+        const existing = options?.mediaStream;
+        const liveStream = existing?.getVideoTracks().some(
+          (track) => track.readyState === "live"
+        )
+          ? existing
+          : null;
+        const media = liveStream
+          ? await attachExistingStream(video, liveStream)
+          : await startMediaCapture(video, {
+              facingMode: config.cameraMode === "fighter" ? "user" : "environment",
+              highQuality: false,
+            });
         mediaRef.current = media.handles;
 
         if (media.hasCamera && media.hasMic && media.handles.stream) {
@@ -848,7 +917,7 @@ export function useBagDrill(): UseBagDrillResult {
       date: new Date().toISOString().slice(0, 10),
       startedAt: sessionStartedAtRef.current,
       duration,
-      sessionType: "combo",
+      sessionType: config.drillMode,
       totalPunches: totalPunchesRef.current || reactions.length,
       avgReactionTime: Math.round(avg * 100) / 100,
       fastestReaction: Math.round(fastest * 100) / 100,
@@ -858,6 +927,12 @@ export function useBagDrill(): UseBagDrillResult {
       cameraMode: config.cameraMode,
       comboReactions,
       guardDrops,
+      ...(config.drillMode === "speed" && Object.keys(strikeSpeedsRef.current).length > 0
+        ? {
+            strikeSpeeds: { ...strikeSpeedsRef.current },
+            fastestStrikeId: fastestStrikeId(strikeSpeedsRef.current),
+          }
+        : {}),
     };
 
     setState({ ...INITIAL, isActive: false });

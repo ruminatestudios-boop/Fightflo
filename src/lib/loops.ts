@@ -1,3 +1,8 @@
+import {
+  comingSoonUserGroup,
+  type ComingSoonInterest,
+} from "@/lib/bag-drill/coming-soon-interests";
+
 export interface LoopsContactResult {
   ok: boolean;
   skipped?: boolean;
@@ -40,6 +45,52 @@ export async function createLoopsContact(
     return { ok: false };
   } catch (err) {
     console.error("[loops] contact create error:", err);
+    return { ok: false };
+  }
+}
+
+export async function createComingSoonLoopsContact(
+  email: string,
+  interestedIn: ComingSoonInterest[]
+): Promise<LoopsContactResult> {
+  const apiKey = process.env.LOOPS_API_KEY;
+  if (!apiKey) {
+    return { ok: false, skipped: true };
+  }
+
+  const waitlistMuayThai = interestedIn.includes("muaythai");
+  const waitlistKickboxing = interestedIn.includes("kickboxing");
+
+  try {
+    const res = await fetch("https://app.loops.so/api/v1/contacts/create", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        source: "coming_soon_banner",
+        userGroup: comingSoonUserGroup(interestedIn),
+        waitlistMuayThai,
+        waitlistKickboxing,
+        interestedIn: interestedIn.join(","),
+        subscribed: true,
+        mailingLists: {},
+      }),
+    });
+
+    if (res.ok) return { ok: true };
+
+    const body = await res.text();
+    if (res.status === 409 || /already exists|duplicate/i.test(body)) {
+      return { ok: true, duplicate: true };
+    }
+
+    console.error("[loops] coming soon contact failed:", res.status, body);
+    return { ok: false };
+  } catch (err) {
+    console.error("[loops] coming soon contact error:", err);
     return { ok: false };
   }
 }

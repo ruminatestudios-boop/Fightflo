@@ -2,6 +2,15 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/bag",
+        destination: "/",
+        permanent: true,
+      },
+    ];
+  },
   // Allow phone on local network to load dev JS bundles
   allowedDevOrigins: [
     "192.168.1.119",

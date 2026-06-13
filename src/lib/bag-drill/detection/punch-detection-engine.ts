@@ -1,18 +1,32 @@
 "use client";
 
-import type { PoseLandmarker } from "@mediapipe/tasks-vision";
+import type { HandLandmarker, PoseLandmarker } from "@mediapipe/tasks-vision";
 import type { BagStance } from "../calibration";
 import { ComboSequencer, type CompletedCombo } from "./combo-sequencer";
 import {
   FUSION_WINDOW_MS,
   GUARD_CHECK_MS,
   MIN_LOG_CONFIDENCE,
+  PUNCH_COOLDOWN_MS,
 } from "./constants";
 import { GuardMonitor, type GuardBaseline, type GuardState } from "./guard-monitor";
+import {
+  createHandLandmarker,
+  detectHands,
+  resetHandLandmarker,
+} from "./hand-landmarker";
 import { bodyVisible } from "./landmarks";
 import { MicPunchDetector } from "./mic-punch-detector";
-import { classifyPunch, type ClassifiedPunch } from "./punch-classifier";
-import { createPoseLandmarker, detectPose } from "./pose-landmarker";
+import {
+  classifyPunchTemporal,
+  type ClassifiedPunch,
+} from "./punch-classifier";
+import {
+  createPoseLandmarker,
+  detectPose,
+  resetPoseLandmarker,
+} from "./pose-landmarker";
+import { TemporalMotionBuffer } from "./temporal-motion-buffer";
 import { WristVelocityTracker } from "./wrist-velocity";
 
 export interface DevAccuracyLog {
@@ -20,6 +34,9 @@ export interface DevAccuracyLog {
   micFired: boolean;
   mediapipeFired: boolean;
   velocityFired: boolean;
+  handTracked: boolean;
+  temporalFrames: number;
+  poseTier: string;
   allThreeFired: boolean;
   punchLogged: boolean;
   confidence: number;
@@ -48,16 +65,22 @@ interface SignalEvent {
 export class PunchDetectionEngine {
   private readonly options: PunchDetectionEngineOptions;
   private landmarker: PoseLandmarker | null = null;
+  private handLandmarker: HandLandmarker | null = null;
+  private poseGpu = false;
+  private handGpu = false;
+  private poseTier = "lite";
   private mic: MicPunchDetector | null = null;
   private velocity = new WristVelocityTracker();
+  private motion = new TemporalMotionBuffer();
   private guard = new GuardMonitor();
   private combo = new ComboSequencer((c) => this.handleComboFlush(c));
   private rafId: number | null = null;
   private guardInterval: ReturnType<typeof setInterval> | null = null;
-  private lastPoseAt = 0;
   private frameNumber = 0;
   private running = false;
   private lastLandmarks: import("@mediapipe/tasks-vision").NormalizedLandmark[] | null =
+    null;
+  private lastHands: import("@mediapipe/tasks-vision").NormalizedLandmark[][] | null =
     null;
   private signals: SignalEvent[] = [];
   private lastVelocityHit: import("./wrist-velocity").VelocityHit | null = null;
@@ -70,9 +93,18 @@ export class PunchDetectionEngine {
     }
   }
 
-  async start(): Promise<{ gpu: boolean }> {
-    const { landmarker, gpu } = await createPoseLandmarker();
+  async start(): Promise<{ gpu: boolean; poseTier: string }> {
+    const [{ landmarker, gpu, tier }, handPack] = await Promise.all([
+      createPoseLandmarker(),
+      createHandLandmarker(),
+    ]);
+
     this.landmarker = landmarker;
+    this.handLandmarker = handPack.landmarker;
+    this.poseGpu = gpu;
+    this.handGpu = handPack.gpu;
+    this.poseTier = tier;
+
     if (!gpu) this.options.onGpuFallback?.();
 
     this.mic = new MicPunchDetector({
@@ -94,7 +126,7 @@ export class PunchDetectionEngine {
       this.options.onGuardWarning(state);
     }, GUARD_CHECK_MS);
 
-    return { gpu };
+    return { gpu, poseTier: tier };
   }
 
   stop(): void {
@@ -107,7 +139,12 @@ export class PunchDetectionEngine {
     this.mic = null;
     this.landmarker?.close();
     this.landmarker = null;
+    this.handLandmarker?.close();
+    this.handLandmarker = null;
+    resetPoseLandmarker();
+    resetHandLandmarker();
     this.velocity.reset();
+    this.motion.clear();
     this.combo.reset();
     this.guard.reset();
   }
@@ -140,8 +177,24 @@ export class PunchDetectionEngine {
     const w = video.videoWidth;
     const h = video.videoHeight;
 
+    const runHandThisFrame =
+      this.handLandmarker != null &&
+      (this.handGpu || this.frameNumber % 2 === 0);
+
+    if (runHandThisFrame && this.handLandmarker) {
+      const handResult = detectHands(this.handLandmarker, video, now);
+      this.lastHands = handResult?.landmarks ?? null;
+    }
+
+    this.motion.push({
+      at: now,
+      landmarks,
+      hands: this.lastHands,
+      width: w,
+      height: h,
+    });
+
     if (bodyVisible(landmarks)) {
-      this.lastPoseAt = now;
       this.pushSignal("pose", now);
     }
 
@@ -151,7 +204,7 @@ export class PunchDetectionEngine {
       this.pushSignal("velocity", now);
     }
 
-    this.tryFuse(landmarks, w, h, now);
+    this.tryFuse(now);
   }
 
   private pushSignal(kind: SignalEvent["kind"], at: number): void {
@@ -160,12 +213,11 @@ export class PunchDetectionEngine {
     this.signals = this.signals.filter((s) => s.at >= cutoff);
   }
 
-  private tryFuse(
-    landmarks: import("@mediapipe/tasks-vision").NormalizedLandmark[],
-    width: number,
-    height: number,
-    now: number
-  ): void {
+  private tryFuse(now: number): void {
+    const landmarks = this.lastLandmarks;
+    if (!landmarks) return;
+
+    const height = this.options.video.videoHeight || 480;
     const recent = this.signals.filter((s) => now - s.at <= FUSION_WINDOW_MS);
     const micFired = recent.some((s) => s.kind === "mic");
     const mediapipeFired = recent.some((s) => s.kind === "pose");
@@ -175,14 +227,17 @@ export class PunchDetectionEngine {
     let punchLogged = false;
     let confidence = 0;
     const guardState = this.guard.check(landmarks, height);
+    const temporalFrames = this.motion.getRecent();
 
-    if (allThree && this.lastVelocityHit && now - this.lastPunchAt > 120) {
-      const classified = classifyPunch(
-        landmarks,
+    if (
+      allThree &&
+      this.lastVelocityHit &&
+      now - this.lastPunchAt > PUNCH_COOLDOWN_MS
+    ) {
+      const classified = classifyPunchTemporal(
+        temporalFrames,
         this.options.stance,
-        this.lastVelocityHit,
-        width,
-        height
+        this.lastVelocityHit
       );
       if (classified && classified.confidence >= MIN_LOG_CONFIDENCE) {
         punchLogged = true;
@@ -190,6 +245,7 @@ export class PunchDetectionEngine {
         this.lastPunchAt = now;
         this.guard.recordPunch();
         this.signals = [];
+        this.motion.clear();
         this.combo.push(classified.punchNumber);
         this.options.onPunch(classified);
       }
@@ -201,6 +257,9 @@ export class PunchDetectionEngine {
         micFired,
         mediapipeFired,
         velocityFired,
+        handTracked: (this.lastHands?.length ?? 0) > 0,
+        temporalFrames: temporalFrames.length,
+        poseTier: this.poseTier,
         allThreeFired: allThree,
         punchLogged,
         confidence,

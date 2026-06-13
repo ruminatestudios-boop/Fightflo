@@ -42,7 +42,7 @@ export async function sendPushToDevice(
           JSON.stringify({
             title: payload.title,
             body: payload.body,
-            url: payload.url ?? "/bag",
+            url: payload.url ?? "/",
           })
         );
         sent += 1;

@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { SessionControlBar } from "@/components/training/SessionControlBar";
+import { BigClock } from "@/components/training/BigClock";
 import type { SessionMoveDisplay } from "@/lib/session-move-label";
 
 export type SessionTimerMode = "countdown" | "active" | "rest";
@@ -23,12 +24,6 @@ interface SessionTimerUIProps {
   onResume?: () => void;
   onStop: () => void;
   onSkipRest?: () => void;
-}
-
-function formatTime(s: number): string {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${m}:${sec.toString().padStart(2, "0")}`;
 }
 
 export function SessionTimerUI({
@@ -55,12 +50,6 @@ export function SessionTimerUI({
   const isRest = mode === "rest";
   const isCountdown = mode === "countdown";
   const isGo = isCountdown && seconds === 0;
-
-  const displayTime = isCountdown
-    ? isGo
-      ? "GO"
-      : String(seconds)
-    : formatTime(seconds);
 
   const roundLabel = isRest
     ? `Next · Round ${currentRound} of ${totalRounds}`
@@ -142,65 +131,19 @@ export function SessionTimerUI({
               </p>
             )}
 
-            {/* Hero timer — 40vh */}
-            <div
-              className="relative flex items-center justify-center"
-              style={{ height: "40vh", width: "40vh", maxHeight: 360, maxWidth: 360 }}
-            >
-              {!isCountdown && progress != null && (
-                <svg
-                  className="absolute inset-0 h-full w-full -rotate-90"
-                  viewBox="0 0 200 200"
-                  aria-hidden
-                >
-                  <circle
-                    cx="100"
-                    cy="100"
-                    r="94"
-                    fill="none"
-                    stroke="rgba(255,255,255,0.06)"
-                    strokeWidth="2"
-                  />
-                  <motion.circle
-                    cx="100"
-                    cy="100"
-                    r="94"
-                    fill="none"
-                    stroke={urgent ? "#fa4141" : isRest ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.35)"}
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeDasharray={2 * Math.PI * 94}
-                    animate={{
-                      strokeDashoffset: 2 * Math.PI * 94 * (1 - progress),
-                    }}
-                    transition={{ duration: 0.35, ease: "easeOut" }}
-                  />
-                </svg>
-              )}
-
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={displayTime + (isPaused ? "-paused" : "")}
-                  initial={{ opacity: 0.5, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.04 }}
-                  transition={{ duration: 0.15 }}
-                  className={`relative z-10 text-center font-display font-bold leading-none tracking-tight ${
-                    isCountdown
-                      ? isGo
-                        ? "text-[clamp(5rem,22vw,9rem)] text-[#fa4141]"
-                        : "text-[clamp(6rem,28vw,10rem)] text-white"
-                      : `text-[clamp(3.5rem,16vw,6.5rem)] tabular-nums ${
-                          urgent ? "text-[#fa4141]" : "text-white"
-                        }`
-                  }`}
-                >
-                  {displayTime}
-                </motion.p>
-              </AnimatePresence>
-
+            {/* Hero timer */}
+            <div className="relative flex w-full items-center justify-center py-4">
+              <BigClock
+                seconds={seconds}
+                totalSeconds={!isCountdown && progress != null ? totalSeconds : undefined}
+                variant={isCountdown ? "countdown" : "session"}
+                isGo={isGo}
+                urgent={urgent}
+                running={!isPaused && !isCountdown}
+                label={isRest ? "Rest" : undefined}
+              />
               {isPaused && (
-                <p className="absolute -bottom-2 text-[10px] uppercase tracking-[0.2em] text-white/50">
+                <p className="absolute -bottom-1 text-[10px] uppercase tracking-[0.2em] text-white/50">
                   Paused
                 </p>
               )}

@@ -2,6 +2,7 @@ import {
   BAG_COMBOS,
   championMidSetSwapChance,
   defensiveCallChance,
+  SPEED_COMBOS,
 } from "./combos";
 import { pickWeightedCombo, topWeaknesses, weaknessWeights } from "./weakness";
 import type { BagCombo, BagDifficulty } from "./types";
@@ -73,4 +74,11 @@ export function pickWeaknessFocusedCombo(
   }
   const weights = weaknessWeights(pool, weaknesses);
   return pickWeightedCombo(pool, weights);
+}
+
+/** Rotate single punches and short pairs for punch-speed drill. */
+export function pickSpeedCombo(previousId: string | null): BagCombo {
+  let pool = SPEED_COMBOS.filter((c) => c.id !== previousId);
+  if (pool.length === 0) pool = [...SPEED_COMBOS];
+  return pool[Math.floor(Math.random() * pool.length)];
 }

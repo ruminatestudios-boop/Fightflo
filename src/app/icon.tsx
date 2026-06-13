@@ -27,13 +27,13 @@ export default function Icon() {
           }}
         >
           <span>F</span>
-          <span style={{ color: "#ff1a1a" }}>F</span>
+          <span style={{ color: "#fa4141" }}>F</span>
         </div>
         <div
           style={{
             width: 80,
             height: 3,
-            background: "#ff1a1a",
+            background: "#fa4141",
             marginTop: 12,
           }}
         />

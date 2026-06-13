@@ -1,4 +1,9 @@
 import { topWeaknesses, averageReactionTime } from "./weakness";
+import {
+  formatStrikeSpeed,
+  strikeLabel,
+  summariseStrikeSpeeds,
+} from "./strike-speed";
 import type {
   BagDrillMode,
   BagSessionRecord,
@@ -49,8 +54,26 @@ export function getSessionInsight(
     };
   }
 
+  if (session.sessionType === "speed" && session.strikeSpeeds) {
+    const ranked = summariseStrikeSpeeds(session.strikeSpeeds);
+    if (ranked.length >= 2) {
+      const fastest = ranked[0];
+      const slowest = ranked[ranked.length - 1];
+      return {
+        headline: `Fastest: ${fastest.label} (${formatStrikeSpeed(fastest.avgSeconds)})`,
+        detail: `Slowest: ${slowest.label} (${formatStrikeSpeed(slowest.avgSeconds)}). Compare punch by punch.`,
+      };
+    }
+    if (ranked.length === 1) {
+      return {
+        headline: `${ranked[0].label} avg ${formatStrikeSpeed(ranked[0].avgSeconds)}`,
+        detail: "Throw more punches next round to compare jab vs cross vs hook.",
+      };
+    }
+  }
+
   const prevSessions = data.sessions.filter(
-    (s) => s !== session && s.sessionType !== "flurry"
+    (s) => s !== session && s.sessionType !== "flurry" && s.sessionType !== "speed"
   );
   const prev = prevSessions[prevSessions.length - 1];
 
@@ -102,12 +125,12 @@ export function getSessionInsight(
   if (session.accuracyPercent >= 90) {
     return {
       headline: "Clean round",
-      detail: `${session.accuracyPercent}% combo accuracy — step up difficulty.`,
+      detail: `${session.accuracyPercent}% combo match — step up difficulty.`,
     };
   }
 
   return {
-    headline: `${session.accuracyPercent}% accuracy`,
+    headline: `${session.accuracyPercent}% combo match`,
     detail: "Keep hands up and wait for the call before you throw.",
   };
 }
@@ -118,13 +141,26 @@ export function getNextSessionRecommendation(
 ): NextSessionRecommendation {
   if (session.sessionType === "flurry") {
     return {
-      title: "Combo drill — 5 min",
-      detail: "Switch to called combos to work technique after volume.",
+      title: "Called combos — 5 min",
+      detail: "Switch to coached combos after your flurry.",
       config: {
         drillMode: "combo",
         difficulty: "fighter",
         timing: { ...defaultTiming("fighter"), durationSeconds: 300 },
         weaknessFocus: false,
+      },
+    };
+  }
+
+  if (session.sessionType === "speed") {
+    return {
+      title: "Weakness drill — 5 min",
+      detail: "Turn timing data into combo reps on your slowest calls.",
+      config: {
+        drillMode: "combo",
+        difficulty: "fighter",
+        weaknessFocus: true,
+        timing: { ...defaultTiming("fighter"), durationSeconds: 300 },
       },
     };
   }

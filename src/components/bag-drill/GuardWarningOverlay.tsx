@@ -21,7 +21,7 @@ export function GuardWarningOverlay({ guard }: GuardWarningOverlayProps) {
             animate={{ opacity: 0.15 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="pointer-events-none absolute inset-y-0 left-0 z-30 w-1/2 bg-red-600"
+            className="pointer-events-none absolute inset-y-0 left-0 z-30 w-1/2 bg-[#fa4141]"
           />
         )}
         {warning === "right" && (
@@ -31,7 +31,7 @@ export function GuardWarningOverlay({ guard }: GuardWarningOverlayProps) {
             animate={{ opacity: 0.15 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="pointer-events-none absolute inset-y-0 right-0 z-30 w-1/2 bg-red-600"
+            className="pointer-events-none absolute inset-y-0 right-0 z-30 w-1/2 bg-[#fa4141]"
           />
         )}
         {warning === "both" && (
@@ -41,7 +41,7 @@ export function GuardWarningOverlay({ guard }: GuardWarningOverlayProps) {
             animate={{ opacity: 0.12 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="pointer-events-none absolute inset-0 z-30 bg-red-600"
+            className="pointer-events-none absolute inset-0 z-30 bg-[#fa4141]"
           />
         )}
       </AnimatePresence>
@@ -55,7 +55,7 @@ export function GuardWarningOverlay({ guard }: GuardWarningOverlayProps) {
             exit={{ opacity: 0, y: -4 }}
             className="pointer-events-none absolute inset-x-0 top-[18%] z-40 flex justify-center px-4"
           >
-            <p className="rounded-xl bg-red-600/90 px-4 py-2 text-center text-sm font-bold uppercase tracking-wide text-white shadow-lg">
+            <p className="rounded-xl bg-[#fa4141]/90 px-4 py-2 text-center text-sm font-bold uppercase tracking-wide text-white shadow-lg">
               {message}
             </p>
           </motion.div>

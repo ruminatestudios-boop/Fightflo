@@ -49,7 +49,7 @@ export function HeroMedia({
 
   const gradient =
     overlay === "strava"
-      ? "bg-gradient-to-t from-black/90 via-black/25 to-black/10"
+      ? "bg-gradient-to-t from-black via-black/50 to-black/20"
       : overlay === "full"
         ? "bg-gradient-to-b from-black/40 via-transparent to-black/85"
         : "bg-gradient-to-t from-[#111111] via-[#111111]/40 to-transparent";
@@ -65,7 +65,7 @@ export function HeroMedia({
         <img
           src={posterSrc}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover object-center"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}
@@ -75,7 +75,7 @@ export function HeroMedia({
       {videoSrc && (
         <video
           ref={videoRef}
-          className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ${
+          className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 pointer-events-none ${
             videoReady ? "opacity-100" : "opacity-40"
           }`}
           autoPlay

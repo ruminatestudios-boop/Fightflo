@@ -82,7 +82,8 @@ export function getWeeklyPlanForToday(data: FightFloBagData): WeeklyPlanDay {
     id: "combo-default",
     dayLabel: DAY_NAMES[dow],
     title: "Combo drill",
-    detail: "Called combos on the bag. AI scores technique if using Fighter cam.",
+    detail:
+      "Called boxing combos on the bag. Fighter cam estimates punches — best in good light.",
     action: "start-bag",
     drillMode: "combo",
     difficulty: "fighter",

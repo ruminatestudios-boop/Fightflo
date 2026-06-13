@@ -5,48 +5,59 @@ import {
   PoseLandmarker,
   type PoseLandmarkerResult,
 } from "@mediapipe/tasks-vision";
-import { POSE_MODEL_URL, POSE_WASM_CDN } from "./constants";
+import {
+  POSE_MODEL_CANDIDATES,
+  POSE_WASM_CDN,
+  type PoseModelTier,
+} from "./constants";
 
-let landmarkerPromise: Promise<PoseLandmarker> | null = null;
-let usingGpu = true;
+let landmarkerPromise: Promise<{
+  landmarker: PoseLandmarker;
+  gpu: boolean;
+  tier: PoseModelTier;
+}> | null = null;
+
+export function resetPoseLandmarker(): void {
+  landmarkerPromise = null;
+}
 
 export async function createPoseLandmarker(): Promise<{
   landmarker: PoseLandmarker;
   gpu: boolean;
+  tier: PoseModelTier;
 }> {
   if (!landmarkerPromise) {
     landmarkerPromise = (async () => {
       const vision = await FilesetResolver.forVisionTasks(POSE_WASM_CDN);
-      try {
-        return await PoseLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath: POSE_MODEL_URL,
-            delegate: "GPU",
-          },
-          runningMode: "VIDEO",
-          numPoses: 1,
-          minPoseDetectionConfidence: 0.6,
-          minPosePresenceConfidence: 0.6,
-          minTrackingConfidence: 0.6,
-        });
-      } catch {
-        usingGpu = false;
-        return PoseLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath: POSE_MODEL_URL,
-            delegate: "CPU",
-          },
-          runningMode: "VIDEO",
-          numPoses: 1,
-          minPoseDetectionConfidence: 0.6,
-          minPosePresenceConfidence: 0.6,
-          minTrackingConfidence: 0.6,
-        });
+      let lastError: unknown;
+
+      for (const candidate of POSE_MODEL_CANDIDATES) {
+        try {
+          const landmarker = await PoseLandmarker.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath: candidate.url,
+              delegate: candidate.delegate,
+            },
+            runningMode: "VIDEO",
+            numPoses: 1,
+            minPoseDetectionConfidence: 0.55,
+            minPosePresenceConfidence: 0.55,
+            minTrackingConfidence: 0.55,
+          });
+          return {
+            landmarker,
+            gpu: candidate.delegate === "GPU",
+            tier: candidate.tier,
+          };
+        } catch (err) {
+          lastError = err;
+        }
       }
+
+      throw lastError ?? new Error("Failed to load any pose landmarker model");
     })();
   }
-  const landmarker = await landmarkerPromise;
-  return { landmarker, gpu: usingGpu };
+  return landmarkerPromise;
 }
 
 export function detectPose(

@@ -12,6 +12,7 @@ import {
   Tooltip,
 } from "recharts";
 import { BagScreenWrapper } from "@/components/bag-drill/BagScreenWrapper";
+import { StreakCalendar } from "@/components/bag-drill/StreakCalendar";
 import { BagStatCard, CHART_COLORS } from "@/components/bag-drill/bag-ui";
 import type { FightFloBagData } from "@/lib/bag-drill/types";
 import { averageReactionTime, topWeaknesses } from "@/lib/bag-drill/weakness";
@@ -23,10 +24,9 @@ import {
 
 interface BagProgressScreenProps {
   data: FightFloBagData;
-  onBack: () => void;
 }
 
-export function BagProgressScreen({ data, onBack }: BagProgressScreenProps) {
+export function BagProgressScreen({ data }: BagProgressScreenProps) {
   const weekly = weeklyImprovementPercent(data);
   const weaknessBars = topWeaknesses(data.weaknesses, 6).map((combo) => ({
     combo: combo.length > 12 ? `${combo.slice(0, 10)}…` : combo,
@@ -49,17 +49,24 @@ export function BagProgressScreen({ data, onBack }: BagProgressScreenProps) {
   const { allTimeStats } = data;
 
   return (
-    <BagScreenWrapper onBack={onBack} className="overflow-y-auto pb-10">
+    <BagScreenWrapper hubScreen className="overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <p className="label text-[#525252]">30-day view</p>
+        <p className="label text-[#525252]">Progress</p>
         <h1 className="font-display mt-2 text-2xl tracking-wide text-white">
-          Am I getting faster?
+          Streak &amp; stats
         </h1>
-        <p className="mt-2 text-sm text-[#737373]">
+
+        {data.sessions.length > 0 && (
+          <div className="nike-card mt-8 rounded-2xl p-5">
+            <StreakCalendar data={data} />
+          </div>
+        )}
+
+        <p className="mt-6 text-sm text-[#737373]">
           {sessions30.length} session{sessions30.length === 1 ? "" : "s"} in the
           last month.
         </p>
@@ -75,7 +82,7 @@ export function BagProgressScreen({ data, onBack }: BagProgressScreenProps) {
             accent
           />
           <BagStatCard
-            label="Avg accuracy"
+            label="Avg combo match"
             value={avgAccuracy != null ? `${avgAccuracy}%` : "—"}
           />
           <BagStatCard label="Best streak" value={`${allTimeStats.longestStreak}d`} />
@@ -131,7 +138,7 @@ export function BagProgressScreen({ data, onBack }: BagProgressScreenProps) {
 
         {accuracy30.length >= 2 && (
           <div className="mt-8 h-48">
-            <p className="label mb-3 text-[#525252]">Combo accuracy (30 days)</p>
+            <p className="label mb-3 text-[#525252]">Combo match (30 days)</p>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={accuracy30}>
                 <XAxis dataKey="label" stroke={CHART_COLORS.grid} fontSize={10} tickLine={false} />

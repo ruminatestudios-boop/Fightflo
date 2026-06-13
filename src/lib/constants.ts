@@ -158,9 +158,9 @@ export const SIGNAL_CONFIG: Record<
 > = {
   attack: {
     label: "ATTACK",
-    color: "#ff1a1a",
-    glow: "rgba(255, 26, 26, 0.6)",
-    bgFlash: "rgba(255, 26, 26, 0.35)",
+    color: "#fa4141",
+    glow: "rgba(250, 65, 65, 0.6)",
+    bgFlash: "rgba(250, 65, 65, 0.35)",
     shortLabel: "ATK",
   },
   defend: {

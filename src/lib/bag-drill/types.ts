@@ -1,6 +1,6 @@
 export type BagDifficulty = "beginner" | "fighter" | "champion";
 
-export type BagDrillMode = "combo" | "flurry";
+export type BagDrillMode = "combo" | "flurry" | "speed";
 
 import type { BagCalibration, BagStance } from "./calibration";
 
@@ -9,6 +9,7 @@ export type { BagCalibration, BagStance };
 export type BagScreen =
   | "intro"
   | "home"
+  | "setup-intro"
   | "setup-camera"
   | "calibration"
   | "setup-config"
@@ -17,7 +18,7 @@ export type BagScreen =
   | "summary"
   | "progress";
 
-/** Bag = impact detection only. Fighter = AI validates strike type from your body. */
+/** Bag = mic counts impacts only. Fighter = cam + mic estimates strike type. */
 export type BagCameraMode = "bag" | "fighter";
 
 export type DetectionMode =
@@ -38,7 +39,7 @@ export interface StrikeLogEntry {
   label: string;
   strikeId: string;
   status: StrikeLogStatus;
-  /** Mic counted when AI live mode missed the strike */
+  /** Mic counted when cam detection missed the strike */
   micBackup?: boolean;
 }
 
@@ -79,6 +80,10 @@ export interface BagSessionRecord {
   /** Best single flurry count for this duration (personal best beat) */
   flurryPersonalBest?: boolean;
   guardDrops?: number;
+  /** Per-strike timing in seconds (reaction or gap between punches) */
+  strikeSpeeds?: Record<string, number[]>;
+  /** Strike id with lowest average time this session */
+  fastestStrikeId?: string;
 }
 
 export interface BagUserMeta {
@@ -125,7 +130,7 @@ export interface BagTrainingConfig {
   weaknessFocus?: boolean;
   /** From weekly plan preset */
   weeklyPlanId?: string;
-  /** Orthodox / southpaw — AI jab-cross mapping */
+  /** Orthodox / southpaw — lead/rear hand mapping for punch estimates */
   stance?: BagStance;
   /** Pre-flight mic + lighting calibration */
   calibration?: BagCalibration;

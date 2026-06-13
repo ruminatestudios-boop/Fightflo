@@ -82,6 +82,23 @@ export function bodyVisible(landmarks: NormalizedLandmark[]): boolean {
   return required.every((i) => (landmarks[i]?.visibility ?? 0) >= 0.6);
 }
 
+export type CameraAngleIssue = "too_profile" | "too_frontal" | null;
+
+/** ~45° three-quarter view: both shoulders visible, arms readable when punching. */
+export function cameraAngleStatus(landmarks: NormalizedLandmark[]): {
+  ok: boolean;
+  issue: CameraAngleIssue;
+} {
+  const ls = lm(landmarks, LM.LEFT_SHOULDER);
+  const rs = lm(landmarks, LM.RIGHT_SHOULDER);
+  if (!ls || !rs) return { ok: false, issue: null };
+
+  const span = Math.abs(rs.x - ls.x);
+  if (span < 0.14) return { ok: false, issue: "too_profile" };
+  if (span > 0.46) return { ok: false, issue: "too_frontal" };
+  return { ok: true, issue: null };
+}
+
 export function isLeadHand(
   side: "left" | "right",
   stance: "orthodox" | "southpaw"

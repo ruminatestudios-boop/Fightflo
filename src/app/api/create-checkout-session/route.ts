@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   const returnPath =
     body.returnPath?.startsWith("/") && !body.returnPath.includes("://")
       ? body.returnPath
-      : "/bag";
+      : "/";
   if (!deviceId) {
     return NextResponse.json({ error: "deviceId required" }, { status: 400 });
   }

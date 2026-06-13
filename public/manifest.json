@@ -1,7 +1,7 @@
 {
-  "name": "FightFlo",
-  "short_name": "FightFlo",
-  "description": "Reactive fight training timer — shadowboxing that fights back.",
+  "name": "FlowBag — Boxing Bag Trainer",
+  "short_name": "FlowBag",
+  "description": "Boxing heavy bag trainer with called combos, punch counting, and combo checks.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",

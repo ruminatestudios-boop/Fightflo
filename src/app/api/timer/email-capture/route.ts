@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: "api_fail",
-        message: "Something went wrong — try fightflo.app/bag directly",
+        message: "Something went wrong — try fightflo.app directly",
       },
       { status: 502 }
     );

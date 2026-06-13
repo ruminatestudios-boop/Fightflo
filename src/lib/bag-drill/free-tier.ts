@@ -1,6 +1,9 @@
 const FREE_SESSION_KEY = "flowbag-free-sessions";
 const DAILY_LIMIT = 5;
 
+/** Set false to re-enable the daily free combo cap */
+export const BYPASS_FREE_TIER = true;
+
 export interface FreeSessionUsage {
   count: number;
   date: string;
@@ -51,6 +54,7 @@ export function getFreeSessionsRemaining(): number {
 }
 
 export function hasFreeSessionsLeft(): boolean {
+  if (BYPASS_FREE_TIER) return true;
   return getFreeSessionsUsedToday() < DAILY_LIMIT;
 }
 

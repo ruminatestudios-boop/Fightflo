@@ -479,20 +479,6 @@ export function FightFloApp() {
     setScreen("home");
   }, []);
 
-  const handleSkipIntro = useCallback(() => {
-    setOnboardingHeroSeen();
-    if (!hasCompletedOnboarding()) {
-      setOnboardingKey((k) => k + 1);
-      setScreen("onboarding");
-      return;
-    }
-    if (!hasSeenPaywall() && !checkIsPro()) {
-      setScreen("paywall");
-      return;
-    }
-    setScreen("home");
-  }, []);
-
   return (
     <div className="relative min-h-dvh bg-black text-white">
       <PWARegister />
@@ -504,7 +490,6 @@ export function FightFloApp() {
           <IntroScreen
             key="intro"
             onGetStarted={handleGetStarted}
-            onSkip={handleSkipIntro}
           />
         )}
 

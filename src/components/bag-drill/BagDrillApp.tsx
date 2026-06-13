@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { AnimatePresence } from "framer-motion";
-import { BagHomeScreen } from "./BagHomeScreen";
+import { BagHomeScreen, type BagHomeStartOptions } from "./BagHomeScreen";
+import { BagTabBar } from "./BagTabBar";
 import { BagCalibrationScreen } from "./BagCalibrationScreen";
+import { BagSetupIntroScreen } from "./BagSetupIntroScreen";
 import { BagSetupCameraScreen } from "./BagSetupCameraScreen";
 import { BagSetupConfigScreen } from "./BagSetupConfigScreen";
 import { BagTrainingScreen } from "./BagTrainingScreen";
@@ -12,25 +14,31 @@ import { BagFlurryTrainingScreen } from "./BagFlurryTrainingScreen";
 import { BagSummaryScreen } from "./BagSummaryScreen";
 import { BagProgressScreen } from "./BagProgressScreen";
 import { UpgradeModal } from "./UpgradeModal";
+import { ComingSoonModal } from "./ComingSoonModal";
 import { IntroScreen } from "@/components/screens/IntroScreen";
 import { PWARegister } from "@/components/PWARegister";
 import { useBagDrill } from "@/hooks/useBagDrill";
 import { useBagFlurry } from "@/hooks/useBagFlurry";
 import {
+  BYPASS_FREE_TIER,
   consumeFreeComboSession,
   hasFreeSessionsLeft,
   resetFreeSessionsIfNewDay,
 } from "@/lib/bag-drill/free-tier";
 import { loadBagData, saveSession } from "@/lib/bag-drill/storage";
-import { buildConfigFromWeeklyPlan, type WeeklyPlanDay } from "@/lib/bag-drill/weekly-plan";
 import {
   notifySessionComplete,
-  registerDevice,
-  syncProFromServer,
 } from "@/lib/pro-sync";
 import { isPro } from "@/lib/subscription";
 import type { BagCalibration, BagStance } from "@/lib/bag-drill/calibration";
 import { loadStoredCalibration } from "@/lib/bag-drill/detection/calibration-store";
+import { BAG_COPY } from "@/lib/bag-drill/copy";
+import {
+  markComingSoonModalShown,
+  shouldShowComingSoonModal,
+} from "@/lib/bag-drill/coming-soon-storage";
+import { buildQuickStartConfig } from "@/lib/bag-drill/quick-start-config";
+import { BagDrillProSync } from "@/components/bag-drill/BagDrillProSync";
 import type {
   BagCameraMode,
   BagDrillMode,
@@ -40,9 +48,15 @@ import type {
   FightFloBagData,
 } from "@/lib/bag-drill/types";
 
+const INTRO_SEEN_KEY = "flowbag-intro-seen";
+
+function readInitialScreen(): BagScreen {
+  if (typeof window === "undefined") return "intro";
+  return sessionStorage.getItem(INTRO_SEEN_KEY) ? "home" : "intro";
+}
+
 export function BagDrillApp() {
-  const searchParams = useSearchParams();
-  const [screen, setScreen] = useState<BagScreen>("intro");
+  const [screen, setScreen] = useState<BagScreen>(readInitialScreen);
   const [data, setData] = useState<FightFloBagData>(() => loadBagData());
   const [config, setConfig] = useState<BagTrainingConfig | null>(null);
   const [lastSession, setLastSession] = useState<BagSessionRecord | null>(null);
@@ -56,6 +70,8 @@ export function BagDrillApp() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [pro, setProState] = useState(false);
   const [freeUsed, setFreeUsed] = useState(0);
+  const [skippedCalibration, setSkippedCalibration] = useState(false);
+  const [comingSoonOpen, setComingSoonOpen] = useState(false);
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
   const releaseMediaStream = useCallback(() => {
@@ -74,18 +90,28 @@ export function BagDrillApp() {
 
   useEffect(() => {
     refreshProAndUsage();
-    void registerDevice();
-    void syncProFromServer().then(() => refreshProAndUsage());
-
-    if (searchParams.get("pro") === "true") {
-      setScreen("home");
-      void syncProFromServer().then(() => refreshProAndUsage());
-    }
-  }, [searchParams, refreshProAndUsage]);
+  }, [refreshProAndUsage]);
 
   const enterBagFlow = useCallback(() => {
+    sessionStorage.setItem(INTRO_SEEN_KEY, "1");
     setScreen("home");
   }, []);
+
+  const dismissComingSoon = useCallback(() => {
+    markComingSoonModalShown();
+    setComingSoonOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (screen !== "home" || !shouldShowComingSoonModal()) return;
+
+    const timer = window.setTimeout(() => {
+      markComingSoonModalShown();
+      setComingSoonOpen(true);
+    }, 5000);
+
+    return () => window.clearTimeout(timer);
+  }, [screen]);
 
   const refreshData = useCallback(() => {
     setData(loadBagData());
@@ -93,7 +119,8 @@ export function BagDrillApp() {
 
   const gateComboStart = useCallback(
     (mode: BagDrillMode, onAllowed: () => void) => {
-      if (mode !== "combo" || isPro()) {
+      const usesFreeComboSlot = mode === "combo" || mode === "speed";
+      if (!usesFreeComboSlot || isPro()) {
         onAllowed();
         return;
       }
@@ -109,24 +136,22 @@ export function BagDrillApp() {
   );
 
   const handleStartFromHome = useCallback(
-    (mode: BagDrillMode, plan?: WeeklyPlanDay) => {
+    (mode: BagDrillMode, options?: BagHomeStartOptions) => {
       gateComboStart(mode, () => {
         setDrillModeDraft(mode);
-        if (plan) {
-          setConfigDraft(buildConfigFromWeeklyPlan(plan, cameraModeDraft));
-          setDrillModeDraft(plan.drillMode);
-        } else {
-          setConfigDraft({ drillMode: mode });
-        }
-        setScreen("setup-camera");
+        setConfigDraft({
+          drillMode: mode,
+          weaknessFocus: options?.weaknessFocus ?? false,
+        });
+        setScreen("setup-intro");
       });
     },
-    [cameraModeDraft, gateComboStart]
+    [gateComboStart]
   );
 
   const handleReady = useCallback(
     (c: BagTrainingConfig) => {
-      if (c.drillMode === "combo" && !isPro()) {
+      if ((c.drillMode === "combo" || c.drillMode === "speed") && !isPro() && !BYPASS_FREE_TIER) {
         if (!hasFreeSessionsLeft()) {
           setShowUpgrade(true);
           return;
@@ -140,14 +165,48 @@ export function BagDrillApp() {
     []
   );
 
+  const startWorkoutDirect = useCallback(() => {
+    const mode = drillModeDraft;
+    gateComboStart(mode, () => {
+      if (mode === "combo" || mode === "speed") {
+        if (!isPro() && !BYPASS_FREE_TIER) {
+          consumeFreeComboSession();
+          setFreeUsed(resetFreeSessionsIfNewDay().count);
+        }
+      }
+      setSkippedCalibration(true);
+      setCalibrationDraft(null);
+      releaseMediaStream();
+      const workoutConfig = buildQuickStartConfig(
+        mode,
+        {
+          ...configDraft,
+          cameraMode: cameraModeDraft,
+          stance: stanceDraft,
+        },
+        cameraModeDraft
+      );
+      setConfig(workoutConfig);
+      setScreen(mode === "flurry" ? "flurry" : "training");
+    });
+  }, [
+    cameraModeDraft,
+    configDraft,
+    drillModeDraft,
+    gateComboStart,
+    releaseMediaStream,
+    stanceDraft,
+  ]);
+
   const handleStopCombo = useCallback(() => {
     const record = drill.stop();
+    releaseMediaStream();
     if (record && record.totalPunches > 0) {
       const updated = saveSession(record);
       setData(updated);
       setLastSession(record);
       void notifySessionComplete({
-        sessionType: "combo",
+        sessionType: record.sessionType ?? "combo",
         combosThrown: Math.max(1, Object.keys(record.comboReactions).length),
       });
       setScreen("summary");
@@ -180,50 +239,54 @@ export function BagDrillApp() {
           cameraMode: partial.cameraMode ?? cameraModeDraft,
         });
         setDrillModeDraft(mode);
-        setScreen("setup-camera");
+        setScreen("setup-intro");
       });
     },
     [cameraModeDraft, gateComboStart]
   );
-
-  const handleOpenOpponent = useCallback(() => {
-    if (typeof window !== "undefined") {
-      window.location.href = "/?train=opponent";
-    }
-  }, []);
 
   const handleProgress = useCallback(() => {
     if (!isPro()) {
       setShowUpgrade(true);
       return;
     }
+    refreshData();
     setScreen("progress");
+  }, [refreshData]);
+
+  const handleGoTrain = useCallback(() => {
+    setScreen("home");
   }, []);
+
+  const showHubTabs = screen === "home" || screen === "progress";
 
   return (
     <>
       <PWARegister />
+      <Suspense fallback={null}>
+        <BagDrillProSync
+          onProReturn={enterBagFlow}
+          onRefreshPro={refreshProAndUsage}
+        />
+      </Suspense>
       {showUpgrade && (
         <UpgradeModal
           sessionsUsed={freeUsed}
           onClose={() => setShowUpgrade(false)}
         />
       )}
+      <ComingSoonModal
+        open={comingSoonOpen}
+        onClose={dismissComingSoon}
+      />
       <AnimatePresence mode="wait">
         {screen === "intro" && (
           <IntroScreen
             key="intro"
-            title={
-              <>
-                Call. Throw.
-                <br />
-                Score.
-              </>
-            }
-            subtitle="Combos called in your ear — you throw them on the bag. AI catches jab, cross, and hook."
+            title={BAG_COPY.headline}
+            subtitle={BAG_COPY.introSubtitle}
             getStartedLabel="Get started"
             onGetStarted={enterBagFlow}
-            onSkip={enterBagFlow}
           />
         )}
         {screen === "home" && (
@@ -231,11 +294,23 @@ export function BagDrillApp() {
             key="home"
             data={data}
             isPro={pro}
-            freeSessionsLeft={isPro() ? null : 5 - freeUsed}
+            freeSessionsLeft={
+              isPro() || BYPASS_FREE_TIER ? null : 5 - freeUsed
+            }
             onStart={handleStartFromHome}
-            onProgress={handleProgress}
-            onOpenOpponent={handleOpenOpponent}
             onUpgrade={() => setShowUpgrade(true)}
+          />
+        )}
+        {screen === "setup-intro" && (
+          <BagSetupIntroScreen
+            key="setup-intro"
+            onBack={() => setScreen("home")}
+            onStartCalibration={() => {
+              setSkippedCalibration(false);
+              setCalibrationDraft(null);
+              setScreen("setup-camera");
+            }}
+            onSkipCalibration={startWorkoutDirect}
           />
         )}
         {screen === "setup-camera" && (
@@ -245,19 +320,37 @@ export function BagDrillApp() {
             isPro={pro}
             onBack={() => {
               releaseMediaStream();
-              setScreen("home");
+              setScreen("setup-intro");
             }}
             onContinue={(mode, stance, stream) => {
               setCameraModeDraft(mode);
               setStanceDraft(stance);
               mediaStreamRef.current = stream;
+              if (skippedCalibration) {
+                setCalibrationDraft(null);
+                setScreen("setup-config");
+                return;
+              }
               const stored = loadStoredCalibration();
+              if (mode === "bag") {
+                if (stored && stored.testPunchesDetected > 0) {
+                  setSkippedCalibration(true);
+                  setCalibrationDraft(stored);
+                  setStanceDraft(stored.stance);
+                  setScreen("setup-config");
+                } else {
+                  setSkippedCalibration(false);
+                  setScreen("calibration");
+                }
+                return;
+              }
               if (stored?.poseReady && stored.guardBaseline) {
-                releaseMediaStream();
+                setSkippedCalibration(true);
                 setCalibrationDraft(stored);
                 setStanceDraft(stored.stance);
                 setScreen("setup-config");
               } else {
+                setSkippedCalibration(false);
                 setScreen("calibration");
               }
             }}
@@ -271,12 +364,19 @@ export function BagDrillApp() {
             stance={stanceDraft}
             existingStream={mediaStreamRef.current}
             onStanceChange={setStanceDraft}
+            onCameraModeChange={setCameraModeDraft}
+            onStreamChange={(stream) => {
+              if (mediaStreamRef.current && mediaStreamRef.current !== stream) {
+                mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+              }
+              mediaStreamRef.current = stream;
+            }}
             onBack={() => {
               releaseMediaStream();
-              setScreen("setup-camera");
+              setScreen(skippedCalibration ? "setup-camera" : "setup-intro");
             }}
             onComplete={(cal) => {
-              releaseMediaStream();
+              setSkippedCalibration(false);
               setCalibrationDraft(cal);
               setStanceDraft(cal.stance);
               setScreen("setup-config");
@@ -294,7 +394,9 @@ export function BagDrillApp() {
               stance: stanceDraft,
               calibration: calibrationDraft ?? undefined,
             }}
-            onBack={() => setScreen("calibration")}
+            onBack={() =>
+              setScreen(skippedCalibration ? "setup-camera" : "calibration")
+            }
             onReady={handleReady}
           />
         )}
@@ -303,6 +405,7 @@ export function BagDrillApp() {
             key="training"
             config={config}
             drill={drill}
+            mediaStream={mediaStreamRef.current}
             onStop={handleStopCombo}
           />
         )}
@@ -321,7 +424,7 @@ export function BagDrillApp() {
             session={lastSession}
             data={data}
             isPro={pro}
-            onTrainAgain={() => setScreen("setup-camera")}
+            onTrainAgain={() => setScreen("setup-intro")}
             onStartRecommended={handleStartRecommended}
             onHome={() => {
               refreshData();
@@ -331,16 +434,16 @@ export function BagDrillApp() {
           />
         )}
         {screen === "progress" && (
-          <BagProgressScreen
-            key="progress"
-            data={data}
-            onBack={() => {
-              refreshData();
-              setScreen("home");
-            }}
-          />
+          <BagProgressScreen key="progress" data={data} />
         )}
       </AnimatePresence>
+      {showHubTabs && (
+        <BagTabBar
+          active={screen === "home" ? "train" : "progress"}
+          onTrain={handleGoTrain}
+          onProgress={handleProgress}
+        />
+      )}
     </>
   );
 }

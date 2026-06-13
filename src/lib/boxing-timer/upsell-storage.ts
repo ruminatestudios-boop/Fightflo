@@ -1,3 +1,5 @@
+import { BAG_COPY } from "@/lib/bag-drill/copy";
+
 const KEY = "fightflo-timer-upsell";
 
 export interface TimerUpsellStats {
@@ -54,7 +56,7 @@ export function getFlowBagLinkCta(stats = loadTimerUpsellStats()): string {
     return "You've done 7 sessions. See what you've been missing →";
   }
   if (stats.timerSessionsCompleted >= 3) {
-    return "Still training without AI feedback? FlowBag is free to try →";
+    return BAG_COPY.timerUpsellCtaAfter3;
   }
   return "Try FlowBag →";
 }

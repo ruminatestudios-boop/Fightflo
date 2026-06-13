@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { BagScreenWrapper } from "@/components/bag-drill/BagScreenWrapper";
 import { BagStatCard, CHART_COLORS } from "@/components/bag-drill/bag-ui";
 import type { BagSessionRecord, BagTrainingConfig, FightFloBagData } from "@/lib/bag-drill/types";
+import { BAG_COPY } from "@/lib/bag-drill/copy";
 import {
   compareToLastSession,
   getSessionsLast7Days,
@@ -23,6 +24,11 @@ import {
   getSessionInsight,
 } from "@/lib/bag-drill/insights";
 import { PushReminderBanner } from "@/components/bag-drill/PushReminderBanner";
+import {
+  formatStrikeSpeed,
+  strikeLabel,
+  summariseStrikeSpeeds,
+} from "@/lib/bag-drill/strike-speed";
 
 interface BagSummaryScreenProps {
   session: BagSessionRecord;
@@ -49,7 +55,7 @@ export function BagSummaryScreen({
   const compare = compareToLastSession(session, data);
   const weekly = weeklyImprovementPercent(data);
   const chartSessions = getSessionsLast7Days(data).filter(
-    (s) => s.sessionType !== "flurry"
+    (s) => s.sessionType !== "flurry" && s.sessionType !== "speed"
   );
   const chartData = chartSessions.map((s, i) => ({
     name: `S${i + 1}`,
@@ -58,6 +64,10 @@ export function BagSummaryScreen({
   const insight = getSessionInsight(session, data);
   const next = getNextSessionRecommendation(session, data);
   const isFlurry = session.sessionType === "flurry";
+  const isSpeed = session.sessionType === "speed";
+  const speedSummary = session.strikeSpeeds
+    ? summariseStrikeSpeeds(session.strikeSpeeds)
+    : [];
 
   return (
     <BagScreenWrapper className="overflow-y-auto pb-10">
@@ -68,7 +78,7 @@ export function BagSummaryScreen({
       >
         <p className="label text-[#525252]">Session complete</p>
         <h1 className="font-display mt-2 text-3xl tracking-wide text-white">
-          {isFlurry ? "Flurry done" : "Round done"}
+          {isFlurry ? "Flurry done" : isSpeed ? "Speed drill done" : "Round done"}
         </h1>
 
         <div className="nike-card mt-6 rounded-xl p-4">
@@ -100,12 +110,31 @@ export function BagSummaryScreen({
                 }
               />
             </>
+          ) : isSpeed ? (
+            <>
+              <BagStatCard label="Punches" value={String(session.totalPunches)} accent />
+              <BagStatCard label="Time" value={formatDuration(session.duration)} />
+              <BagStatCard
+                label="Fastest punch"
+                value={
+                  session.fastestStrikeId
+                    ? strikeLabel(session.fastestStrikeId)
+                    : "—"
+                }
+              />
+              <BagStatCard
+                label="Punches timed"
+                value={String(
+                  speedSummary.reduce((sum, row) => sum + row.count, 0)
+                )}
+              />
+            </>
           ) : (
             <>
               <BagStatCard label="Time" value={formatDuration(session.duration)} />
               <BagStatCard label="Punches" value={String(session.totalPunches)} />
               <BagStatCard label="Avg reaction" value={`${session.avgReactionTime}s`} />
-              <BagStatCard label="Accuracy" value={`${session.accuracyPercent}%`} accent />
+              <BagStatCard label="Combo match" value={`${session.accuracyPercent}%`} accent />
               <BagStatCard label="Fastest" value={`${session.fastestReaction}s`} />
               {session.guardDrops != null && session.guardDrops > 0 && (
                 <BagStatCard
@@ -117,7 +146,26 @@ export function BagSummaryScreen({
           )}
         </div>
 
-        {compare && !isFlurry && (
+        {isSpeed && speedSummary.length > 0 && (
+          <div className="nike-card mt-4 rounded-xl p-4">
+            <p className="label text-[#525252]">Punch speed breakdown</p>
+            <ul className="mt-3 space-y-2">
+              {speedSummary.map((row) => (
+                <li
+                  key={row.strikeId}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <span className="text-white">{row.label}</span>
+                  <span className="tabular-nums text-[#a3a3a3]">
+                    {formatStrikeSpeed(row.avgSeconds)} avg · {row.count}×
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {compare && !isFlurry && !isSpeed && (
           <div className="nike-card mt-4 rounded-xl p-4 text-sm">
             <p className="label text-[#525252]">vs last session</p>
             <p className="mt-2 text-[#a3a3a3]">
@@ -129,7 +177,7 @@ export function BagSummaryScreen({
           </div>
         )}
 
-        {weekly != null && data.sessions.length >= 2 && !isFlurry && (
+        {weekly != null && data.sessions.length >= 2 && !isFlurry && !isSpeed && (
           <p className="mt-3 text-sm text-emerald-400/90">
             {weekly > 0
               ? `${weekly}% faster than last week`
@@ -140,11 +188,11 @@ export function BagSummaryScreen({
         )}
 
         <p className="mt-4 text-sm text-white/50">
-          <span className="text-[#fa4141]">{data.allTimeStats.currentStreak}-day</span> bag
-          streak — don&apos;t break the chain.
+          <span className="text-[#fa4141]">{data.allTimeStats.currentStreak}-day</span>{" "}
+          {BAG_COPY.streakLine}
         </p>
 
-        {chartData.length >= 2 && !isFlurry && (
+        {chartData.length >= 2 && !isFlurry && !isSpeed && (
           <div className="mt-8 h-44">
             <p className="label mb-3 text-[#525252]">Last 7 sessions</p>
             <ResponsiveContainer width="100%" height="100%">

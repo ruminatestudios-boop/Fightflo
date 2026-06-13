@@ -43,7 +43,7 @@ export async function syncProFromServer(): Promise<boolean> {
 
 export async function startCheckout(
   plan: "monthly" | "annual",
-  returnPath = "/bag"
+  returnPath = "/"
 ): Promise<string | null> {
   const deviceId = getDeviceId();
   try {

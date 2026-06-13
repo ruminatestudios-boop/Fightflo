@@ -13,18 +13,26 @@ export interface HeroSlide {
   id: string;
   eyebrow: string;
   title: string;
+  detail?: string;
   image?: string;
   /** Gradient-only slide (e.g. Pro upsell) */
   gradient?: string;
+  /** Red radial accent — matches DailyChallengeCard */
+  accentGlow?: boolean;
   actions: HeroSlideAction[];
 }
 
 interface HeroCarouselProps {
   slides: HeroSlide[];
   autoPlayMs?: number;
+  variant?: "hero" | "compact";
 }
 
-export function HeroCarousel({ slides, autoPlayMs = 6500 }: HeroCarouselProps) {
+export function HeroCarousel({
+  slides,
+  autoPlayMs = 6500,
+  variant = "hero",
+}: HeroCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   const pauseUntilRef = useRef(0);
@@ -69,6 +77,8 @@ export function HeroCarousel({ slides, autoPlayMs = 6500 }: HeroCarouselProps) {
 
   if (slides.length === 0) return null;
 
+  const compact = variant === "compact";
+
   return (
     <div className="relative">
       <div
@@ -78,12 +88,14 @@ export function HeroCarousel({ slides, autoPlayMs = 6500 }: HeroCarouselProps) {
         onMouseDown={pauseAutoPlay}
         className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth rounded-2xl [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         aria-roledescription="carousel"
-        aria-label="Featured"
+        aria-label={compact ? "Coming later" : "Featured"}
       >
         {slides.map((slide, index) => (
           <article
             key={slide.id}
-            className="relative aspect-[4/3] w-full min-w-full shrink-0 snap-center snap-always overflow-hidden rounded-2xl"
+            className={`relative w-full min-w-full shrink-0 snap-center snap-always overflow-hidden rounded-2xl ${
+              compact ? "aspect-[2.2/1]" : "aspect-[4/3]"
+            }`}
             aria-roledescription="slide"
             aria-label={`${index + 1} of ${slides.length}`}
             aria-hidden={active !== index}
@@ -91,16 +103,40 @@ export function HeroCarousel({ slides, autoPlayMs = 6500 }: HeroCarouselProps) {
             {slide.image ? (
               <HeroMedia posterSrc={slide.image} overlay="bottom" />
             ) : (
-              <div
-                className={`absolute inset-0 ${slide.gradient ?? "bg-gradient-to-br from-[#1a0808] via-[#111111] to-[#050505]"}`}
-              />
+              <>
+                <div
+                  className={`absolute inset-0 ${slide.gradient ?? "bg-gradient-to-br from-[#1a0808] via-[#111111] to-[#050505]"}`}
+                />
+                {slide.accentGlow && (
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_100%_0%,rgba(250,65,65,0.22),transparent_60%)]" />
+                )}
+              </>
             )}
 
-            <div className="absolute inset-0 flex flex-col justify-end p-5">
-              <p className="label text-white/70">{slide.eyebrow}</p>
-              <h3 className="mt-1 whitespace-pre-line font-display text-2xl text-white">
+            <div
+              className={`absolute inset-0 flex flex-col justify-end ${
+                compact ? "p-4" : "p-5"
+              }`}
+            >
+              <p className={`label ${compact ? "text-white/55" : "text-white/70"}`}>
+                {slide.eyebrow}
+              </p>
+              <h3
+                className={`mt-1 whitespace-pre-line font-display text-white ${
+                  compact ? "text-lg" : "text-2xl"
+                }`}
+              >
                 {slide.title}
               </h3>
+              {slide.detail && (
+                <p
+                  className={`mt-1 leading-relaxed text-white/55 ${
+                    compact ? "line-clamp-2 text-xs" : "text-sm"
+                  }`}
+                >
+                  {slide.detail}
+                </p>
+              )}
               {slide.actions.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {slide.actions.map((action) => (

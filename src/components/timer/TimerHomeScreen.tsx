@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { AppTopBar } from "@/components/ui/AppTopBar";
 import { chipClass } from "@/components/bag-drill/bag-ui";
+import { BAG_COPY } from "@/lib/bag-drill/copy";
 import { FlowBagSocialTooltip } from "@/components/timer/FlowBagSocialTooltip";
 import { TIMER_PRESETS, configFromPreset } from "@/lib/boxing-timer/presets";
 import {
@@ -142,10 +143,10 @@ export function TimerHomeScreen({
           <Button onClick={onStart}>Start workout</Button>
           {!isPro && (
             <p className="text-center text-[10px] leading-relaxed text-[#525252]">
-              Want AI punch scoring on the bag?{" "}
+              {BAG_COPY.timerHomeTeaser}{" "}
               <FlowBagSocialTooltip enabled={!isPro}>
                 <Link
-                  href="/bag"
+                  href="/"
                   onClick={() => recordFlowBagClick()}
                   className="text-[#fa4141]/90 hover:text-[#fa4141]"
                 >

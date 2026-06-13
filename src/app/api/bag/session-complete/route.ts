@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   void sendPushToDevice(deviceId, {
     title: "Nice work today.",
     body: "Come back tomorrow to beat your score.",
-    url: "/bag",
+    url: "/",
   });
 
   return NextResponse.json({ ok: true });

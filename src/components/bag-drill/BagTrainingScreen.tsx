@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { motion } from "framer-motion";
 import { SessionControlBar } from "@/components/training/SessionControlBar";
+import { BigClock } from "@/components/training/BigClock";
 import {
   formatReaction,
   tierColor,
@@ -10,18 +10,14 @@ import {
 } from "@/hooks/useBagDrill";
 import { GuardWarningOverlay } from "@/components/bag-drill/GuardWarningOverlay";
 import { StrikeLogStrip } from "@/components/bag-drill/StrikeLogStrip";
+import { formatStrikeSpeed } from "@/lib/bag-drill/strike-speed";
 import type { BagTrainingConfig } from "@/lib/bag-drill/types";
 
 interface BagTrainingScreenProps {
   config: BagTrainingConfig;
   drill: UseBagDrillResult;
+  mediaStream?: MediaStream | null;
   onStop: () => void;
-}
-
-function formatTimer(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 const VALIDATION_COPY = {
@@ -30,37 +26,25 @@ const VALIDATION_COPY = {
   miss: "Missed",
 } as const;
 
-export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenProps) {
+export function BagTrainingScreen({
+  config,
+  drill,
+  mediaStream,
+  onStop,
+}: BagTrainingScreenProps) {
   const { state, videoRef, start, tapPunch, disputeStrike, micBackupPunch } = drill;
   const tapOnly =
     state.detectionMode === "visual-tap" || state.detectionMode === "timer-fallback";
   const poseMode =
     state.detectionMode === "pose-triple" && state.liveConnected;
   const aiMode = poseMode && config.cameraMode === "fighter";
+  const isSpeedDrill = config.drillMode === "speed";
   const showTap =
     state.inComboWindow &&
     state.hitsExpected > 0 &&
     !aiMode;
   const showMicBackup =
     aiMode && state.inComboWindow && state.micBackupHint;
-  const progress = Math.min(
-    1,
-    state.elapsedSeconds / config.timing.durationSeconds
-  );
-
-  const phaseLabel = state.inComboWindow
-    ? aiMode && state.nextStrikeLabel
-      ? `Throw — ${state.nextStrikeLabel}`
-      : "Go — throw the combo"
-    : "Listen";
-
-  const modeBadge = poseMode
-    ? config.cameraMode === "fighter"
-      ? "Pose AI"
-      : "Triple"
-    : state.detectionMode === "audio-hybrid"
-      ? "Mic"
-      : "Tap";
 
   const statusText =
     (state.statusMessage && !state.inComboWindow) ||
@@ -68,19 +52,31 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
       ? state.statusMessage
       : "\u00a0";
 
-  const validationText = state.lastValidation
-    ? VALIDATION_COPY[state.lastValidation]
-    : "\u00a0";
+  const validationText = isSpeedDrill
+    ? state.lastStrikeSpeedSeconds != null && state.lastStrikeSpeedLabel
+      ? `${state.lastStrikeSpeedLabel} ${formatStrikeSpeed(state.lastStrikeSpeedSeconds)}`
+      : state.inComboWindow
+        ? "Throw when you hear go"
+        : "\u00a0"
+    : state.lastValidation
+      ? VALIDATION_COPY[state.lastValidation]
+      : "\u00a0";
 
-  const validationColor =
-    state.lastValidation === "correct"
+  const validationColor = isSpeedDrill
+    ? state.lastStrikeSpeedSeconds != null
+      ? "#4ade80"
+      : "transparent"
+    : state.lastValidation === "correct"
       ? "#4ade80"
       : state.lastValidation === "wrong" || state.lastValidation === "miss"
         ? "#fa4141"
         : "transparent";
 
-  const reactionText =
-    state.lastReactionSeconds != null && state.lastReactionTier
+  const reactionText = isSpeedDrill
+    ? state.inComboWindow
+      ? "Timing each punch"
+      : "\u00a0"
+    : state.lastReactionSeconds != null && state.lastReactionTier
       ? `${formatReaction(state.lastReactionSeconds)} to first hit`
       : "\u00a0";
 
@@ -90,7 +86,7 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
       : "transparent";
 
   useEffect(() => {
-    void start(config);
+    void start(config, { mediaStream });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -100,7 +96,8 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
     }
   }, [state.elapsedSeconds, state.isActive, config.timing.durationSeconds, onStop]);
 
-  const maxHitDots = Math.max(state.hitsExpected, 6);
+  const hitDotCount =
+    state.inComboWindow && state.hitsExpected > 0 ? state.hitsExpected : 0;
 
   return (
     <div
@@ -110,22 +107,9 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
           "auto minmax(0, 1fr) 15.5rem 5.5rem",
       }}
     >
-      <motion.div
+      <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 z-[1] bg-emerald-500/20"
-        animate={{ opacity: state.lastValidation === "correct" ? 0.35 : 0 }}
-        transition={{ duration: 0.35 }}
-      />
-      <motion.div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 z-[1] bg-[#fa4141]/25"
-        animate={{
-          opacity:
-            state.lastValidation === "wrong" || state.lastValidation === "miss"
-              ? 0.35
-              : 0,
-        }}
-        transition={{ duration: 0.35 }}
+        className="pointer-events-none fixed inset-0 z-[1] bg-black/75"
       />
 
       <video
@@ -142,31 +126,15 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
 
       {/* Top band — fixed structure */}
       <header className="relative z-10 px-6 pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="mx-auto grid h-6 max-w-md grid-cols-[1fr_auto_1fr] items-center gap-2">
-          <span />
-          <p className="truncate text-center text-xs font-medium uppercase tracking-[0.2em] text-white/40">
-            {phaseLabel}
+        {statusText.trim() !== "\u00a0" && (
+          <p className="mx-auto flex h-8 max-w-xs items-center justify-center text-center text-[11px] leading-snug text-white/35">
+            {statusText}
           </p>
-          <span
-            className={`justify-self-end rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
-              aiMode
-                ? "bg-emerald-500/20 text-emerald-400"
-                : state.detectionMode === "audio-hybrid"
-                  ? "bg-amber-500/15 text-amber-400/90"
-                  : "bg-white/10 text-white/45"
-            }`}
-          >
-            {modeBadge}
-          </span>
-        </div>
+        )}
 
-        <p className="mx-auto mt-2 flex h-10 max-w-xs items-center justify-center text-center text-[11px] leading-snug text-white/35">
-          {statusText}
-        </p>
-
-        <div className="mx-auto mt-1 flex h-6 items-center justify-center gap-4 text-xs uppercase tracking-[0.12em] text-white/40">
+        <div className="mx-auto flex h-6 items-center justify-center gap-4 text-xs uppercase tracking-[0.12em] text-white/40">
           <span className="tabular-nums">
-            Acc <span className="text-white/80">{state.accuracyPercent}%</span>
+            Match <span className="text-white/80">{state.accuracyPercent}%</span>
           </span>
           <span className="tabular-nums">
             Hits <span className="text-white/80">{state.punchCount}</span>
@@ -181,22 +149,14 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
           </span>
         </div>
 
-        <div className="mx-auto mt-2 flex h-2 items-center justify-center gap-1.5">
-          {Array.from({ length: maxHitDots }).map((_, i) => {
-            const active =
-              state.hitsExpected > 0 &&
-              state.inComboWindow &&
-              i < state.hitsExpected;
-            const filled = active && i < state.hitsInCombo;
+        <div className="mx-auto mt-2 flex h-2 min-h-2 w-full items-center justify-center gap-1.5">
+          {Array.from({ length: hitDotCount }).map((_, i) => {
+            const filled = i < state.hitsInCombo;
             return (
               <div
                 key={i}
-                className={`h-2 w-8 rounded-full transition-colors ${
-                  !active
-                    ? "bg-transparent"
-                    : filled
-                      ? "bg-emerald-500/80"
-                      : "bg-white/10"
+                className={`h-2 w-8 shrink-0 rounded-full transition-colors ${
+                  filled ? "bg-emerald-500/80" : "bg-white/10"
                 }`}
               />
             );
@@ -204,41 +164,16 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
         </div>
       </header>
 
-      {/* Timer — centered in middle row only */}
+      {/* Timer — big clock with top progress bar */}
       <main className="relative z-10 flex items-center justify-center px-6">
-        <div className="relative h-[260px] w-[260px] shrink-0">
-          <svg
-            className="absolute inset-0 h-full w-full -rotate-90"
-            viewBox="0 0 200 200"
-            aria-hidden
-          >
-            <circle
-              cx="100"
-              cy="100"
-              r="94"
-              fill="none"
-              stroke="rgba(255,255,255,0.06)"
-              strokeWidth="2"
-            />
-            <motion.circle
-              cx="100"
-              cy="100"
-              r="94"
-              fill="none"
-              stroke={state.inComboWindow ? "#fa4141" : "rgba(255,255,255,0.35)"}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 94}
-              animate={{
-                strokeDashoffset: 2 * Math.PI * 94 * (1 - progress),
-              }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
-            />
-          </svg>
-          <p className="absolute inset-0 flex items-center justify-center font-display text-[4rem] font-bold tabular-nums leading-none tracking-tight text-white">
-            {formatTimer(state.elapsedSeconds)}
-          </p>
-        </div>
+        <BigClock
+          seconds={state.elapsedSeconds}
+          totalSeconds={config.timing.durationSeconds}
+          variant="session"
+          active={state.inComboWindow}
+          running={state.isActive}
+          label={state.inComboWindow ? "Go" : isSpeedDrill ? "Listen" : "Listen"}
+        />
       </main>
 
       {/* Bottom band — every slot has fixed height */}
@@ -247,14 +182,14 @@ export function BagTrainingScreen({ config, drill, onStop }: BagTrainingScreenPr
           <div className="relative h-[4.5rem] shrink-0">
             <p
               className={`absolute inset-0 flex items-center justify-center text-xs uppercase tracking-[0.2em] text-white/25 transition-opacity ${
-                state.currentCombo ? "opacity-0" : "opacity-100"
+                state.currentCombo && !state.inComboWindow ? "opacity-0" : "opacity-100"
               }`}
             >
               Ready
             </p>
             <p
               className={`font-display absolute inset-0 flex items-center justify-center text-[clamp(1.75rem,8vw,3rem)] leading-tight tracking-wide text-white transition-opacity ${
-                state.currentCombo ? "opacity-100" : "opacity-0"
+                state.currentCombo && !state.inComboWindow ? "opacity-100" : "opacity-0"
               }`}
             >
               {state.currentCombo?.label ?? "\u00a0"}

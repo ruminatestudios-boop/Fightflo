@@ -132,6 +132,22 @@ export const BAG_COMBOS: Record<BagDifficulty, BagCombo[]> = {
   ],
 };
 
+/** Single punches and short pairs for punch-speed drill. */
+export const SPEED_COMBOS: BagCombo[] = [
+  makeCombo("speed-jab", "Jab", [hit("jab", "JAB", "Jab")]),
+  makeCombo("speed-cross", "Cross", [hit("cross", "CROSS", "Cross")]),
+  makeCombo("speed-hook", "Hook", [hit("hook", "HOOK", "Hook")]),
+  makeCombo("speed-body", "Body shot", [hit("body-shot", "BODY SHOT", "Body shot")]),
+  makeCombo("speed-jab-cross", "Jab, Cross", [
+    hit("jab", "JAB", "Jab"),
+    hit("cross", "CROSS", "Cross"),
+  ]),
+  makeCombo("speed-cross-hook", "Cross, Hook", [
+    hit("cross", "CROSS", "Cross"),
+    hit("hook", "HOOK", "Hook"),
+  ]),
+];
+
 export const DIFFICULTY_REST_MS: Record<BagDifficulty, number> = {
   beginner: 10_000,
   fighter: 5_000,

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { BAG_COPY } from "@/lib/bag-drill/copy";
 import { TimerEmailCaptureFields } from "@/components/timer/TimerEmailCaptureFields";
 import { useTimerEmailCapture } from "@/hooks/useTimerEmailCapture";
 import {
@@ -51,7 +52,7 @@ export function TimerFirstVisitBanner({ isPro = false }: TimerFirstVisitBannerPr
           initial={{ y: -48, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -32, opacity: 0 }}
-          className="fixed inset-x-0 top-0 z-50 border-b border-[#ff0000]/20 bg-[#0a0a0a]/98 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md"
+          className="fixed inset-x-0 top-0 z-50 border-b border-[#fa4141]/20 bg-[#0a0a0a]/98 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md"
           role="region"
           aria-label="FlowBag free access"
         >
@@ -68,7 +69,7 @@ export function TimerFirstVisitBanner({ isPro = false }: TimerFirstVisitBannerPr
               ) : (
                 <>
                   <p className="text-xs font-medium leading-snug text-white">
-                    🥊 Free AI bag trainer → FlowBag detects your combos
+                    🥊 {BAG_COPY.timerBanner}
                   </p>
                   <p className="mt-0.5 text-[10px] text-white/50">
                     Enter email for free access

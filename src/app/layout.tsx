@@ -15,14 +15,14 @@ const barlow = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "FightFlo — Reactive Fight Training",
+  title: "FlowBag — Boxing Heavy Bag Trainer",
   description:
-    "Shadowboxing that fights back. Randomized reaction signals for Muay Thai, boxing, MMA and kickboxing.",
-  applicationName: "FightFlo",
+    "Boxing heavy bag trainer with called combos, punch counting, combo checks, and guard alerts.",
+  applicationName: "FlowBag",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "FightFlo",
+    title: "FlowBag",
   },
   formatDetection: {
     telephone: false,
@@ -33,8 +33,9 @@ export const metadata: Metadata = {
     apple: "/icon.svg",
   },
   openGraph: {
-    title: "FightFlo",
-    description: "Can you survive Stadium Mode?",
+    title: "FlowBag — Boxing Heavy Bag Trainer",
+    description:
+      "Boxing combos called in your ear — punches counted, sequences checked, guard flagged.",
     type: "website",
   },
 };

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { SessionControlBar } from "@/components/training/SessionControlBar";
+import { BigClock } from "@/components/training/BigClock";
 import type { UseBagFlurryResult } from "@/hooks/useBagFlurry";
 import type { BagTrainingConfig } from "@/lib/bag-drill/types";
 import { getBestFlurryForDuration } from "@/lib/bag-drill/storage";
@@ -40,9 +41,6 @@ export function BagFlurryTrainingScreen({
       onStop();
     }
   }, [state.phase, onStop]);
-
-  const progress =
-    state.phase === "go" ? 1 - state.secondsLeft / seconds : 0;
 
   const phaseLabel =
     state.phase === "countdown"
@@ -91,62 +89,20 @@ export function BagFlurryTrainingScreen({
       </div>
 
       <div className="relative z-10 flex flex-1 items-center justify-center px-6">
-        <div
-          className="relative flex items-center justify-center"
-          style={{ height: 280, width: 280 }}
-        >
-          <svg
-            className="absolute inset-0 h-full w-full -rotate-90"
-            viewBox="0 0 200 200"
-            aria-hidden
-          >
-            <circle
-              cx="100"
-              cy="100"
-              r="94"
-              fill="none"
-              stroke="rgba(255,255,255,0.06)"
-              strokeWidth="3"
-            />
-            <motion.circle
-              cx="100"
-              cy="100"
-              r="94"
-              fill="none"
-              stroke="#fa4141"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 94}
-              animate={{
-                strokeDashoffset: 2 * Math.PI * 94 * (1 - progress),
-              }}
-              transition={{ duration: 0.2, ease: "linear" }}
-            />
-          </svg>
-
-          <AnimatePresence mode="wait">
-            {state.phase === "countdown" ? (
-              <motion.p
-                key="cd"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="font-display text-[clamp(4rem,20vw,7rem)] font-bold tabular-nums text-white"
-              >
-                {state.countdown}
-              </motion.p>
-            ) : (
-              <motion.div key="go" className="text-center">
-                <p className="font-display text-[clamp(3.5rem,18vw,6rem)] font-bold tabular-nums leading-none text-white">
-                  {state.phase === "go" ? state.secondsLeft : seconds}
-                </p>
-                <p className="mt-2 text-xs uppercase tracking-[0.2em] text-white/40">
-                  {state.phase === "go" ? "seconds left" : `${seconds}s round`}
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        <BigClock
+          seconds={
+            state.phase === "countdown"
+              ? state.countdown
+              : state.phase === "go"
+                ? state.secondsLeft
+                : seconds
+          }
+          totalSeconds={state.phase === "go" ? seconds : undefined}
+          variant={state.phase === "countdown" ? "countdown" : "short"}
+          active={state.phase === "go"}
+          running={state.phase === "go"}
+          label={state.phase === "go" ? "Flurry" : undefined}
+        />
       </div>
 
       <div className="relative z-10 w-full shrink-0 px-6 pb-2">

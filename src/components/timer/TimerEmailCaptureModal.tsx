@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { BAG_COPY } from "@/lib/bag-drill/copy";
 import { TimerEmailCaptureFields } from "@/components/timer/TimerEmailCaptureFields";
 import { useTimerEmailCapture } from "@/hooks/useTimerEmailCapture";
 
@@ -37,7 +38,7 @@ export function TimerEmailCaptureModal({
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
-            className="fixed inset-x-4 top-[max(4rem,env(safe-area-inset-top))] z-[70] mx-auto max-w-sm rounded-2xl border border-[#ff0000]/20 bg-[#0a0a0a] p-6 shadow-xl"
+            className="fixed inset-x-4 top-[max(4rem,env(safe-area-inset-top))] z-[70] mx-auto max-w-sm rounded-2xl border border-[#fa4141]/20 bg-[#0a0a0a] p-6 shadow-xl"
             role="dialog"
             aria-modal="true"
             aria-labelledby="email-modal-title"
@@ -46,11 +47,10 @@ export function TimerEmailCaptureModal({
               id="email-modal-title"
               className="font-display text-xl tracking-wide text-white"
             >
-              Want AI to score your bag work?
+              {BAG_COPY.timerUpsellTitle}
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-[#a3a3a3]">
-              Get free access to FlowBag — AI that watches you on the bag, detects
-              combos and catches when your guard drops.
+              {BAG_COPY.timerUpsellBody}
             </p>
             <div className="mt-6">
               <TimerEmailCaptureFields

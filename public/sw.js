@@ -1,4 +1,4 @@
-const CACHE = "fightflo-v5";
+const CACHE = "fightflo-v6";
 const SHELL = ["/manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -49,7 +49,7 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("push", (event) => {
-  let payload = { title: "FlowBag", body: "Time to train.", url: "/bag" };
+  let payload = { title: "FlowBag", body: "Time to train.", url: "/" };
   try {
     if (event.data) {
       payload = { ...payload, ...event.data.json() };
@@ -63,7 +63,7 @@ self.addEventListener("push", (event) => {
       body: payload.body,
       icon: "/manifest.json",
       badge: "/manifest.json",
-      data: { url: payload.url || "/bag" },
+      data: { url: payload.url || "/" },
       tag: "flowbag-reminder",
     })
   );
@@ -71,13 +71,16 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const target = event.notification.data?.url || "/bag";
+  const target = event.notification.data?.url || "/";
   const url = new URL(target, self.location.origin).href;
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
       for (const client of list) {
-        if (client.url.includes("/bag") && "focus" in client) {
+        if (
+          (client.url.endsWith("/") || client.url.includes("/bag")) &&
+          "focus" in client
+        ) {
           return client.focus();
         }
       }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { BAG_COPY } from "@/lib/bag-drill/copy";
 import { FLOWBAG_PLANS, type SubscriptionPlan } from "@/lib/subscription";
 import { startCheckout } from "@/lib/pro-sync";
 
@@ -52,7 +53,7 @@ export function UpgradeModal({ sessionsUsed, onClose }: UpgradeModalProps) {
           You&apos;re on a roll. Don&apos;t stop now.
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-[#737373]">
-          Unlimited sessions, AI feedback, combo history. Cancel anytime.
+          {BAG_COPY.upgradeBody}
         </p>
 
         <div className="mt-6 flex rounded-full border border-white/10 bg-white/[0.03] p-1">
@@ -92,7 +93,7 @@ export function UpgradeModal({ sessionsUsed, onClose }: UpgradeModalProps) {
         </button>
 
         {error && (
-          <p className="mt-3 text-center text-xs text-red-400">{error}</p>
+          <p className="mt-3 text-center text-xs text-[#fa4141]">{error}</p>
         )}
 
         <button

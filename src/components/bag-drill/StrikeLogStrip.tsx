@@ -23,9 +23,13 @@ interface StrikeLogStripProps {
 export function StrikeLogStrip({ entries }: StrikeLogStripProps) {
   if (entries.length === 0) return null;
 
+  const firstPending = entries.findIndex((e) => e.status === "pending");
+  const visible =
+    firstPending < 0 ? entries : entries.slice(0, firstPending + 1);
+
   return (
     <div className="flex max-h-10 flex-wrap items-center justify-center gap-x-3 gap-y-1 overflow-hidden">
-      {entries.map((e, i) => (
+      {visible.map((e, i) => (
         <span
           key={`${e.strikeId}-${i}`}
           className={`text-xs uppercase tracking-[0.1em] ${statusColor(e.status)}`}

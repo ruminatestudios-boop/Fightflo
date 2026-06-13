@@ -84,6 +84,6 @@ export const FLOWBAG_PRO_FEATURES = [
   "Unlimited combo sessions",
   "Full session history & scores",
   "Combo library & 30-day charts",
-  "AI punch feedback (Fighter cam)",
+  "Corner feedback after rounds (Fighter cam)",
   "Weekly recap push notifications",
 ];

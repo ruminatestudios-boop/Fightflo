@@ -60,7 +60,7 @@ export async function GET(request: Request) {
       const n = await sendPushToDevice(user.deviceId, {
         title: "Your bag is waiting 👊",
         body: "5 minutes is enough. Open FlowBag.",
-        url: "/bag",
+        url: "/",
       });
       if (n > 0) {
         await markNotification(user.deviceId, { day1Sent: true });
@@ -76,7 +76,7 @@ export async function GET(request: Request) {
         const n = await sendPushToDevice(user.deviceId, {
           title: "You slipped.",
           body: "Get back on the bag. Your streak is at risk.",
-          url: "/bag",
+          url: "/",
         });
         if (n > 0) {
           await markNotification(user.deviceId, { slippedSentDate: today });
@@ -96,7 +96,7 @@ export async function GET(request: Request) {
       const n = await sendPushToDevice(user.deviceId, {
         title: "Your week on the bag 🔥",
         body: `You threw ${user.weeklyCombos} combos. Top ${topPct}% of FlowBag.`,
-        url: "/bag",
+        url: "/",
       });
       if (n > 0) {
         await markNotification(user.deviceId, {

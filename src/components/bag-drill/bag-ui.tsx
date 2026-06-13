@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 
+export { CAMERA_MODE_COPY } from "@/lib/bag-drill/copy";
+
 export function chipClass(selected: boolean): string {
   return selected
     ? "border-[#fa4141]/50 bg-[#fa4141]/10 text-white"

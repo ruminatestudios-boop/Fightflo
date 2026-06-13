@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { BAG_COPY } from "@/lib/bag-drill/copy";
 
 interface TimerRound3EmailBannerProps {
   visible: boolean;
@@ -48,17 +49,17 @@ export function TimerRound3EmailBanner({
           role="region"
           aria-label="FlowBag email capture"
         >
-          <div className="mx-auto flex w-full max-w-md items-center gap-3 rounded-xl border border-[#ff0000]/25 bg-[#141414]/95 px-4 py-3 shadow-lg backdrop-blur-sm">
+          <div className="mx-auto flex w-full max-w-md items-center gap-3 rounded-xl border border-[#fa4141]/25 bg-[#141414]/95 px-4 py-3 shadow-lg backdrop-blur-sm">
             <button
               type="button"
               onClick={dismiss}
               className="min-w-0 flex-1 text-left"
             >
               <p className="text-sm font-medium text-white">
-                Still training without AI feedback?
+                {BAG_COPY.timerRound3Title}
               </p>
               <p className="mt-0.5 text-xs text-white/50">
-                FlowBag is free to try 👇
+                {BAG_COPY.timerRound3Subtitle}
               </p>
             </button>
             <button
@@ -67,7 +68,7 @@ export function TimerRound3EmailBanner({
                 onOpenModal();
                 dismiss();
               }}
-              className="shrink-0 rounded-full bg-[#ff0000] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-white"
+              className="shrink-0 rounded-full bg-[#fa4141] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-white"
             >
               Get free access →
             </button>

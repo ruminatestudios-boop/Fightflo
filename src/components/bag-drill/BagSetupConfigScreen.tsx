@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Slider } from "@/components/ui/Slider";
 import { BagScreenWrapper } from "@/components/bag-drill/BagScreenWrapper";
 import { BagSection, chipClass } from "@/components/bag-drill/bag-ui";
+import { BAG_COPY } from "@/lib/bag-drill/copy";
 import { DIFFICULTY_REST_MS } from "@/lib/bag-drill/combos";
 import {
   defaultTiming,
@@ -39,12 +40,6 @@ const DIFFICULTIES: { id: BagDifficulty; label: string; desc: string }[] = [
   { id: "champion", label: "Champion", desc: "Long combos, fast windows" },
 ];
 
-const CAMERA_MODE_SUMMARY: Record<BagCameraMode, string> = {
-  fighter:
-    "Fighter cam — AI validates each punch (jab, cross, hook) and scores technique.",
-  bag: "Bag cam — mic counts impacts only. Punch type is not checked.",
-};
-
 export function BagSetupConfigScreen({
   cameraMode,
   initialDrillMode = "combo",
@@ -70,7 +65,12 @@ export function BagSetupConfigScreen({
   const [restOverridden, setRestOverridden] = useState(false);
 
   useEffect(() => {
-    if (!restOverridden && drillMode === "combo") {
+    if (restOverridden) return;
+    if (drillMode === "speed") {
+      setTiming((t) => ({ ...t, restBetweenCombosMs: 3_000 }));
+      return;
+    }
+    if (drillMode === "combo") {
       setTiming((t) => ({
         ...t,
         restBetweenCombosMs: DIFFICULTY_REST_MS[difficulty],
@@ -81,6 +81,10 @@ export function BagSetupConfigScreen({
   const restSec = Math.round(timing.restBetweenCombosMs / 1000);
   const windowExample = estimateComboWindowSec(3, difficulty, timing.comboWindowScale);
   const isFlurry = drillMode === "flurry";
+  const isSpeed = drillMode === "speed";
+  const isWeakness = weaknessFocus && drillMode === "combo";
+  const lockDrillMode =
+    initialDrillMode !== "combo" || Boolean(initialConfig?.weaknessFocus);
 
   return (
     <BagScreenWrapper onBack={onBack} className="overflow-y-auto pb-10">
@@ -89,35 +93,53 @@ export function BagSetupConfigScreen({
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col"
       >
-        <p className="label text-[#525252]">Session setup</p>
+        <p className="label text-[#525252]">Boxing session setup</p>
         <h1 className="font-display mt-2 text-2xl tracking-wide text-white">
-          {isFlurry ? "Punch flurry" : "Combo drill"}
+          {isFlurry
+            ? "Flurry"
+            : isSpeed
+              ? "Punch speed"
+              : isWeakness
+                ? "Weakness drill"
+                : "Called combos"}
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-[#737373]">
           {isFlurry
-            ? "Max punches in a short burst — mic counts every hit on the bag."
-            : CAMERA_MODE_SUMMARY[cameraMode]}
+            ? BAG_COPY.quickStart.flurry.detail
+            : isSpeed
+              ? BAG_COPY.quickStart.speed.detail
+              : isWeakness
+                ? BAG_COPY.quickStart.weakness.detail
+                : BAG_COPY.quickStart.combo.detail}
         </p>
 
-        <div className="mt-6 flex gap-2">
-          {(["combo", "flurry"] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setDrillMode(m)}
-              className={`flex-1 rounded-xl border py-3 text-center transition-colors ${chipClass(drillMode === m)}`}
-            >
-              <span className="font-display text-xs">
-                {m === "combo" ? "Combos" : "Flurry"}
-              </span>
-            </button>
-          ))}
-        </div>
+        {!lockDrillMode && (
+          <div className="mt-6 flex gap-2">
+            {(["combo", "flurry"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setDrillMode(m)}
+                className={`flex-1 rounded-xl border py-3 text-center transition-colors ${chipClass(drillMode === m)}`}
+              >
+                <span className="font-display text-xs">
+                  {m === "combo" ? "Combos" : "Flurry"}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="mt-8 space-y-8">
-          {!isFlurry && weaknessFocus && (
+          {!isFlurry && isWeakness && (
             <div className="rounded-xl border border-[#fa4141]/30 bg-[#fa4141]/10 px-4 py-3 text-sm text-[#fa4141]/90">
-              Weakness drill — app prioritises your slowest combos.
+              Prioritises combos you&apos;re slowest on.
+            </div>
+          )}
+
+          {!isFlurry && isSpeed && (
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-[#737373]">
+              Camera on you works best — we time each punch as it lands.
             </div>
           )}
 
@@ -211,18 +233,20 @@ export function BagSetupConfigScreen({
                 </p>
               </BagSection>
 
-              <BagSection label="Focus">
-                <button
-                  type="button"
-                  onClick={() => setWeaknessFocus((v) => !v)}
-                  className={`w-full rounded-xl border px-4 py-4 text-left transition-colors ${chipClass(weaknessFocus)}`}
-                >
-                  <span className="font-display text-sm">Weakness drill</span>
-                  <span className="mt-0.5 block text-xs normal-case tracking-normal text-[#737373]">
-                    Weight calls toward combos you&apos;re slowest on
-                  </span>
-                </button>
-              </BagSection>
+              {!isSpeed && !lockDrillMode && (
+                <BagSection label="Focus">
+                  <button
+                    type="button"
+                    onClick={() => setWeaknessFocus((v) => !v)}
+                    className={`w-full rounded-xl border px-4 py-4 text-left transition-colors ${chipClass(weaknessFocus)}`}
+                  >
+                    <span className="font-display text-sm">Weakness drill</span>
+                    <span className="mt-0.5 block text-xs normal-case tracking-normal text-[#737373]">
+                      Weight calls toward combos you&apos;re slowest on
+                    </span>
+                  </button>
+                </BagSection>
+              )}
             </>
           )}
         </div>
@@ -238,7 +262,7 @@ export function BagSetupConfigScreen({
                 stance: initialConfig?.stance,
                 calibration: initialConfig?.calibration,
                 flurrySeconds: isFlurry ? flurrySeconds : undefined,
-                weaknessFocus: isFlurry ? false : weaknessFocus,
+                weaknessFocus: isFlurry || isSpeed ? false : weaknessFocus,
                 weeklyPlanId: initialConfig?.weeklyPlanId,
                 timing: {
                   ...timing,

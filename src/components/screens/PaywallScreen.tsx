@@ -181,7 +181,7 @@ export function PaywallScreen({
             {loading ? "Opening checkout…" : "Go Pro — subscribe"}
           </Button>
           {error && (
-            <p className="text-center text-xs text-red-400">{error}</p>
+            <p className="text-center text-xs text-[#fa4141]">{error}</p>
           )}
           <p className="text-center text-xs text-[#525252]">
             Recurring billing · Cancel anytime in Stripe

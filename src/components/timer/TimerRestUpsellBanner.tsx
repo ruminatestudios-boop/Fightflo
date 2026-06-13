@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { BAG_COPY } from "@/lib/bag-drill/copy";
 import { recordFlowBagClick } from "@/lib/boxing-timer/upsell-storage";
 
 interface TimerRestUpsellBannerProps {
@@ -55,14 +56,14 @@ export function TimerRestUpsellBanner({
           >
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-white">
-                Know if you landed that combo
+                {BAG_COPY.timerRestTitle}
               </p>
               <p className="mt-0.5 text-xs text-white/50">
-                FlowBag scores your bag work with AI
+                {BAG_COPY.timerRestSubtitle}
               </p>
             </div>
             <Link
-              href="/bag"
+              href="/"
               onClick={(e) => {
                 e.stopPropagation();
                 recordFlowBagClick();
