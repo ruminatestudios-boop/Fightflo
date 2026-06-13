@@ -312,6 +312,7 @@ export function useBagFlurry(): UseBagFlurryResult {
               () => registerImpact(),
               {
                 bagProfile: config.calibration?.bagProfile,
+                strictSession: !config.calibration?.bagProfile,
                 cooldownMs: 165,
                 calibrateMs: config.calibration?.micThreshold != null ? 0 : 2500,
                 threshold: config.calibration?.micThreshold,

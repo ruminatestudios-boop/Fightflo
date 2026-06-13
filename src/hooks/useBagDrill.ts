@@ -10,6 +10,7 @@ import {
 import { fetchComboFeedback } from "@/lib/bag-drill/detection/fetch-combo-feedback";
 import type { GuardState } from "@/lib/bag-drill/detection/guard-monitor";
 import { shouldUsePoseEngine } from "@/lib/bag-drill/detection-mode";
+import { COMBO_WINDOW_GRACE_MS } from "@/lib/bag-drill/detection/constants";
 import { PunchDetectionEngine } from "@/lib/bag-drill/detection/punch-detection-engine";
 import {
   attachExistingStream,
@@ -156,7 +157,7 @@ const INITIAL: BagTrainingState = {
   lastImpactAt: null,
 };
 
-const PUNCH_DEBOUNCE_MS = 110;
+const PUNCH_DEBOUNCE_MS = 150;
 const SPEED_ARM_MS = 1_400;
 const SPEED_MISS_RETRY_MS = 2_000;
 
@@ -182,6 +183,7 @@ export function useBagDrill(): UseBagDrillResult {
   const reactionsRef = useRef<number[]>([]);
   const comboReactionsRef = useRef<Record<string, number[]>>({});
   const currentComboRef = useRef<BagCombo | null>(null);
+  const comboWindowGraceUntilRef = useRef(0);
   const inWindowRef = useRef(false);
   const hitsInComboRef = useRef(0);
   const lastPunchAtRef = useRef(0);
@@ -369,10 +371,15 @@ export function useBagDrill(): UseBagDrillResult {
   const scheduleNextComboRef = useRef<() => void>(() => {});
   const callCurrentComboRef = useRef<() => void>(() => {});
 
+  const hitsAllowedNow = useCallback(() => {
+    if (!inWindowRef.current || comboResolvedRef.current) return false;
+    return Date.now() >= comboWindowGraceUntilRef.current;
+  }, []);
+
   const registerAiHit = useCallback(
     (strikeId: string) => {
       const combo = currentComboRef.current;
-      if (!combo || !inWindowRef.current || comboResolvedRef.current) return;
+      if (!combo || !hitsAllowedNow()) return;
 
       const now = Date.now();
       const normalised = normaliseStrikeId(strikeId);
@@ -422,7 +429,7 @@ export function useBagDrill(): UseBagDrillResult {
         finishComboRoundRef.current("correct");
       }
     },
-    [markStrikeHit, scheduleMicBackupHint, syncStrikeLog, logStrikeSpeed]
+    [hitsAllowedNow, markStrikeHit, scheduleMicBackupHint, syncStrikeLog, logStrikeSpeed]
   );
 
   registerAiHitRef.current = registerAiHit;
@@ -594,7 +601,7 @@ export function useBagDrill(): UseBagDrillResult {
 
   const registerImpact = useCallback(() => {
     const combo = currentComboRef.current;
-    if (!combo || !inWindowRef.current || comboResolvedRef.current) return;
+    if (!combo || !hitsAllowedNow()) return;
 
     const now = Date.now();
     if (now - lastPunchAtRef.current < PUNCH_DEBOUNCE_MS) return;
@@ -633,7 +640,7 @@ export function useBagDrill(): UseBagDrillResult {
     ) {
       finishComboRound("correct");
     }
-  }, [finishComboRound, logStrikeSpeed, markStrikeHit]);
+  }, [finishComboRound, hitsAllowedNow, logStrikeSpeed, markStrikeHit]);
 
   registerImpactRef.current = registerImpact;
 
@@ -644,6 +651,7 @@ export function useBagDrill(): UseBagDrillResult {
 
       comboResolvedRef.current = false;
       inWindowRef.current = true;
+      comboWindowGraceUntilRef.current = Date.now() + COMBO_WINDOW_GRACE_MS;
       hitsInComboRef.current = 0;
       strikeIndexRef.current = 0;
       lastAiHitRef.current = null;
@@ -780,7 +788,7 @@ export function useBagDrill(): UseBagDrillResult {
 
   const micBackupPunch = useCallback(() => {
     const combo = currentComboRef.current;
-    if (!combo || !inWindowRef.current || comboResolvedRef.current) return;
+    if (!combo || !hitsAllowedNow()) return;
     if (!poseDetectionRef.current || cameraModeRef.current !== "fighter") {
       registerImpact();
       return;
@@ -810,7 +818,7 @@ export function useBagDrill(): UseBagDrillResult {
     } else {
       scheduleMicBackupHint();
     }
-  }, [finishComboRound, logStrikeSpeed, markStrikeHit, registerImpact, scheduleMicBackupHint]);
+  }, [finishComboRound, hitsAllowedNow, logStrikeSpeed, markStrikeHit, registerImpact, scheduleMicBackupHint]);
 
   const disputeStrike = useCallback(() => {
     if (disputeUsedRef.current || comboResolvedRef.current) return;
@@ -844,6 +852,7 @@ export function useBagDrill(): UseBagDrillResult {
       if (!ctx || !handles.stream.getAudioTracks().length) return;
 
       const bagProfile = configRef.current?.calibration?.bagProfile;
+      const strictSession = !bagProfile;
 
       cleanupAudioRef.current = createAudioImpactDetector(
         handles.stream,
@@ -851,6 +860,7 @@ export function useBagDrill(): UseBagDrillResult {
         () => registerImpact(),
         {
           bagProfile,
+          strictSession,
           threshold: micThresholdRef.current,
           calibrateMs: micThresholdRef.current != null ? 0 : 2000,
           devMode: process.env.NODE_ENV === "development",
@@ -941,6 +951,7 @@ export function useBagDrill(): UseBagDrillResult {
               stance: stanceRef.current,
               micThreshold: micThresholdRef.current,
               bagProfile: config.calibration?.bagProfile,
+              strictSession: !config.calibration?.bagProfile,
               guardBaseline: config.calibration?.guardBaseline,
               devMode: process.env.NODE_ENV === "development",
               onPunch: (punch) => {

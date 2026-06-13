@@ -30,14 +30,16 @@ export const MIC_SAMPLE_MS = 16;
 export const MIC_SPIKE_THRESHOLD = 0.18;
 export const MIC_SPIKE_MAX_MS = 150;
 
-export const WRIST_VELOCITY_PX = 22;
+export const WRIST_VELOCITY_PX = 32;
 export const WRIST_VELOCITY_WINDOW_MS = 120;
 
-export const FUSION_WINDOW_MS = 180;
-export const MIN_LOG_CONFIDENCE = 72;
+export const FUSION_WINDOW_MS = 160;
+export const FUSION_MIC_VELOCITY_MAX_MS = 120;
+export const MIN_LOG_CONFIDENCE = 78;
 export const TEMPORAL_WINDOW_MS = 280;
 export const TEMPORAL_MIN_FRAMES = 3;
-export const PUNCH_COOLDOWN_MS = 110;
+export const PUNCH_COOLDOWN_MS = 150;
+export const COMBO_WINDOW_GRACE_MS = 600;
 
 export const GUARD_CHECK_MS = 100;
 export const GUARD_DROP_PCT = 0.2;

@@ -4,6 +4,7 @@ import type { HandLandmarker, PoseLandmarker } from "@mediapipe/tasks-vision";
 import type { BagStance } from "../calibration";
 import { ComboSequencer, type CompletedCombo } from "./combo-sequencer";
 import {
+  FUSION_MIC_VELOCITY_MAX_MS,
   FUSION_WINDOW_MS,
   GUARD_CHECK_MS,
   MIN_LOG_CONFIDENCE,
@@ -50,6 +51,7 @@ export interface PunchDetectionEngineOptions {
   stance: BagStance;
   micThreshold?: number;
   bagProfile?: import("@/lib/bag-drill/detection/bag-thud-detector").BagThudProfile;
+  strictSession?: boolean;
   guardBaseline?: GuardBaseline;
   devMode?: boolean;
   onPunch: (punch: ClassifiedPunch) => void;
@@ -111,6 +113,7 @@ export class PunchDetectionEngine {
     this.mic = new MicPunchDetector({
       threshold: this.options.micThreshold,
       bagProfile: this.options.bagProfile,
+      strictSession: this.options.strictSession,
       onSpike: (peak, at) => {
         void peak;
         this.pushSignal("mic", at);
@@ -196,14 +199,14 @@ export class PunchDetectionEngine {
       height: h,
     });
 
-    if (bodyVisible(landmarks)) {
-      this.pushSignal("pose", now);
-    }
-
     const velHit = this.velocity.update(landmarks, w, h, now);
     if (velHit) {
       this.lastVelocityHit = velHit;
       this.pushSignal("velocity", now);
+      // Pose confirms body tracking during strike motion — not every idle frame.
+      if (bodyVisible(landmarks)) {
+        this.pushSignal("pose", now);
+      }
     }
 
     this.tryFuse(now);
@@ -221,10 +224,19 @@ export class PunchDetectionEngine {
 
     const height = this.options.video.videoHeight || 480;
     const recent = this.signals.filter((s) => now - s.at <= FUSION_WINDOW_MS);
-    const micFired = recent.some((s) => s.kind === "mic");
+    const micEvents = recent.filter((s) => s.kind === "mic");
+    const velEvents = recent.filter((s) => s.kind === "velocity");
+    const micFired = micEvents.length > 0;
     const mediapipeFired = recent.some((s) => s.kind === "pose");
-    const velocityFired = recent.some((s) => s.kind === "velocity");
+    const velocityFired = velEvents.length > 0;
     const allThree = micFired && mediapipeFired && velocityFired;
+
+    const lastMicAt = micEvents.at(-1)?.at ?? 0;
+    const lastVelAt = velEvents.at(-1)?.at ?? 0;
+    const micVelocityAligned =
+      micFired &&
+      velocityFired &&
+      Math.abs(lastMicAt - lastVelAt) <= FUSION_MIC_VELOCITY_MAX_MS;
 
     let punchLogged = false;
     let confidence = 0;
@@ -233,6 +245,7 @@ export class PunchDetectionEngine {
 
     if (
       allThree &&
+      micVelocityAligned &&
       this.lastVelocityHit &&
       now - this.lastPunchAt > PUNCH_COOLDOWN_MS
     ) {

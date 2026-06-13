@@ -701,6 +701,7 @@ export interface AudioImpactDetectorOptions {
   calibrateMs?: number;
   threshold?: number;
   bagProfile?: Partial<BagThudProfile>;
+  strictSession?: boolean;
   devMode?: boolean;
   onPeak?: (peak: number) => void;
   onEnvironment?: (env: GymEnvironment, label: string) => void;
@@ -716,6 +717,7 @@ export function createAudioImpactDetector(
   return createBagThudImpactDetector(stream, audioContext, onImpact, {
     bagProfile: options.bagProfile,
     threshold: options.threshold,
+    strictSession: options.strictSession,
     devMode: options.devMode,
     onEnvironment: options.onEnvironment,
   });

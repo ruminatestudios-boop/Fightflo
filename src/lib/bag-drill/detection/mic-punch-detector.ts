@@ -4,6 +4,7 @@ import { BagThudDetector } from "./bag-thud-detector";
 export interface MicPunchDetectorOptions {
   threshold?: number;
   bagProfile?: Partial<BagThudProfile>;
+  strictSession?: boolean;
   onSpike: (peak: number, at: number) => void;
 }
 
@@ -14,21 +15,27 @@ export class MicPunchDetector {
 
   constructor(options: MicPunchDetectorOptions) {
     this.onSpike = options.onSpike;
+    this.detector = this.buildDetector(options);
+  }
+
+  private buildDetector(options: MicPunchDetectorOptions): BagThudDetector {
     const profile =
       options.bagProfile ??
       (options.threshold != null
         ? { threshold: options.threshold * 255 }
         : undefined);
-    this.detector = new BagThudDetector({
+    return new BagThudDetector({
       profile,
+      strictSession: options.strictSession ?? !options.bagProfile,
       onThud: (hit) => this.onSpike(hit.peakVolume / 255, performance.now()),
     });
   }
 
   setThreshold(threshold: number): void {
-    this.detector = new BagThudDetector({
-      profile: { threshold: threshold * 255 },
-      onThud: (hit) => this.onSpike(hit.peakVolume / 255, performance.now()),
+    this.detector = this.buildDetector({
+      threshold,
+      strictSession: true,
+      onSpike: this.onSpike,
     });
   }
 

@@ -45,6 +45,8 @@ export interface BagThudDetectorOptions {
   audioContext?: AudioContext;
   ownsAudioContext?: boolean;
   profile?: Partial<BagThudProfile>;
+  /** Stricter thresholds during live combos when no bag profile exists. */
+  strictSession?: boolean;
   devMode?: boolean;
   calibrating?: boolean;
   onThud?: (hit: BagThudHit) => void;
@@ -321,8 +323,26 @@ export class BagThudDetector {
   }
 
   private personalThreshold(): number {
-    if (this.profile) return this.profile.threshold;
+    const floor = Math.max(this.ambientFloor + 55, 70);
+    if (this.profile) {
+      return this.options.strictSession
+        ? Math.max(this.profile.threshold, floor)
+        : this.profile.threshold;
+    }
+    if (this.options.strictSession) {
+      return floor;
+    }
     return Math.max(this.ambientFloor + 35, 40);
+  }
+
+  private attackVolumeMin(): number {
+    return this.options.strictSession
+      ? this.ambientFloor + 45
+      : this.ambientFloor + 30;
+  }
+
+  private attackMultiplier(): number {
+    return this.options.strictSession ? 3.2 : 2.5;
   }
 
   private proximityMinimum(): number {
@@ -404,8 +424,8 @@ export class BagThudDetector {
 
     if (
       !this.isTracking &&
-      currentVolume > this.ambientFloor + 30 &&
-      currentVolume > this.lastVolume * 2.5 &&
+      currentVolume > this.attackVolumeMin() &&
+      currentVolume > this.lastVolume * this.attackMultiplier() &&
       this.lastVolume > 0
     ) {
       this.isTracking = true;
@@ -507,6 +527,7 @@ export class BagThudDetector {
 export interface BagThudImpactOptions {
   bagProfile?: Partial<BagThudProfile>;
   threshold?: number;
+  strictSession?: boolean;
   devMode?: boolean;
   onEnvironment?: (env: GymEnvironment, label: string) => void;
 }
@@ -531,6 +552,7 @@ export function createBagThudImpactDetector(
     audioContext,
     ownsAudioContext: false,
     profile: profile ?? undefined,
+    strictSession: options.strictSession,
     devMode: options.devMode,
     onThud: () => onImpact(),
     onEnvironment: options.onEnvironment,
