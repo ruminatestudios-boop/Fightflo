@@ -365,7 +365,11 @@ async function openCombinedAvStream(
   facingMode: FacingMode,
   highQuality: boolean
 ): Promise<{ stream: MediaStream | null; failure: GumFailure | null }> {
-  const attempts: MediaStreamConstraints[] = [
+  const iosAttempts: MediaStreamConstraints[] = [
+    { video: { facingMode: { ideal: facingMode } }, audio: true },
+    { video: true, audio: true },
+  ];
+  const defaultAttempts: MediaStreamConstraints[] = [
     {
       video: { facingMode: { ideal: facingMode } },
       audio: true,
@@ -389,6 +393,8 @@ async function openCombinedAvStream(
       },
     },
   ];
+
+  const attempts = isIOSDevice() ? iosAttempts : defaultAttempts;
 
   const failures: GumFailure[] = [];
 
@@ -425,10 +431,22 @@ export async function reacquireMediaWithMicrophone(
   existingStream?.getTracks().forEach((track) => track.stop());
   releaseVideoPreview(videoEl);
   await delay(isIOSDevice() ? 120 : 60);
-  return startMediaCapture(videoEl, {
+
+  const withMic = await startMediaCapture(videoEl, {
     facingMode,
     highQuality: false,
     requestMicrophone: true,
+  });
+
+  if (withMic.hasCamera) {
+    return withMic;
+  }
+
+  // Combined failed entirely — reopen camera-only so the user is not stuck on "camera blocked".
+  return startMediaCapture(videoEl, {
+    facingMode,
+    highQuality: false,
+    requestMicrophone: false,
   });
 }
 
@@ -508,7 +526,8 @@ export async function startMediaCapture(
     stream = combined.stream;
     videoFailure = combined.failure;
 
-    if (!stream && !isIOSDevice()) {
+    // If combined AV fails (common on iOS when mic is denied in Settings), still open camera.
+    if (!stream) {
       const videoOnly = await openVideoStream(facingMode, highQuality);
       stream = videoOnly.stream;
       videoFailure = videoOnly.videoFailure;
@@ -538,6 +557,10 @@ export async function startMediaCapture(
       }
     } else if (requestMicrophone && hasMic) {
       handles.audioContext = await initAudioContext(stream);
+    } else if (requestMicrophone && !hasMic && hasCamera) {
+      error = isIOSDevice()
+        ? "Mic blocked — tap the button below, or aA → Website Settings → Microphone → Allow"
+        : gumErrorMessage(null, "audio");
     } else if (requestMicrophone && !hasMic) {
       error = gumErrorMessage(null, "audio");
     }

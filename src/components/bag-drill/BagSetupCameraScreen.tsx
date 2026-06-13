@@ -176,12 +176,6 @@ export function BagSetupCameraScreen({
     onBack();
   };
 
-  const statusText = !cameraReady
-    ? "Tap below — your phone will ask for permission"
-    : micReady
-      ? "Camera & mic ready"
-      : "Camera ready — allow mic next";
-
   const primaryLabel = !cameraReady
     ? starting
       ? "Opening camera…"
@@ -193,6 +187,14 @@ export function BagSetupCameraScreen({
           ? "Allow camera & microphone"
           : "Allow microphone"
       : "Continue";
+
+  const statusText = !cameraReady
+    ? "Tap below — Safari will ask for camera and microphone"
+    : micReady
+      ? "Camera & mic ready"
+      : isIOSDevice()
+        ? "Camera on — allow microphone next (aA → Website Settings if blocked)"
+        : "Camera ready — allow mic next";
 
   const primaryAction = () => {
     if (!cameraReady) return void startAccess();
