@@ -49,6 +49,7 @@ export interface PunchDetectionEngineOptions {
   stream: MediaStream;
   stance: BagStance;
   micThreshold?: number;
+  bagProfile?: import("@/lib/bag-drill/detection/bag-thud-detector").BagThudProfile;
   guardBaseline?: GuardBaseline;
   devMode?: boolean;
   onPunch: (punch: ClassifiedPunch) => void;
@@ -109,6 +110,7 @@ export class PunchDetectionEngine {
 
     this.mic = new MicPunchDetector({
       threshold: this.options.micThreshold,
+      bagProfile: this.options.bagProfile,
       onSpike: (peak, at) => {
         void peak;
         this.pushSignal("mic", at);

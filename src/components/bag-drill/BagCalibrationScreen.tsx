@@ -5,7 +5,7 @@ import { BackButton } from "@/components/ui/BackButton";
 import { CAMERA_MODE_COPY } from "@/components/bag-drill/bag-ui";
 import {
   brightnessOk,
-  micThresholdFromPeaks,
+  calibrationFromThudHits,
   sampleFrameBrightness,
   stanceLabel,
   type BagCalibration,
@@ -13,7 +13,10 @@ import {
 } from "@/lib/bag-drill/calibration";
 import { BAG_COPY } from "@/lib/bag-drill/copy";
 import { saveCalibration } from "@/lib/bag-drill/detection/calibration-store";
-import { MicPunchDetector } from "@/lib/bag-drill/detection/mic-punch-detector";
+import {
+  BagThudDetector,
+  type BagThudHit,
+} from "@/lib/bag-drill/detection/bag-thud-detector";
 import {
   createPoseLandmarker,
   detectPose,
@@ -42,6 +45,7 @@ type CalStep = "camera" | "stance" | "guard" | "mic" | "done";
 type FlowStep = Exclude<CalStep, "done">;
 
 const STEP_MS = 3000;
+const CALIBRATION_HITS = 5;
 
 interface BagCalibrationScreenProps {
   purpose?: CalibrationPurpose;
@@ -69,8 +73,8 @@ export function BagCalibrationScreen({
   const videoRef = useRef<HTMLVideoElement>(null);
   const stopRef = useRef<(() => void) | null>(null);
   const landmarkerRef = useRef<PoseLandmarker | null>(null);
-  const micRef = useRef<MicPunchDetector | null>(null);
-  const peaksRef = useRef<number[]>([]);
+  const thudRef = useRef<BagThudDetector | null>(null);
+  const thudHitsRef = useRef<BagThudHit[]>([]);
   const guardMonitorRef = useRef(new GuardMonitor());
   const guardBaselineRef = useRef<ReturnType<GuardMonitor["calibrateFromLandmarks"]> | null>(
     null
@@ -102,6 +106,7 @@ export function BagCalibrationScreen({
   const [testPunchCount, setTestPunchCount] = useState(0);
   const [captureStream, setCaptureStream] = useState<MediaStream | null>(existingStream);
   const [starting, setStarting] = useState(false);
+  const [envLabel, setEnvLabel] = useState<string | null>(null);
   const startingRef = useRef(false);
 
   const fighterCam = activeCameraMode === "fighter";
@@ -121,17 +126,20 @@ export function BagCalibrationScreen({
       chinY: 0,
     };
 
-    const cal: BagCalibration = {
+    const ambientFloor =
+      thudRef.current?.getProfile()?.ambientFloor ??
+      thudHitsRef.current[0]?.peakVolume ??
+      20;
+
+    const cal = calibrationFromThudHits(thudHitsRef.current, ambientFloor, {
       stance: detectedStance ?? stance,
-      micThreshold: micThresholdFromPeaks(peaksRef.current),
       lightingOk: poseCalibration ? lightOk : true,
       brightness: poseCalibration ? brightness : 0.35,
-      testPunchesDetected: peaksRef.current.length,
       frameConfirmed: poseCalibration ? bodyOk && angleOk : false,
       poseReady: poseCalibration ? bodyOk && angleOk : false,
       guardBaseline: poseCalibration ? baseline : undefined,
       gpuDelegate: gpuOk,
-    };
+    });
     saveCalibration(cal);
     onComplete(cal);
   }, [stance, detectedStance, lightOk, brightness, bodyOk, angleOk, gpuOk, poseCalibration, onComplete]);
@@ -201,13 +209,8 @@ export function BagCalibrationScreen({
     }
 
     if (result.handles.stream) {
-      micRef.current = new MicPunchDetector({
-        onSpike: (peak) => {
-          peaksRef.current.push(peak);
-          setTestPunchCount(peaksRef.current.length);
-          if (stepRef.current === "mic") setMicOk(true);
-        },
-      });
+      thudRef.current?.stop();
+      thudRef.current = null;
     }
 
     startingRef.current = false;
@@ -265,19 +268,21 @@ export function BagCalibrationScreen({
     setPreviewError(result.hasMic ? null : result.error);
 
     if (result.hasMic && stepRef.current === "mic") {
-      peaksRef.current = [];
+      thudHitsRef.current = [];
       setTestPunchCount(0);
       setMicOk(false);
-      micRef.current?.stop();
-      micRef.current = new MicPunchDetector({
-        onSpike: (peak) => {
-          peaksRef.current.push(peak);
-          setTestPunchCount(peaksRef.current.length);
-          if (stepRef.current === "mic") setMicOk(true);
+      thudRef.current?.stop();
+      thudRef.current = new BagThudDetector({
+        calibrating: true,
+        onCalibrationHit: (hit) => {
+          thudHitsRef.current.push(hit);
+          setTestPunchCount(thudHitsRef.current.length);
+          if (thudHitsRef.current.length >= CALIBRATION_HITS) setMicOk(true);
         },
+        onEnvironment: (_env, label) => setEnvLabel(label),
       });
       if (result.handles.stream) {
-        micRef.current.start(result.handles.stream);
+        void thudRef.current.start(result.handles.stream);
       }
     }
 
@@ -303,7 +308,7 @@ export function BagCalibrationScreen({
     setAngleIssue(null);
     setLightOk(false);
     setBrightness(0);
-    peaksRef.current = [];
+    thudHitsRef.current = [];
     guardBaselineRef.current = null;
     stepStartRef.current = Date.now();
     setCameraReady(false);
@@ -327,7 +332,7 @@ export function BagCalibrationScreen({
     }
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      micRef.current?.stop();
+      thudRef.current?.stop();
       landmarkerRef.current?.close();
       stopRef.current?.();
     };
@@ -349,15 +354,29 @@ export function BagCalibrationScreen({
   useEffect(() => {
     stepStartRef.current = Date.now();
 
-    if (step === "mic" && micRef.current) {
-      peaksRef.current = [];
+    if (step === "mic") {
+      thudHitsRef.current = [];
       setTestPunchCount(0);
-      const stream = videoRef.current?.srcObject as MediaStream | null;
-      if (stream) micRef.current.start(stream);
+      setMicOk(false);
+      const stream =
+        (videoRef.current?.srcObject as MediaStream | null) ?? captureStream;
+      if (!stream) return;
+
+      thudRef.current?.stop();
+      thudRef.current = new BagThudDetector({
+        calibrating: true,
+        onCalibrationHit: (hit) => {
+          thudHitsRef.current.push(hit);
+          setTestPunchCount(thudHitsRef.current.length);
+          if (thudHitsRef.current.length >= CALIBRATION_HITS) setMicOk(true);
+        },
+        onEnvironment: (_env, label) => setEnvLabel(label),
+      });
+      void thudRef.current.start(stream);
     } else {
-      micRef.current?.stop();
+      thudRef.current?.stop();
     }
-  }, [step]);
+  }, [step, captureStream]);
 
   useEffect(() => {
     if (cameraReady && !poseCalibration && step === "camera") {
@@ -470,7 +489,9 @@ export function BagCalibrationScreen({
       ? `${stanceLabel(detectedStance)} detected — hold still`
       : "Hold your stance for 3 seconds",
     guard: guardOk ? "Guard set" : "Keep hands by your chin",
-    mic: micOk ? "Got it" : "Hit the bag once so we can hear you",
+    mic: micOk
+      ? "Bag thud profile saved"
+      : `Hit the bag ${CALIBRATION_HITS} times normally`,
     done: poseCalibration
       ? `Ready — ${stanceLabel(detectedStance ?? stance)} stance saved`
       : "Ready — mic tuned for bag hits",
@@ -719,11 +740,15 @@ export function BagCalibrationScreen({
               {step === "mic" && (
                 <MicListenPanel
                   stream={captureStream}
-                  hitsRequired={1}
+                  hitsRequired={CALIBRATION_HITS}
                   hitsDetected={testPunchCount}
                   onEnableMic={() => void enableMicrophone()}
                   enabling={starting}
                 />
+              )}
+
+              {step === "mic" && envLabel && (
+                <p className="text-xs leading-relaxed text-white/45">{envLabel}</p>
               )}
 
               {step === "done" ? (

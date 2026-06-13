@@ -1,3 +1,16 @@
+"use client";
+
+import {
+  createBagThudImpactDetector,
+  createBagThudLevelMonitor,
+  RAW_AUDIO_CONSTRAINTS,
+  type BagThudProfile,
+  type GymEnvironment,
+} from "./detection/bag-thud-detector";
+
+export { RAW_AUDIO_CONSTRAINTS } from "./detection/bag-thud-detector";
+export type { BagThudProfile, GymEnvironment } from "./detection/bag-thud-detector";
+
 export interface MediaCaptureHandles {
   stream: MediaStream | null;
   videoEl: HTMLVideoElement | null;
@@ -101,54 +114,21 @@ export interface MicLevelMonitorOptions {
   peakThreshold?: number;
 }
 
-/** Live mic level for setup UI — time-domain peaks, optional impact flash callback. */
+/** Live mic level for setup UI — filtered bag thud band only. */
 export function createMicLevelMonitor(
   stream: MediaStream,
-  options: MicLevelMonitorOptions = {}
+  options: MicLevelMonitorOptions & { bagProfile?: Partial<BagThudProfile> } = {}
 ): MicLevelMonitor | null {
   if (!hasLiveAudio(stream)) return null;
 
-  const peakThreshold = options.peakThreshold ?? 0.18;
-  let currentLevel = 0;
-  let cooldown = false;
+  const monitor = createBagThudLevelMonitor(stream, {
+    peakThreshold: options.peakThreshold,
+    bagProfile: options.bagProfile,
+    onPeak: options.onPeak ? () => options.onPeak!(1) : undefined,
+  });
+  if (!monitor) return null;
 
-  try {
-    const audioContext = new AudioContext();
-    void audioContext.resume();
-    const source = audioContext.createMediaStreamSource(stream);
-    const analyser = audioContext.createAnalyser();
-    analyser.fftSize = 512;
-    source.connect(analyser);
-    const data = new Uint8Array(analyser.fftSize);
-
-    const id = window.setInterval(() => {
-      analyser.getByteTimeDomainData(data);
-      let peak = 0;
-      for (let i = 0; i < data.length; i++) {
-        const v = Math.abs(data[i] - 128) / 128;
-        if (v > peak) peak = v;
-      }
-      currentLevel = peak;
-      if (peak >= peakThreshold && !cooldown) {
-        cooldown = true;
-        options.onPeak?.(peak);
-        window.setTimeout(() => {
-          cooldown = false;
-        }, 220);
-      }
-    }, 40);
-
-    return {
-      getLevel: () => currentLevel,
-      stop: () => {
-        window.clearInterval(id);
-        source.disconnect();
-        void audioContext.close();
-      },
-    };
-  } catch {
-    return null;
-  }
+  return monitor;
 }
 
 function gumErrorMessage(failure: GumFailure | null, kind: "video" | "audio"): string {
@@ -289,21 +269,8 @@ async function attachMicrophone(stream: MediaStream): Promise<boolean> {
   }
 
   const attempts: MediaStreamConstraints[] = [
+    { audio: RAW_AUDIO_CONSTRAINTS },
     { audio: true },
-    {
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-      },
-    },
-    {
-      audio: {
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false,
-      },
-    },
   ];
 
   for (const constraints of attempts) {
@@ -379,31 +346,27 @@ async function openCombinedAvStream(
   highQuality: boolean
 ): Promise<{ stream: MediaStream | null; failure: GumFailure | null }> {
   const iosAttempts: MediaStreamConstraints[] = [
-    { video: { facingMode: { ideal: facingMode } }, audio: true },
-    { video: true, audio: true },
+    { video: { facingMode: { ideal: facingMode } }, audio: RAW_AUDIO_CONSTRAINTS },
+    { video: true, audio: RAW_AUDIO_CONSTRAINTS },
   ];
   const defaultAttempts: MediaStreamConstraints[] = [
     {
       video: { facingMode: { ideal: facingMode } },
-      audio: true,
+      audio: RAW_AUDIO_CONSTRAINTS,
     },
     {
       video: { facingMode },
-      audio: true,
+      audio: RAW_AUDIO_CONSTRAINTS,
     },
     {
       video: true,
-      audio: true,
+      audio: RAW_AUDIO_CONSTRAINTS,
     },
     {
       video: highQuality
         ? { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }
         : { facingMode: { ideal: facingMode }, width: { ideal: 640 }, height: { ideal: 480 } },
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-      },
+      audio: RAW_AUDIO_CONSTRAINTS,
     },
   ];
 
@@ -599,7 +562,7 @@ export async function startMediaCapture(
       videoFailure?.name !== "NotAllowedError" &&
       videoFailure?.name !== "PermissionDeniedError"
     ) {
-      const { stream: audioOnly } = await tryGetUserMedia({ audio: true });
+      const { stream: audioOnly } = await tryGetUserMedia({ audio: RAW_AUDIO_CONSTRAINTS });
       if (audioOnly) {
         handles.stream = audioOnly;
         hasMic = hasLiveAudio(audioOnly);
@@ -737,62 +700,23 @@ export interface AudioImpactDetectorOptions {
   cooldownMs?: number;
   calibrateMs?: number;
   threshold?: number;
+  bagProfile?: Partial<BagThudProfile>;
+  devMode?: boolean;
   onPeak?: (peak: number) => void;
+  onEnvironment?: (env: GymEnvironment, label: string) => void;
 }
 
+/** Bag thud impact listener — rejects gym noise via band-pass + shape detection. */
 export function createAudioImpactDetector(
   stream: MediaStream,
   audioContext: AudioContext,
   onImpact: () => void,
   options: AudioImpactDetectorOptions = {}
 ): () => void {
-  const cooldownMs = options.cooldownMs ?? 130;
-  const calibrateMs = options.calibrateMs ?? 2000;
-  const presetThreshold = options.threshold;
-
-  const source = audioContext.createMediaStreamSource(stream);
-  const analyser = audioContext.createAnalyser();
-  analyser.fftSize = 512;
-  source.connect(analyser);
-
-  const data = new Uint8Array(analyser.fftSize);
-  let cooldown = false;
-  const startedAt = Date.now();
-  const noiseSamples: number[] = [];
-  let threshold = presetThreshold ?? 0.22;
-  const skipAutoCalibrate = presetThreshold != null;
-
-  const id = window.setInterval(() => {
-    analyser.getByteTimeDomainData(data);
-    let peak = 0;
-    for (let i = 0; i < data.length; i++) {
-      const v = Math.abs(data[i] - 128) / 128;
-      if (v > peak) peak = v;
-    }
-
-    const elapsed = Date.now() - startedAt;
-    if (!skipAutoCalibrate && elapsed < calibrateMs) {
-      noiseSamples.push(peak);
-      if (noiseSamples.length >= 8) {
-        const sorted = [...noiseSamples].sort((a, b) => a - b);
-        const p90 = sorted[Math.floor(sorted.length * 0.9)] ?? 0.05;
-        threshold = Math.max(0.14, Math.min(0.45, p90 * 3.2));
-      }
-      return;
-    }
-
-    if (peak > threshold && !cooldown) {
-      cooldown = true;
-      options.onPeak?.(peak);
-      onImpact();
-      window.setTimeout(() => {
-        cooldown = false;
-      }, cooldownMs);
-    }
-  }, 40);
-
-  return () => {
-    clearInterval(id);
-    source.disconnect();
-  };
+  return createBagThudImpactDetector(stream, audioContext, onImpact, {
+    bagProfile: options.bagProfile,
+    threshold: options.threshold,
+    devMode: options.devMode,
+    onEnvironment: options.onEnvironment,
+  });
 }

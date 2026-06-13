@@ -1,6 +1,18 @@
 /** Fighter stance — drives jab/cross mapping in AI prompts. */
 export type BagStance = "orthodox" | "southpaw";
 
+export type { BagThudHit, BagThudProfile, GymEnvironment } from "./detection/bag-thud-detector";
+export {
+  buildBagProfileFromHits,
+  detectEnvironment,
+  environmentLabel,
+} from "./detection/bag-thud-detector";
+import {
+  buildBagProfileFromHits,
+  type BagThudHit,
+  type BagThudProfile,
+} from "./detection/bag-thud-detector";
+
 export interface GuardBaselineCal {
   left: number;
   right: number;
@@ -9,8 +21,10 @@ export interface GuardBaselineCal {
 
 export interface BagCalibration {
   stance: BagStance;
-  /** Passive + active mic calibration (0–1 peak threshold). */
+  /** Normalized 0–1 impact threshold (legacy UI + fallbacks). */
   micThreshold: number;
+  /** Tuned bag thud profile from calibration punches. */
+  bagProfile?: BagThudProfile;
   lightingOk: boolean;
   /** Average frame luminance 0–1 from pre-flight sample. */
   brightness: number;
@@ -57,7 +71,29 @@ export function brightnessOk(score: number): boolean {
   return score >= 0.1 && score <= 0.88;
 }
 
-/** Derive impact threshold from calibration punch peaks. */
+/** Derive normalized threshold from bag thud profile. */
+export function micThresholdFromProfile(profile: BagThudProfile): number {
+  return Math.max(0.12, Math.min(0.5, profile.threshold / 255));
+}
+
+/** Build calibration from detected thud hits + ambient floor. */
+export function calibrationFromThudHits(
+  hits: BagThudHit[],
+  ambientFloor: number,
+  partial: Omit<BagCalibration, "micThreshold" | "bagProfile" | "testPunchesDetected">
+): BagCalibration {
+  const bagProfile = buildBagProfileFromHits(hits, ambientFloor);
+  return {
+    ...partial,
+    bagProfile: bagProfile ?? undefined,
+    micThreshold: bagProfile
+      ? micThresholdFromProfile(bagProfile)
+      : micThresholdFromPeaks(hits.map((h) => h.peakVolume / 255)),
+    testPunchesDetected: hits.length,
+  };
+}
+
+/** Derive impact threshold from calibration punch peaks (legacy). */
 export function micThresholdFromPeaks(peaks: number[], fallback = 0.22): number {
   if (peaks.length === 0) return fallback;
   const sorted = [...peaks].sort((a, b) => a - b);

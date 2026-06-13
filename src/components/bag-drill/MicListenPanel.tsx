@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { BagThudProfile } from "@/lib/bag-drill/detection/bag-thud-detector";
 import {
   createMicLevelMonitor,
   hasLiveMicrophone,
@@ -13,6 +14,7 @@ interface MicListenPanelProps {
   hitsRequired?: number;
   hitsDetected?: number;
   peakThreshold?: number;
+  bagProfile?: Partial<BagThudProfile>;
   onPeak?: () => void;
   onEnableMic?: () => void;
   enabling?: boolean;
@@ -34,6 +36,7 @@ export function MicListenPanel({
   hitsRequired = 0,
   hitsDetected = 0,
   peakThreshold = 0.18,
+  bagProfile,
   onPeak,
   onEnableMic,
   enabling = false,
@@ -53,6 +56,7 @@ export function MicListenPanel({
 
     const monitor = createMicLevelMonitor(stream, {
       peakThreshold,
+      bagProfile,
       onPeak: () => {
         setFlash(true);
         setPeaksSeen((n) => n + 1);
@@ -67,7 +71,7 @@ export function MicListenPanel({
       window.clearInterval(id);
       monitor.stop();
     };
-  }, [stream, micLive, peakThreshold, onPeak]);
+  }, [stream, micLive, peakThreshold, bagProfile, onPeak]);
 
   const hitsOk = hitsRequired <= 0 || hitsDetected >= hitsRequired;
   const levelPct = Math.min(100, Math.round(level * 100));
@@ -119,8 +123,8 @@ export function MicListenPanel({
         {!micPermissionDenied && (
           <p className="mt-1 text-sm leading-relaxed text-white/70">
             Prop phone on a ledge or bag stand —{" "}
-            <span className="text-white">mic hole toward the bag</span>. Throw one test punch
-            and watch the bar spike.
+            <span className="text-white">mic hole toward the bag</span>. Throw test punches —
+            only the low thud of glove on bag should move the bar.
           </p>
         )}
       </div>

@@ -89,7 +89,7 @@ export const BAG_COPY = {
     camera: "Step back — fit your whole body in frame",
     stance: "Get in your fighting stance",
     guard: "Hands up by your chin",
-    mic: "Throw one punch at the bag",
+    mic: "Hit the bag 5 times — we tune to your thud",
     done: "You're set",
   },
   calibrationBagNote:

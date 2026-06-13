@@ -285,6 +285,7 @@ export function useBagFlurry(): UseBagFlurryResult {
               stream: media.handles.stream,
               stance: config.stance ?? config.calibration?.stance ?? "orthodox",
               micThreshold: config.calibration?.micThreshold,
+              bagProfile: config.calibration?.bagProfile,
               guardBaseline: config.calibration?.guardBaseline,
               devMode: process.env.NODE_ENV === "development",
               onPunch: () => registerImpactRef.current(),
@@ -310,9 +311,15 @@ export function useBagFlurry(): UseBagFlurryResult {
               ctx,
               () => registerImpact(),
               {
+                bagProfile: config.calibration?.bagProfile,
                 cooldownMs: 165,
                 calibrateMs: config.calibration?.micThreshold != null ? 0 : 2500,
                 threshold: config.calibration?.micThreshold,
+                devMode: process.env.NODE_ENV === "development",
+                onEnvironment: (_env, label) => {
+                  if (!mountedRef.current) return;
+                  setState((s) => ({ ...s, statusMessage: label }));
+                },
               }
             );
           }

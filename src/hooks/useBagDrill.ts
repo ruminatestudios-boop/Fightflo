@@ -843,13 +843,21 @@ export function useBagDrill(): UseBagDrillResult {
       const ctx = await ensureAudioContext(handles);
       if (!ctx || !handles.stream.getAudioTracks().length) return;
 
+      const bagProfile = configRef.current?.calibration?.bagProfile;
+
       cleanupAudioRef.current = createAudioImpactDetector(
         handles.stream,
         ctx,
         () => registerImpact(),
         {
+          bagProfile,
           threshold: micThresholdRef.current,
           calibrateMs: micThresholdRef.current != null ? 0 : 2000,
+          devMode: process.env.NODE_ENV === "development",
+          onEnvironment: (_env, label) => {
+            if (!mountedRef.current) return;
+            setState((s) => ({ ...s, statusMessage: label }));
+          },
         }
       );
     },
@@ -932,6 +940,7 @@ export function useBagDrill(): UseBagDrillResult {
               stream: media.handles.stream,
               stance: stanceRef.current,
               micThreshold: micThresholdRef.current,
+              bagProfile: config.calibration?.bagProfile,
               guardBaseline: config.calibration?.guardBaseline,
               devMode: process.env.NODE_ENV === "development",
               onPunch: (punch) => {
