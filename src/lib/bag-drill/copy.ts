@@ -62,8 +62,12 @@ export const BAG_COPY = {
   },
   speedPick: {
     title: "Which punch?",
-    subtitle: "One throw on go — then see your speed.",
-    cta: "Ready",
+    subtitle: "Prop your phone mic toward the bag — throw a test punch so the bar spikes, then pick your punch.",
+    cta: "Start speed drill",
+    ctaNeedTest: "Throw a test punch first",
+    ctaWithoutMic: "Start without mic — tap each hit",
+    micBlockedHint:
+      "Mic is blocked. Enable it in Settings → Safari → Microphone, or use tap-to-count during the drill.",
   },
   speedTraining: {
     arming: "Get ready — throw when you hear GO",
@@ -74,6 +78,9 @@ export const BAG_COPY = {
     resultLabel: "Go to impact",
     tryAgain: "Try again",
     done: "Done",
+    micReady: "Mic listening — bar spikes on impact",
+    micBlocked: "Mic blocked — tap each punch below",
+    hitFlash: "Hit registered",
   },
   calibrationPermission:
     "Camera and mic needed to count punches and check your combos",

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SessionControlBar } from "@/components/training/SessionControlBar";
+import { MicListenPanel } from "@/components/bag-drill/MicListenPanel";
 import { formatReaction, tierColor, type UseBagDrillResult } from "@/hooks/useBagDrill";
 import { BAG_COPY } from "@/lib/bag-drill/copy";
 import { tierLabel } from "@/lib/bag-drill/reaction-timing";
@@ -39,9 +40,25 @@ export function BagSpeedTrainingScreen({
   const phase = state.speedPhase;
 
   const showTap =
-    phase === "go" && state.inComboWindow && !aiMode;
+    phase === "go" &&
+    state.inComboWindow &&
+    (!aiMode ||
+      !state.micReady ||
+      state.detectionMode === "audio-hybrid" ||
+      state.detectionMode === "visual-tap" ||
+      state.detectionMode === "timer-fallback");
+
   const showMicBackup =
     aiMode && phase === "go" && state.inComboWindow && state.micBackupHint;
+
+  const [impactFlash, setImpactFlash] = useState(false);
+
+  useEffect(() => {
+    if (!state.lastImpactAt) return;
+    setImpactFlash(true);
+    const id = window.setTimeout(() => setImpactFlash(false), 650);
+    return () => window.clearTimeout(id);
+  }, [state.lastImpactAt]);
 
   useEffect(() => {
     void start(config, { mediaStream });
@@ -187,6 +204,20 @@ export function BagSpeedTrainingScreen({
       {showControls && (
         <section className="relative z-10 px-6 pb-2">
           <div className="mx-auto flex max-w-md flex-col items-center gap-3">
+            {(phase === "arming" || phase === "go") && (
+              <MicListenPanel
+                stream={mediaStream ?? null}
+                variant="live"
+                peakThreshold={config.calibration?.micThreshold ?? 0.18}
+              />
+            )}
+
+            {impactFlash && phase === "go" && (
+              <p className="text-center text-xs font-medium uppercase tracking-[0.16em] text-emerald-400">
+                {COPY.hitFlash}
+              </p>
+            )}
+
             <div className="flex h-12 w-full items-center justify-center gap-3">
               {showMicBackup && (
                 <button

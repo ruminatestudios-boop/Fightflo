@@ -97,6 +97,8 @@ export interface BagTrainingState {
   /** Frozen result shown on the stats screen */
   speedResultSeconds: number | null;
   speedResultTier: ReactionTier | null;
+  micReady: boolean;
+  lastImpactAt: number | null;
 }
 
 export interface UseBagDrillResult {
@@ -147,6 +149,8 @@ const INITIAL: BagTrainingState = {
   speedPhase: null,
   speedResultSeconds: null,
   speedResultTier: null,
+  micReady: false,
+  lastImpactAt: null,
 };
 
 const PUNCH_DEBOUNCE_MS = 110;
@@ -406,6 +410,7 @@ export function useBagDrill(): UseBagDrillResult {
         ...s,
         hitsInCombo: strikeIndexRef.current,
         nextStrikeLabel: sequence[strikeIndexRef.current]?.label ?? null,
+        ...(speedModeRef.current ? { lastImpactAt: now } : {}),
       }));
 
       scheduleMicBackupHint();
@@ -611,7 +616,11 @@ export function useBagDrill(): UseBagDrillResult {
 
     hitsInComboRef.current += 1;
     markStrikeHit(idx, false);
-    setState((s) => ({ ...s, hitsInCombo: hitsInComboRef.current }));
+    if (speedModeRef.current) {
+      setState((s) => ({ ...s, hitsInCombo: hitsInComboRef.current, lastImpactAt: now }));
+    } else {
+      setState((s) => ({ ...s, hitsInCombo: hitsInComboRef.current }));
+    }
 
     const expectedCount = expectedHits(combo);
     if (
@@ -972,6 +981,7 @@ export function useBagDrill(): UseBagDrillResult {
               detectionMode: mode,
               liveConnected: true,
               statusMessage: status,
+              micReady: media.hasMic,
             }));
           } catch {
             poseDetectionRef.current = false;
@@ -984,16 +994,29 @@ export function useBagDrill(): UseBagDrillResult {
             status =
               config.cameraMode === "fighter"
                 ? "Camera + mic needed for punch recognition"
-                : "Tap for each hit in the combo";
+                : speedModeRef.current
+                  ? "Mic blocked — tap each punch when you throw"
+                  : "Tap for each hit in the combo";
           } else if (media.hasMic) {
             mode = "audio-hybrid";
-            status = "Mic counts hits — enable camera for punch type recognition";
+            status = speedModeRef.current
+              ? "Mic listening — throw when you hear GO"
+              : "Mic counts hits — enable camera for punch type recognition";
           } else {
             mode = "visual-tap";
-            status = "Tap once per strike in the combo";
+            status = speedModeRef.current
+              ? "Tap each punch when you throw"
+              : "Tap once per strike in the combo";
           }
           startStreaming(mode);
-          setState((s) => ({ ...s, detectionMode: mode, statusMessage: status }));
+          setState((s) => ({
+            ...s,
+            detectionMode: mode,
+            statusMessage: status,
+            micReady: media.hasMic,
+          }));
+        } else {
+          setState((s) => ({ ...s, micReady: media.hasMic }));
         }
       }
 

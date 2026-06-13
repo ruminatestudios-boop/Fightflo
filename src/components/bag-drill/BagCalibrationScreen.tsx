@@ -23,12 +23,14 @@ import type { CameraAngleIssue } from "@/lib/bag-drill/detection/landmarks";
 import { GuardMonitor } from "@/lib/bag-drill/detection/guard-monitor";
 import { CalibrationCameraGuideModal } from "@/components/bag-drill/CalibrationCameraGuideModal";
 import {
+  appendMicrophoneToCapture,
   attachExistingStream,
   detachVideoPreview,
   releaseVideoPreview,
   startMediaCapture,
 } from "@/lib/bag-drill/media-capture";
 import { unlockBagAudio } from "@/lib/bag-drill/audio-queue";
+import { MicListenPanel } from "@/components/bag-drill/MicListenPanel";
 import type { BagCameraMode } from "@/lib/bag-drill/types";
 import type { CalibrationPurpose } from "@/lib/bag-drill/calibration-purpose";
 import { isMicOnlyCalibration } from "@/lib/bag-drill/calibration-purpose";
@@ -95,6 +97,8 @@ export function BagCalibrationScreen({
   const [gpuOk, setGpuOk] = useState(true);
   const [cameraReady, setCameraReady] = useState(false);
   const [micReady, setMicReady] = useState(false);
+  const [testPunchCount, setTestPunchCount] = useState(0);
+  const [captureStream, setCaptureStream] = useState<MediaStream | null>(existingStream);
   const [starting, setStarting] = useState(false);
   const startingRef = useRef(false);
 
@@ -165,6 +169,9 @@ export function BagCalibrationScreen({
         });
 
     stopRef.current = result.handles.stop;
+    if (result.handles.stream) {
+      setCaptureStream(result.handles.stream);
+    }
     if (result.handles.stream && result.handles.stream !== existingStream) {
       onStreamChange?.(result.handles.stream);
     }
@@ -195,6 +202,7 @@ export function BagCalibrationScreen({
       micRef.current = new MicPunchDetector({
         onSpike: (peak) => {
           peaksRef.current.push(peak);
+          setTestPunchCount(peaksRef.current.length);
           if (stepRef.current === "mic") setMicOk(true);
         },
       });
@@ -205,6 +213,46 @@ export function BagCalibrationScreen({
   },
     [activeCameraMode, existingStream, onStreamChange, purpose]
   );
+
+  const enableMicrophone = useCallback(async () => {
+    const video = videoRef.current;
+    const stream = video?.srcObject as MediaStream | null;
+    if (!stream || startingRef.current) return;
+
+    startingRef.current = true;
+    setStarting(true);
+    setPreviewError(null);
+    void unlockBagAudio();
+
+    const handles = {
+      stream,
+      videoEl: video,
+      audioContext: null,
+      stop: stopRef.current ?? (() => {}),
+    };
+    const mic = await appendMicrophoneToCapture(handles);
+    stopRef.current = handles.stop;
+    setMicReady(mic.hasMic);
+    setPreviewError(mic.hasMic ? null : mic.error);
+
+    if (mic.hasMic && stepRef.current === "mic") {
+      peaksRef.current = [];
+      setTestPunchCount(0);
+      setMicOk(false);
+      micRef.current?.stop();
+      micRef.current = new MicPunchDetector({
+        onSpike: (peak) => {
+          peaksRef.current.push(peak);
+          setTestPunchCount(peaksRef.current.length);
+          if (stepRef.current === "mic") setMicOk(true);
+        },
+      });
+      micRef.current.start(stream);
+    }
+
+    startingRef.current = false;
+    setStarting(false);
+  }, []);
 
   const switchToYou = useCallback(async () => {
     if (startingRef.current || activeCameraMode === "fighter") return;
@@ -272,6 +320,7 @@ export function BagCalibrationScreen({
 
     if (step === "mic" && micRef.current) {
       peaksRef.current = [];
+      setTestPunchCount(0);
       const stream = videoRef.current?.srcObject as MediaStream | null;
       if (stream) micRef.current.start(stream);
     } else {
@@ -636,15 +685,14 @@ export function BagCalibrationScreen({
                 </p>
               )}
 
-              {!micReady && (
-                <button
-                  type="button"
-                  onClick={() => void bootCamera()}
-                  disabled={starting}
-                  className="font-display flex h-11 w-full items-center justify-center rounded-full border border-[#fa4141]/35 text-[11px] tracking-[0.14em] text-[#fa4141] disabled:opacity-60"
-                >
-                  {starting ? "Retrying mic…" : "Enable microphone"}
-                </button>
+              {step === "mic" && (
+                <MicListenPanel
+                  stream={captureStream}
+                  hitsRequired={1}
+                  hitsDetected={testPunchCount}
+                  onEnableMic={() => void enableMicrophone()}
+                  enabling={starting}
+                />
               )}
 
               {step === "done" ? (

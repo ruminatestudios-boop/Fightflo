@@ -78,6 +78,71 @@ function hasLiveVideo(stream: MediaStream): boolean {
     .some((track) => track.readyState === "live" && track.enabled);
 }
 
+export function hasLiveMicrophone(stream: MediaStream | null | undefined): boolean {
+  if (!stream) return false;
+  return hasLiveAudio(stream);
+}
+
+export interface MicLevelMonitor {
+  getLevel: () => number;
+  stop: () => void;
+}
+
+export interface MicLevelMonitorOptions {
+  onPeak?: (peak: number) => void;
+  peakThreshold?: number;
+}
+
+/** Live mic level for setup UI — time-domain peaks, optional impact flash callback. */
+export function createMicLevelMonitor(
+  stream: MediaStream,
+  options: MicLevelMonitorOptions = {}
+): MicLevelMonitor | null {
+  if (!hasLiveAudio(stream)) return null;
+
+  const peakThreshold = options.peakThreshold ?? 0.18;
+  let currentLevel = 0;
+  let cooldown = false;
+
+  try {
+    const audioContext = new AudioContext();
+    void audioContext.resume();
+    const source = audioContext.createMediaStreamSource(stream);
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 512;
+    source.connect(analyser);
+    const data = new Uint8Array(analyser.fftSize);
+
+    const id = window.setInterval(() => {
+      analyser.getByteTimeDomainData(data);
+      let peak = 0;
+      for (let i = 0; i < data.length; i++) {
+        const v = Math.abs(data[i] - 128) / 128;
+        if (v > peak) peak = v;
+      }
+      currentLevel = peak;
+      if (peak >= peakThreshold && !cooldown) {
+        cooldown = true;
+        options.onPeak?.(peak);
+        window.setTimeout(() => {
+          cooldown = false;
+        }, 220);
+      }
+    }, 40);
+
+    return {
+      getLevel: () => currentLevel,
+      stop: () => {
+        window.clearInterval(id);
+        source.disconnect();
+        void audioContext.close();
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
 function gumErrorMessage(failure: GumFailure | null, kind: "video" | "audio"): string {
   if (!failure) {
     return kind === "video"

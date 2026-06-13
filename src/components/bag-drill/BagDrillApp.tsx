@@ -149,6 +149,7 @@ export function BagDrillApp() {
           weaknessFocus: options?.weaknessFocus ?? false,
         });
         if (mode === "speed") {
+          setCameraModeDraft("bag");
           setSkippedCalibration(false);
           setCalibrationDraft(null);
           setScreen("setup-camera");
@@ -483,6 +484,8 @@ export function BagDrillApp() {
         {screen === "speed-pick" && (
           <BagSpeedPunchScreen
             key="speed-pick"
+            mediaStream={mediaStreamRef.current}
+            micThreshold={calibrationDraft?.micThreshold}
             onBack={() => setScreen("calibration")}
             onHome={handleGoHome}
             onStart={(punchId) => {

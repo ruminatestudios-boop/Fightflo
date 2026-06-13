@@ -38,6 +38,8 @@ export function BagSetupCameraScreen({
   onContinue,
 }: BagSetupCameraScreenProps) {
   const bagOnly = calibrationPurpose === "flurry";
+  const micRequired =
+    calibrationPurpose === "speed" || calibrationPurpose === "flurry";
   const videoRef = useRef<HTMLVideoElement>(null);
   const handlesRef = useRef<MediaCaptureHandles | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -158,11 +160,14 @@ export function BagSetupCameraScreen({
 
   const primaryAction = () => {
     if (!cameraReady) return void startAccess();
-    if (!micReady) return void startMic();
+    if (!micReady) {
+      if (micRequired) return void startMic();
+      return void startMic();
+    }
     handleContinue();
   };
 
-  const showSkipMic = cameraReady && !micReady;
+  const showSkipMic = cameraReady && !micReady && !micRequired;
   const showRetry = Boolean(previewError);
   const primaryReady = cameraReady && micReady;
 
@@ -237,6 +242,12 @@ export function BagSetupCameraScreen({
           >
             {primaryLabel}
           </motion.button>
+
+          {micRequired && cameraReady && !micReady && (
+            <p className="text-center text-xs text-amber-200/80">
+              Microphone required for punch speed — allow mic to continue
+            </p>
+          )}
 
           <div className="flex h-10 items-center justify-center">
             {showSkipMic ? (
