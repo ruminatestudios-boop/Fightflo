@@ -215,7 +215,7 @@ export function BagProgressScreen({ data, onHome }: BagProgressScreenProps) {
                     borderRadius: 8,
                     fontSize: 12,
                   }}
-                  formatter={(value: number) => [`${value}s`, "Avg reaction"]}
+                  formatter={(value) => [`${value ?? "—"}s`, "Avg reaction"]}
                 />
                 <Bar
                   dataKey="avg"
