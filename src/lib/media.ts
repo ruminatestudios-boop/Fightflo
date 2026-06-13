@@ -1,7 +1,7 @@
 /** Hero media — Fightlore Shopify CDN + poster overlay */
 
 const FIGHTLORE_INTRO_CDN =
-  "https://cdn.shopify.com/videos/c/o/v/8b216f4aa5df41b78eb801519b3745a6.mp4";
+  "https://cdn.shopify.com/videos/c/o/v/b91c7a6219d44acba26b38ec4b6ae297.mp4";
 
 /** Fightlore intro — streamed from Shopify CDN (no 44MB local copy) */
 export const ONBOARDING_VIDEO = FIGHTLORE_INTRO_CDN;

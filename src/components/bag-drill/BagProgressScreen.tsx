@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import {
   BarChart,
   Bar,
+  CartesianGrid,
   LineChart,
   Line,
   XAxis,
@@ -171,18 +172,41 @@ export function BagProgressScreen({ data, onHome }: BagProgressScreenProps) {
         )}
 
         {weaknessBars.length > 0 && (
-          <div className="mt-8 h-52">
+          <div
+            className="mt-8"
+            style={{ height: Math.max(weaknessBars.length * 40 + 36, 120) }}
+          >
             <p className="label mb-3 text-[#525252]">Slowest combos</p>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weaknessBars} layout="vertical" margin={{ left: 4 }}>
-                <XAxis type="number" stroke={CHART_COLORS.grid} fontSize={10} tickLine={false} />
+              <BarChart
+                data={weaknessBars}
+                layout="vertical"
+                margin={{ left: 4, right: 8, top: 4, bottom: 0 }}
+                barCategoryGap="35%"
+              >
+                <CartesianGrid
+                  strokeDasharray="3 4"
+                  stroke={CHART_COLORS.grid}
+                  horizontal={false}
+                  vertical
+                />
+                <XAxis
+                  type="number"
+                  stroke={CHART_COLORS.grid}
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: "#525252" }}
+                />
                 <YAxis
                   type="category"
                   dataKey="combo"
                   stroke={CHART_COLORS.grid}
-                  width={72}
+                  width={80}
                   fontSize={9}
                   tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: "#737373" }}
                 />
                 <Tooltip
                   contentStyle={{
@@ -191,8 +215,14 @@ export function BagProgressScreen({ data, onHome }: BagProgressScreenProps) {
                     borderRadius: 8,
                     fontSize: 12,
                   }}
+                  formatter={(value: number) => [`${value}s`, "Avg reaction"]}
                 />
-                <Bar dataKey="avg" fill={CHART_COLORS.line} radius={[0, 4, 4, 0]} />
+                <Bar
+                  dataKey="avg"
+                  fill={CHART_COLORS.line}
+                  barSize={8}
+                  radius={[0, 3, 3, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
