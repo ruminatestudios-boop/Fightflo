@@ -9,7 +9,10 @@ import {
   type UseBagDrillResult,
 } from "@/hooks/useBagDrill";
 import { GuardWarningOverlay } from "@/components/bag-drill/GuardWarningOverlay";
+import { HitConfirmFlash } from "@/components/bag-drill/HitConfirmFlash";
+import { MicListenPanel } from "@/components/bag-drill/MicListenPanel";
 import { StrikeLogStrip } from "@/components/bag-drill/StrikeLogStrip";
+import { BAG_COPY } from "@/lib/bag-drill/copy";
 import { formatStrikeSpeed } from "@/lib/bag-drill/strike-speed";
 import type { BagTrainingConfig } from "@/lib/bag-drill/types";
 
@@ -19,6 +22,8 @@ interface BagTrainingScreenProps {
   mediaStream?: MediaStream | null;
   onStop: () => void;
 }
+
+const COPY = BAG_COPY.comboTraining;
 
 const VALIDATION_COPY = {
   correct: "Combo complete",
@@ -45,6 +50,8 @@ export function BagTrainingScreen({
     !aiMode;
   const showMicBackup =
     aiMode && state.inComboWindow && state.micBackupHint;
+  const micListening =
+    state.inComboWindow && state.micReady && !tapOnly;
 
   const statusText =
     (state.statusMessage && !state.inComboWindow) ||
@@ -103,10 +110,15 @@ export function BagTrainingScreen({
     <div
       className="fixed inset-0 z-40 grid overflow-hidden bg-black"
       style={{
-        gridTemplateRows:
-          "auto minmax(0, 1fr) 15.5rem 5.5rem",
+        gridTemplateRows: "auto minmax(0, 1fr) 15.5rem 5.5rem",
       }}
     >
+      <HitConfirmFlash
+        impactAt={state.lastImpactAt}
+        label={state.lastHitLabel}
+        headline={COPY.hitConfirmed}
+      />
+
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 z-[1] bg-black/75"
@@ -124,7 +136,6 @@ export function BagTrainingScreen({
 
       <GuardWarningOverlay guard={state.guardWarning} />
 
-      {/* Top band — fixed structure */}
       <header className="relative z-10 px-6 pt-[max(0.75rem,env(safe-area-inset-top))]">
         {statusText.trim() !== "\u00a0" && (
           <p className="mx-auto flex h-8 max-w-xs items-center justify-center text-center text-[11px] leading-snug text-white/35">
@@ -152,31 +163,65 @@ export function BagTrainingScreen({
         <div className="mx-auto mt-2 flex h-2 min-h-2 w-full items-center justify-center gap-1.5">
           {Array.from({ length: hitDotCount }).map((_, i) => {
             const filled = i < state.hitsInCombo;
+            const isLatest =
+              filled && i === state.hitsInCombo - 1 && state.lastImpactAt != null;
             return (
               <div
                 key={i}
-                className={`h-2 w-8 shrink-0 rounded-full transition-colors ${
+                className={`h-2 w-8 shrink-0 rounded-full transition-all duration-200 ${
                   filled ? "bg-emerald-500/80" : "bg-white/10"
-                }`}
+                } ${isLatest ? "ring-2 ring-emerald-300/70 ring-offset-1 ring-offset-black" : ""}`}
               />
             );
           })}
         </div>
       </header>
 
-      {/* Timer — big clock with top progress bar */}
-      <main className="relative z-10 flex items-center justify-center px-6">
-        <BigClock
-          seconds={state.elapsedSeconds}
-          totalSeconds={config.timing.durationSeconds}
-          variant="session"
-          active={state.inComboWindow}
-          running={state.isActive}
-          label={state.inComboWindow ? "Go" : isSpeedDrill ? "Listen" : "Listen"}
-        />
+      <main className="relative z-10 flex flex-col items-center justify-center px-6">
+        {state.inComboWindow ? (
+          <div className="flex w-full max-w-sm flex-col items-center gap-4">
+            <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#fa4141]">
+              {COPY.throwNext}
+            </p>
+            <p className="font-display text-[clamp(2.5rem,14vw,4rem)] leading-none tracking-wide text-white">
+              {state.nextStrikeLabel ?? state.currentCombo?.label ?? "Hit"}
+            </p>
+            {micListening && mediaStream && (
+              <div className="w-full">
+                <MicListenPanel
+                  stream={mediaStream}
+                  variant="live"
+                  bagProfile={config.calibration?.bagProfile}
+                  peakThreshold={config.calibration?.micThreshold ?? 0.18}
+                />
+                <p className="mt-2 text-center text-[10px] uppercase tracking-[0.14em] text-white/35">
+                  {COPY.listening}
+                </p>
+              </div>
+            )}
+            {showTap && (
+              <p className="text-center text-[10px] uppercase tracking-[0.12em] text-white/40">
+                {COPY.tapFallback}
+              </p>
+            )}
+          </div>
+        ) : (
+          <>
+            <BigClock
+              seconds={state.elapsedSeconds}
+              totalSeconds={config.timing.durationSeconds}
+              variant="session"
+              active={false}
+              running={state.isActive}
+              label="Listen"
+            />
+            <p className="mt-4 text-center text-[11px] uppercase tracking-[0.16em] text-white/30">
+              {state.currentCombo ? COPY.waitingCombo : "\u00a0"}
+            </p>
+          </>
+        )}
       </main>
 
-      {/* Bottom band — every slot has fixed height */}
       <section className="relative z-10 w-full px-6">
         <div className="mx-auto flex h-full max-w-md flex-col">
           <div className="relative h-[4.5rem] shrink-0">

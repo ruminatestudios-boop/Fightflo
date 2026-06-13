@@ -82,6 +82,13 @@ export const BAG_COPY = {
     micBlocked: "Mic blocked — tap each punch below",
     hitFlash: "Hit registered",
   },
+  comboTraining: {
+    throwNext: "Throw now",
+    listening: "Mic live — bar spikes when the bag gets hit",
+    hitConfirmed: "Punch heard ✓",
+    tapFallback: "No spike? Tap +1 hit below",
+    waitingCombo: "Listen for the combo call…",
+  },
   calibrationPermission:
     "Camera and mic needed to count punches and check your combos",
   calibrationGpuTip: "Use Chrome on a modern phone for best results",

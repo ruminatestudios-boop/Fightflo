@@ -29,3 +29,9 @@ export function triggerRoundEndHaptic(): void {
   if (typeof navigator === "undefined" || !navigator.vibrate) return;
   navigator.vibrate([24, 40, 24]);
 }
+
+/** Short pulse when a bag hit is registered. */
+export function triggerHitHaptic(): void {
+  if (typeof navigator === "undefined" || !navigator.vibrate) return;
+  navigator.vibrate([10, 6, 28]);
+}

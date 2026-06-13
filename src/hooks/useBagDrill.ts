@@ -20,6 +20,7 @@ import {
   type MediaCaptureHandles,
 } from "@/lib/bag-drill/media-capture";
 import { unlockBagAudio } from "@/lib/bag-drill/audio-queue";
+import { triggerGoHaptic, triggerHitHaptic } from "@/lib/haptics";
 import {
   formatReaction,
   reactionTier,
@@ -103,6 +104,7 @@ export interface BagTrainingState {
   speedResultTier: ReactionTier | null;
   micReady: boolean;
   lastImpactAt: number | null;
+  lastHitLabel: string | null;
 }
 
 export interface UseBagDrillResult {
@@ -155,6 +157,7 @@ const INITIAL: BagTrainingState = {
   speedResultTier: null,
   micReady: false,
   lastImpactAt: null,
+  lastHitLabel: null,
 };
 
 const PUNCH_DEBOUNCE_MS = 150;
@@ -371,6 +374,15 @@ export function useBagDrill(): UseBagDrillResult {
   const scheduleNextComboRef = useRef<() => void>(() => {});
   const callCurrentComboRef = useRef<() => void>(() => {});
 
+  const emitHitFeedback = useCallback((label: string) => {
+    triggerHitHaptic();
+    setState((s) => ({
+      ...s,
+      lastImpactAt: Date.now(),
+      lastHitLabel: label,
+    }));
+  }, []);
+
   const hitsAllowedNow = useCallback(() => {
     if (!inWindowRef.current || comboResolvedRef.current) return false;
     return Date.now() >= comboWindowGraceUntilRef.current;
@@ -420,7 +432,6 @@ export function useBagDrill(): UseBagDrillResult {
         ...s,
         hitsInCombo: strikeIndexRef.current,
         nextStrikeLabel: sequence[strikeIndexRef.current]?.label ?? null,
-        ...(speedModeRef.current ? { lastImpactAt: now } : {}),
       }));
 
       scheduleMicBackupHint();
@@ -428,8 +439,10 @@ export function useBagDrill(): UseBagDrillResult {
       if (strikeIndexRef.current >= sequence.length) {
         finishComboRoundRef.current("correct");
       }
+
+      emitHitFeedback(expected.label);
     },
-    [hitsAllowedNow, markStrikeHit, scheduleMicBackupHint, syncStrikeLog, logStrikeSpeed]
+    [emitHitFeedback, hitsAllowedNow, markStrikeHit, scheduleMicBackupHint, syncStrikeLog, logStrikeSpeed]
   );
 
   registerAiHitRef.current = registerAiHit;
@@ -626,11 +639,7 @@ export function useBagDrill(): UseBagDrillResult {
 
     hitsInComboRef.current += 1;
     markStrikeHit(idx, false);
-    if (speedModeRef.current) {
-      setState((s) => ({ ...s, hitsInCombo: hitsInComboRef.current, lastImpactAt: now }));
-    } else {
-      setState((s) => ({ ...s, hitsInCombo: hitsInComboRef.current }));
-    }
+    setState((s) => ({ ...s, hitsInCombo: hitsInComboRef.current }));
 
     const expectedCount = expectedHits(combo);
     if (
@@ -640,7 +649,9 @@ export function useBagDrill(): UseBagDrillResult {
     ) {
       finishComboRound("correct");
     }
-  }, [finishComboRound, hitsAllowedNow, logStrikeSpeed, markStrikeHit]);
+
+    emitHitFeedback(expected?.label ?? "Hit");
+  }, [emitHitFeedback, finishComboRound, hitsAllowedNow, logStrikeSpeed, markStrikeHit]);
 
   registerImpactRef.current = registerImpact;
 
@@ -668,6 +679,7 @@ export function useBagDrill(): UseBagDrillResult {
 
       initStrikeLog(combo);
       const sequence = hitStrikes(combo);
+      triggerGoHaptic();
       setState((s) => ({
         ...s,
         inComboWindow: true,
@@ -675,6 +687,8 @@ export function useBagDrill(): UseBagDrillResult {
         hitsExpected: expected,
         lastValidation: null,
         nextStrikeLabel: sequence[0]?.label ?? null,
+        lastImpactAt: null,
+        lastHitLabel: null,
       }));
 
       if (poseDetectionRef.current && config.cameraMode === "fighter") {
@@ -818,7 +832,9 @@ export function useBagDrill(): UseBagDrillResult {
     } else {
       scheduleMicBackupHint();
     }
-  }, [finishComboRound, hitsAllowedNow, logStrikeSpeed, markStrikeHit, registerImpact, scheduleMicBackupHint]);
+
+    emitHitFeedback(expected.label);
+  }, [emitHitFeedback, finishComboRound, hitsAllowedNow, logStrikeSpeed, markStrikeHit, registerImpact, scheduleMicBackupHint]);
 
   const disputeStrike = useCallback(() => {
     if (disputeUsedRef.current || comboResolvedRef.current) return;

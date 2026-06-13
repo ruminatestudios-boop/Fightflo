@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { SessionControlBar } from "@/components/training/SessionControlBar";
+import { HitConfirmFlash } from "@/components/bag-drill/HitConfirmFlash";
 import { MicListenPanel } from "@/components/bag-drill/MicListenPanel";
 import { formatReaction, tierColor, type UseBagDrillResult } from "@/hooks/useBagDrill";
 import { BAG_COPY } from "@/lib/bag-drill/copy";
@@ -51,15 +52,6 @@ export function BagSpeedTrainingScreen({
   const showMicBackup =
     aiMode && phase === "go" && state.inComboWindow && state.micBackupHint;
 
-  const [impactFlash, setImpactFlash] = useState(false);
-
-  useEffect(() => {
-    if (!state.lastImpactAt) return;
-    setImpactFlash(true);
-    const id = window.setTimeout(() => setImpactFlash(false), 650);
-    return () => window.clearTimeout(id);
-  }, [state.lastImpactAt]);
-
   useEffect(() => {
     void start(config, { mediaStream });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -102,6 +94,11 @@ export function BagSpeedTrainingScreen({
 
   return (
     <div className="fixed inset-0 z-40 grid overflow-hidden bg-black">
+      <HitConfirmFlash
+        impactAt={state.lastImpactAt}
+        label={punchLabel}
+        headline={COPY.hitFlash}
+      />
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 z-[1] bg-black/80"
@@ -209,12 +206,13 @@ export function BagSpeedTrainingScreen({
                 stream={mediaStream ?? null}
                 variant="live"
                 peakThreshold={config.calibration?.micThreshold ?? 0.18}
+                bagProfile={config.calibration?.bagProfile}
               />
             )}
 
-            {impactFlash && phase === "go" && (
-              <p className="text-center text-xs font-medium uppercase tracking-[0.16em] text-emerald-400">
-                {COPY.hitFlash}
+            {phase === "go" && state.inComboWindow && !state.micReady && showTap && (
+              <p className="text-center text-[10px] uppercase tracking-[0.12em] text-white/40">
+                {COPY.micBlocked}
               </p>
             )}
 
