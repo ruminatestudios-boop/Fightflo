@@ -27,7 +27,7 @@ export const HAND_LM = {
 } as const;
 
 export const MIC_SAMPLE_MS = 16;
-export const MIC_SPIKE_THRESHOLD = 85 / 255;
+export const MIC_SPIKE_THRESHOLD = 0.18;
 export const MIC_SPIKE_MAX_MS = 150;
 
 export const WRIST_VELOCITY_PX = 22;

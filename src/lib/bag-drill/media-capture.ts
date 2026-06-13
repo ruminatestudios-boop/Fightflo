@@ -463,23 +463,35 @@ export async function reacquireMediaWithMicrophone(
   });
 }
 
-async function initAudioContext(
+export async function initAudioContext(
   stream: MediaStream
 ): Promise<AudioContext | null> {
   if (!stream.getAudioTracks().length) return null;
   try {
-    const ctx = new AudioContext({ sampleRate: 16000 });
+    const ctx = new AudioContext();
     await ctx.resume();
     return ctx;
   } catch {
+    return null;
+  }
+}
+
+/** Ensure Web Audio is running — required on iOS before mic impact detection. */
+export async function ensureAudioContext(
+  handles: MediaCaptureHandles
+): Promise<AudioContext | null> {
+  if (!handles.stream?.getAudioTracks().length) return null;
+  if (!handles.audioContext) {
+    handles.audioContext = await initAudioContext(handles.stream);
+  }
+  if (handles.audioContext?.state === "suspended") {
     try {
-      const ctx = new AudioContext();
-      await ctx.resume();
-      return ctx;
+      await handles.audioContext.resume();
     } catch {
       return null;
     }
   }
+  return handles.audioContext;
 }
 
 export async function appendMicrophoneToCapture(

@@ -9,13 +9,16 @@ import {
 } from "@/lib/bag-drill/combo-picker";
 import { fetchComboFeedback } from "@/lib/bag-drill/detection/fetch-combo-feedback";
 import type { GuardState } from "@/lib/bag-drill/detection/guard-monitor";
+import { shouldUsePoseEngine } from "@/lib/bag-drill/detection-mode";
 import { PunchDetectionEngine } from "@/lib/bag-drill/detection/punch-detection-engine";
 import {
   attachExistingStream,
   createAudioImpactDetector,
+  ensureAudioContext,
   startMediaCapture,
   type MediaCaptureHandles,
 } from "@/lib/bag-drill/media-capture";
+import { unlockBagAudio } from "@/lib/bag-drill/audio-queue";
 import {
   formatReaction,
   reactionTier,
@@ -825,24 +828,30 @@ export function useBagDrill(): UseBagDrillResult {
   }, [syncStrikeLog]);
 
   const startStreaming = useCallback(
-    (mode: DetectionMode) => {
+    async (mode: DetectionMode) => {
       const handles = mediaRef.current;
       if (!handles?.stream) return;
 
       if (
-        (mode === "audio-hybrid" ||
-          mode === "audio-only" ||
-          mode === "timer-fallback") &&
-        handles.audioContext &&
-        handles.stream.getAudioTracks().length
+        mode !== "audio-hybrid" &&
+        mode !== "audio-only" &&
+        mode !== "timer-fallback"
       ) {
-        cleanupAudioRef.current = createAudioImpactDetector(
-          handles.stream,
-          handles.audioContext,
-          () => registerImpact(),
-          { threshold: micThresholdRef.current }
-        );
+        return;
       }
+
+      const ctx = await ensureAudioContext(handles);
+      if (!ctx || !handles.stream.getAudioTracks().length) return;
+
+      cleanupAudioRef.current = createAudioImpactDetector(
+        handles.stream,
+        ctx,
+        () => registerImpact(),
+        {
+          threshold: micThresholdRef.current,
+          calibrateMs: micThresholdRef.current != null ? 0 : 2000,
+        }
+      );
     },
     [registerImpact]
   );
@@ -890,6 +899,7 @@ export function useBagDrill(): UseBagDrillResult {
       });
 
       await prepareBagSpeech();
+      void unlockBagAudio();
       if (!speedModeRef.current) {
         speakSessionStart();
       }
@@ -909,7 +919,13 @@ export function useBagDrill(): UseBagDrillResult {
             });
         mediaRef.current = media.handles;
 
-        if (media.hasCamera && media.hasMic && media.handles.stream) {
+        const usePoseEngine =
+          shouldUsePoseEngine(config) &&
+          media.hasCamera &&
+          media.hasMic &&
+          media.handles.stream;
+
+        if (usePoseEngine && media.handles.stream) {
           try {
             const engine = new PunchDetectionEngine({
               video,
@@ -1008,7 +1024,7 @@ export function useBagDrill(): UseBagDrillResult {
               ? "Tap each punch when you throw"
               : "Tap once per strike in the combo";
           }
-          startStreaming(mode);
+          await startStreaming(mode);
           setState((s) => ({
             ...s,
             detectionMode: mode,

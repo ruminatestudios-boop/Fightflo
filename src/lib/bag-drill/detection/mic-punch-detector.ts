@@ -5,7 +5,7 @@ export interface MicPunchDetectorOptions {
   onSpike: (peak: number, at: number) => void;
 }
 
-/** Web Audio mic punch spike detector — 60fps sampling */
+/** Web Audio mic punch spike detector — time-domain peaks (matches bag impact detector). */
 export class MicPunchDetector {
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private audioContext: AudioContext | null = null;
@@ -34,21 +34,21 @@ export class MicPunchDetector {
 
     const source = this.audioContext.createMediaStreamSource(stream);
     this.analyser = this.audioContext.createAnalyser();
-    this.analyser.fftSize = 256;
+    this.analyser.fftSize = 512;
     source.connect(this.analyser);
-    this.data = new Uint8Array(new ArrayBuffer(this.analyser.frequencyBinCount));
+    this.data = new Uint8Array(this.analyser.fftSize);
 
     this.intervalId = setInterval(() => this.sample(), MIC_SAMPLE_MS);
   }
 
   private sample(): void {
     if (!this.analyser || !this.data) return;
-    this.analyser.getByteFrequencyData(
+    this.analyser.getByteTimeDomainData(
       this.data as Uint8Array<ArrayBuffer>
     );
     let peak = 0;
     for (let i = 0; i < this.data.length; i++) {
-      const v = this.data[i] / 255;
+      const v = Math.abs(this.data[i] - 128) / 128;
       if (v > peak) peak = v;
     }
 

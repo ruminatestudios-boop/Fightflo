@@ -1,13 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { shouldUsePoseEngine } from "@/lib/bag-drill/detection-mode";
 import { PunchDetectionEngine } from "@/lib/bag-drill/detection/punch-detection-engine";
 import {
   attachExistingStream,
   createAudioImpactDetector,
+  ensureAudioContext,
   startMediaCapture,
   type MediaCaptureHandles,
 } from "@/lib/bag-drill/media-capture";
+import { unlockBagAudio } from "@/lib/bag-drill/audio-queue";
 import {
   prepareBagSpeech,
   speakCombo,
@@ -246,6 +249,7 @@ export function useBagFlurry(): UseBagFlurryResult {
       });
 
       await prepareBagSpeech();
+      void unlockBagAudio();
       void speakCombo(`Flurry — ${seconds} seconds`, config.difficulty);
       startCountdown();
 
@@ -268,7 +272,13 @@ export function useBagFlurry(): UseBagFlurryResult {
             });
         mediaRef.current = media.handles;
 
-        if (media.hasCamera && media.hasMic && media.handles.stream) {
+        const usePoseEngine =
+          shouldUsePoseEngine(config) &&
+          media.hasCamera &&
+          media.hasMic &&
+          media.handles.stream;
+
+        if (usePoseEngine && media.handles.stream) {
           try {
             const engine = new PunchDetectionEngine({
               video,
@@ -290,19 +300,22 @@ export function useBagFlurry(): UseBagFlurryResult {
           }
         }
 
-        if (!engineRef.current && media.hasMic && media.handles.stream && media.handles.audioContext) {
-          mode = "audio-hybrid";
-          status = "Mic counts hits — tap any strike the mic misses";
-          cleanupAudioRef.current = createAudioImpactDetector(
-            media.handles.stream,
-            media.handles.audioContext,
-            () => registerImpact(),
-            {
-              cooldownMs: 165,
-              calibrateMs: config.calibration ? 0 : 2500,
-              threshold: config.calibration?.micThreshold,
-            }
-          );
+        if (!engineRef.current && media.hasMic && media.handles.stream) {
+          const ctx = await ensureAudioContext(media.handles);
+          if (ctx) {
+            mode = "audio-hybrid";
+            status = "Mic counts hits — tap any strike the mic misses";
+            cleanupAudioRef.current = createAudioImpactDetector(
+              media.handles.stream,
+              ctx,
+              () => registerImpact(),
+              {
+                cooldownMs: 165,
+                calibrateMs: config.calibration?.micThreshold != null ? 0 : 2500,
+                threshold: config.calibration?.micThreshold,
+              }
+            );
+          }
         } else if (!engineRef.current) {
           mode = "visual-tap";
           status = "Tap once per punch";
