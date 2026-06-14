@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS users (
   stripe_customer_id TEXT,
   subscription_status TEXT NOT NULL DEFAULT 'none',
   free_analyses_used INTEGER NOT NULL DEFAULT 0,
-  free_analyses_limit INTEGER NOT NULL DEFAULT 1  -- lifetime cap for free tier; Pro capped via monthly session count (15/mo)
+  free_analyses_limit INTEGER NOT NULL DEFAULT 1,  -- lifetime cap for free tier; Pro capped via monthly session count (15/mo)
+  bonus_scans INTEGER NOT NULL DEFAULT 0  -- Pro top-up credits (used after monthly 15)
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -28,7 +29,10 @@ CREATE TABLE IF NOT EXISTS sessions (
   session_number INTEGER NOT NULL DEFAULT 1,
   progress_step TEXT DEFAULT 'uploading',
   progress_message TEXT DEFAULT 'Uploading your video...',
-  cloudinary_public_id TEXT
+  cloudinary_public_id TEXT,
+  display_name TEXT,
+  summary TEXT,
+  thumbnail_url TEXT
 );
 
 CREATE TABLE IF NOT EXISTS reports (
@@ -80,7 +84,9 @@ CREATE INDEX IF NOT EXISTS idx_reports_session_id ON reports(session_id);
 CREATE INDEX IF NOT EXISTS idx_weaknesses_user_id ON weaknesses(user_id);
 CREATE INDEX IF NOT EXISTS idx_clips_report_id ON clips(report_id);
 
--- Migration for existing databases:
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS bonus_scans INTEGER NOT NULL DEFAULT 0;
+-- ALTER TABLE sessions ADD COLUMN IF NOT EXISTS summary TEXT;
+-- ALTER TABLE sessions ADD COLUMN IF NOT EXISTS thumbnail_url TEXT;
 -- ALTER TABLE reports ADD COLUMN IF NOT EXISTS pose_quality JSONB;
 -- ALTER TABLE reports ADD COLUMN IF NOT EXISTS confirmed_events JSONB NOT NULL DEFAULT '[]';
 -- ALTER TABLE reports ADD COLUMN IF NOT EXISTS landmark_summary JSONB;

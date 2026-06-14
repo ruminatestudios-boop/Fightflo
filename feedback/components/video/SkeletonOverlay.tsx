@@ -85,8 +85,8 @@ export function drawSkeleton(
     const p1 = toCanvasPoint(from, layout);
     const p2 = toCanvasPoint(to, layout);
 
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(p2.x, p2.y);

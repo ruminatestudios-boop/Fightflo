@@ -105,7 +105,10 @@ export function diagnoseRootCause(
   sport: SportId
 ): RootCauseDiagnosis {
   const sportConfig = getSportConfig(sport);
-  const weaknessType = patternData.primary_weakness;
+  const weaknessType =
+    patternData.primary_weakness ||
+    patternData.events[0]?.weakness_type ||
+    "technique_error";
   const template = ROOT_CAUSE_TEMPLATES[weaknessType];
 
   if (template) {

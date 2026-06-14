@@ -73,9 +73,10 @@ Upload any training video. Get technical coaching in minutes.
 | Tier | Price | Features |
 |------|-------|----------|
 | Free | £0 | 1 analysis (lifetime), full report, no clips |
-| Pro | £9.99/mo | 15 analyses/month, clips, history, progress |
-| Team | £29.99/mo | 5 users, shared reports |
-| API | £199+/mo | Bulk processing, white label |
+| Pro | £12.99/mo | 15 analyses/month, clips, history, progress |
+| Top-up | £5.99 | +5 analyses (Pro only, when monthly cap hit) |
+
+Prices in `config/pricing.ts` — match amounts in Stripe Product catalogue.
 
 ## Deployment
 

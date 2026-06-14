@@ -5,7 +5,8 @@ import { UPLOAD_CONFIG } from "@/config/prompts";
 import { parseJsonResponse } from "@/lib/api/parseResponse";
 import { hapticStep, hapticTick } from "@/lib/haptics";
 import { storeUserId } from "@/lib/storage/client";
-import type { SkillLevel, SportId } from "@/types";
+import type { AnalysisAllowance, SkillLevel, SportId } from "@/types";
+import type { PaywallMode } from "@/components/shared/PaywallSheet";
 
 export type UploadPhase =
   | "idle"
@@ -21,11 +22,18 @@ interface UploadState {
   sessionId: string | null;
   userId: string | null;
   error: string | null;
+  paywallMode: PaywallMode | null;
 }
 
-interface CloudinarySignResponse {
-  mode: "cloudinary" | "direct";
+interface UploadApiResponse {
   sessionId?: string;
+  userId?: string;
+  error?: string;
+  allowance?: AnalysisAllowance;
+}
+
+interface CloudinarySignResponse extends UploadApiResponse {
+  mode: "cloudinary" | "direct";
   userId: string;
   cloudinary?: {
     timestamp: number;
@@ -36,7 +44,6 @@ interface CloudinarySignResponse {
     publicId: string;
     uploadUrl: string;
   };
-  error?: string;
 }
 
 interface CloudinaryUploadResult {
@@ -99,7 +106,20 @@ export function useUpload() {
     sessionId: null,
     userId: null,
     error: null,
+    paywallMode: null,
   });
+
+  const failUpload = useCallback(
+    (message: string, allowance?: AnalysisAllowance) => {
+      setState((s) => ({
+        ...s,
+        phase: "error",
+        error: message,
+        paywallMode: allowance?.isPro ? "topup" : allowance ? "pro" : null,
+      }));
+    },
+    []
+  );
 
   const validateFile = useCallback((file: File): string | null => {
     if (file.size > UPLOAD_CONFIG.maxSizeBytes) {
@@ -127,6 +147,7 @@ export function useUpload() {
         sessionId: null,
         userId: null,
         error: null,
+        paywallMode: null,
       });
 
       try {
@@ -148,7 +169,8 @@ export function useUpload() {
         const sign = await parseJsonResponse<CloudinarySignResponse>(signResponse);
 
         if (!signResponse.ok) {
-          throw new Error(sign.error ?? "Could not start upload");
+          failUpload(sign.error ?? "Could not start upload", sign.allowance);
+          return null;
         }
 
         if (sign.mode === "cloudinary" && sign.cloudinary && sign.sessionId) {
@@ -185,17 +207,19 @@ export function useUpload() {
             }),
           });
 
-          const data = await parseJsonResponse<{
-            sessionId: string;
-            userId: string;
-            error?: string;
-          }>(completeResponse);
+          const data = await parseJsonResponse<UploadApiResponse>(completeResponse);
 
           if (!completeResponse.ok) {
-            throw new Error(data.error ?? "Upload failed");
+            failUpload(data.error ?? "Upload failed", data.allowance);
+            return null;
           }
 
           if (data.userId) storeUserId(data.userId);
+
+          if (!data.sessionId || !data.userId) {
+            failUpload("Upload failed");
+            return null;
+          }
 
           setState({
             phase: "processing",
@@ -204,6 +228,7 @@ export function useUpload() {
             sessionId: data.sessionId,
             userId: data.userId,
             error: null,
+            paywallMode: null,
           });
           hapticStep();
 
@@ -221,36 +246,39 @@ export function useUpload() {
           body: formData,
         });
 
-        const data = await parseJsonResponse<{
-          sessionId: string;
-          userId: string;
-          error?: string;
-        }>(response);
+        const data = await parseJsonResponse<UploadApiResponse>(response);
 
         if (!response.ok) {
-          throw new Error(data.error ?? "Upload failed");
+          failUpload(data.error ?? "Upload failed", data.allowance);
+          return null;
         }
 
         if (data.userId) storeUserId(data.userId);
 
+        if (!data.sessionId || !data.userId) {
+          failUpload("Upload failed");
+          return null;
+        }
+
         setState({
           phase: "processing",
           progress: 30,
-          message: "Extracting frames...",
+          message: "Upload complete — extracting frames from your video…",
           sessionId: data.sessionId,
           userId: data.userId,
           error: null,
+          paywallMode: null,
         });
         hapticStep();
 
         return data.sessionId;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Upload failed";
-        setState((s) => ({ ...s, phase: "error", error: message }));
+        failUpload(message);
         return null;
       }
     },
-    [validateFile]
+    [validateFile, failUpload]
   );
 
   const updateProgress = useCallback((progress: number, message: string) => {
@@ -275,6 +303,7 @@ export function useUpload() {
       sessionId: null,
       userId: null,
       error: null,
+      paywallMode: null,
     });
   }, []);
 

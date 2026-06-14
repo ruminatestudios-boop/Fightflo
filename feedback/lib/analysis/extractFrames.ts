@@ -1,12 +1,38 @@
-import { mkdir, readdir, readFile, rm, writeFile } from "fs/promises";
+import { mkdir, readdir, readFile, rm, writeFile, copyFile } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
+import { isAbsolute } from "path";
 import ffmpeg from "fluent-ffmpeg";
 import { configureFfmpeg } from "@/lib/config/ffmpeg";
 
 const FRAMES_PER_SECOND = 12;
 
 export { FRAMES_PER_SECOND };
+
+async function materializeVideo(
+  videoUrl: string,
+  destPath: string
+): Promise<void> {
+  if (
+    videoUrl.startsWith("http://") ||
+    videoUrl.startsWith("https://")
+  ) {
+    const videoResponse = await fetch(videoUrl);
+    if (!videoResponse.ok) {
+      throw new Error(`Failed to download video: ${videoResponse.statusText}`);
+    }
+    const buffer = Buffer.from(await videoResponse.arrayBuffer());
+    await writeFile(destPath, buffer);
+    return;
+  }
+
+  if (isAbsolute(videoUrl)) {
+    await copyFile(videoUrl, destPath);
+    return;
+  }
+
+  throw new Error(`Unsupported video URL: ${videoUrl}`);
+}
 
 export async function extractFrames(
   videoUrl: string,
@@ -16,12 +42,7 @@ export async function extractFrames(
   await mkdir(sessionDir, { recursive: true });
 
   const videoPath = join(sessionDir, "source.mp4");
-  const videoResponse = await fetch(videoUrl);
-  if (!videoResponse.ok) {
-    throw new Error(`Failed to download video: ${videoResponse.statusText}`);
-  }
-  const buffer = Buffer.from(await videoResponse.arrayBuffer());
-  await writeFile(videoPath, buffer);
+  await materializeVideo(videoUrl, videoPath);
 
   configureFfmpeg();
   const outputPattern = join(sessionDir, "frame_%04d.jpg");
@@ -56,9 +77,7 @@ export async function extractClip(
 
   const exists = await readFile(videoPath).catch(() => null);
   if (!exists) {
-    const videoResponse = await fetch(videoUrl);
-    const buffer = Buffer.from(await videoResponse.arrayBuffer());
-    await writeFile(videoPath, buffer);
+    await materializeVideo(videoUrl, videoPath);
   }
 
   const start = Math.max(0, timestampSeconds - 1);

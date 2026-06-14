@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isLocalDevMode } from "@/lib/config/env";
+import { isRealAnalysisPipelineEnabled } from "@/lib/config/env";
 import { runDemoAnalysisPipeline } from "@/lib/analysis/demo-pipeline";
 import { runAnalysisPipeline } from "@/lib/analysis/pipeline";
 import { getSessionById } from "@/lib/db/queries";
@@ -28,9 +28,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: "processing", sessionId });
     }
 
-    const runPipeline = isLocalDevMode()
-      ? runDemoAnalysisPipeline
-      : runAnalysisPipeline;
+    const runPipeline = isRealAnalysisPipelineEnabled()
+      ? runAnalysisPipeline
+      : runDemoAnalysisPipeline;
 
     runPipeline(sessionId).catch(console.error);
 

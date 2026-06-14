@@ -14,7 +14,7 @@ interface AnalysisSheetProps {
 const ACCENT_BORDER: Record<string, string> = {
   green: "border-emerald-500/40",
   orange: "border-[#ff9500]/40",
-  red: "border-[#e50914]/50",
+  red: "border-[#fa4141]/50",
   neutral: "border-white/10",
 };
 

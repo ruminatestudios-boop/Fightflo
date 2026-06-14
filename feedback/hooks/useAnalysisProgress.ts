@@ -5,7 +5,8 @@ import {
   ANALYSIS_STEPS,
   DEFAULT_ANALYSIS_STEP,
 } from "@/config/prompts";
-import { hapticStep, hapticSuccess, hapticTick } from "@/lib/haptics";
+import { hapticStep, hapticSuccess } from "@/lib/haptics";
+import { parseJsonResponse } from "@/lib/api/parseResponse";
 import type { Report, Session } from "@/types";
 
 interface AnalysisProgressState {
@@ -25,6 +26,12 @@ function getStepConfig(step?: string) {
   return DEFAULT_ANALYSIS_STEP;
 }
 
+function resolveMessage(step: string, serverMessage: string): string {
+  if (serverMessage.trim()) return serverMessage;
+  const config = getStepConfig(step);
+  return config.detail ?? config.ticks[0] ?? "Working…";
+}
+
 export function useAnalysisProgress(sessionId: string | null) {
   const [state, setState] = useState<AnalysisProgressState>(() => {
     const config = ANALYSIS_STEPS.uploading;
@@ -36,16 +43,14 @@ export function useAnalysisProgress(sessionId: string | null) {
       step: "uploading",
       eyebrow: config.eyebrow,
       headline: config.headline,
-      message: config.ticks[0],
+      message: config.detail ?? config.ticks[0],
       progressPercent: config.percent,
     };
   });
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastStepRef = useRef("uploading");
-  const tickIndexRef = useRef(0);
   const targetProgressRef = useRef(10);
 
   const fetchReport = async () => {
@@ -53,7 +58,11 @@ export function useAnalysisProgress(sessionId: string | null) {
 
     try {
       const res = await fetch(`/api/report?sessionId=${sessionId}`);
-      const data = await res.json();
+      const data = await parseJsonResponse<{
+        session?: Session;
+        report?: Report | null;
+        error?: string;
+      }>(res);
 
       if (!res.ok) throw new Error(data.error ?? "Failed to load report");
 
@@ -80,7 +89,7 @@ export function useAnalysisProgress(sessionId: string | null) {
           step: "complete",
           eyebrow: ANALYSIS_STEPS.complete.eyebrow,
           headline: ANALYSIS_STEPS.complete.headline,
-          message: ANALYSIS_STEPS.complete.ticks[0],
+          message: ANALYSIS_STEPS.complete.detail ?? ANALYSIS_STEPS.complete.ticks[0],
           progressPercent: 100,
         });
         return true;
@@ -98,7 +107,6 @@ export function useAnalysisProgress(sessionId: string | null) {
       if (step !== lastStepRef.current) {
         hapticStep();
         lastStepRef.current = step;
-        tickIndexRef.current = 0;
       }
 
       setState((s) => ({
@@ -107,7 +115,7 @@ export function useAnalysisProgress(sessionId: string | null) {
         step,
         eyebrow: config.eyebrow,
         headline: config.headline,
-        message: config.ticks[tickIndexRef.current] ?? serverMessage,
+        message: resolveMessage(step, serverMessage),
         progressPercent: Math.max(s.progressPercent, config.percent - 8),
       }));
 
@@ -145,19 +153,6 @@ export function useAnalysisProgress(sessionId: string | null) {
   useEffect(() => {
     if (!sessionId || !state.loading) return;
 
-    tickRef.current = setInterval(() => {
-      const config = getStepConfig(lastStepRef.current);
-      tickIndexRef.current = (tickIndexRef.current + 1) % config.ticks.length;
-
-      if (tickIndexRef.current === 0) return;
-
-      hapticTick();
-      setState((s) => ({
-        ...s,
-        message: config.ticks[tickIndexRef.current],
-      }));
-    }, 2800);
-
     progressRef.current = setInterval(() => {
       setState((s) => {
         const target = targetProgressRef.current;
@@ -170,7 +165,6 @@ export function useAnalysisProgress(sessionId: string | null) {
     }, 400);
 
     return () => {
-      if (tickRef.current) clearInterval(tickRef.current);
       if (progressRef.current) clearInterval(progressRef.current);
     };
   }, [sessionId, state.loading]);

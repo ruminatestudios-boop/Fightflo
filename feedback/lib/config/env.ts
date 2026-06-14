@@ -22,7 +22,21 @@ export function isLocalDevMode(): boolean {
   return !isSupabaseConfigured();
 }
 
+/** Real video analysis (frames + pose + Gemini) — not the sleep-and-hallucinate demo path */
+export function isRealAnalysisPipelineEnabled(): boolean {
+  return isGeminiConfigured();
+}
+
+/** Client-safe flag (GEMINI_API_KEY is server-only) */
+export function isPublicRealAnalysisEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_REAL_ANALYSIS === "true";
+}
+
 /** Skip free/pro analysis caps — local testing only */
 export function isAnalysisLimitBypassed(): boolean {
   return process.env.ANALYSIS_LIMIT_BYPASS === "true";
+}
+
+export function isLoopsConfigured(): boolean {
+  return Boolean(process.env.LOOPS_API_KEY?.trim());
 }

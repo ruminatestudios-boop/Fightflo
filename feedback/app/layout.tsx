@@ -1,29 +1,25 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Barlow_Condensed, Inter } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
   variable: "--font-inter",
 });
 
-const display = Inter({
+const barlow = Barlow_Condensed({
   subsets: ["latin"],
-  weight: ["600", "700"],
+  weight: ["500", "600", "700"],
   variable: "--font-display",
 });
 
-const serif = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-serif",
-});
-
 export const metadata: Metadata = {
-  title: "Feedback — AI Sports Coaching",
+  title: "Fightflo — AI Coaching",
   description:
-    "Record your training. AI tells you exactly why you'd get hit. Upload any training video for technical biomechanical coaching.",
+    "Film your training. AI tracks your movement and tells you exactly what to improve.",
   openGraph: {
-    title: "Feedback — AI Sports Coaching",
+    title: "Fightflo — AI Coaching",
     description:
       "Upload any training video. Get timestamped technical coaching in minutes.",
   },
@@ -36,7 +32,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${display.variable} ${serif.variable} min-h-dvh antialiased`}>
+      <body
+        className={`${inter.variable} ${barlow.variable} min-h-dvh antialiased`}
+      >
         {children}
       </body>
     </html>

@@ -1,5 +1,9 @@
-import { callGemini } from "@/lib/ai/gemini";
+import { callGemini, callGeminiVision } from "@/lib/ai/gemini";
 import { getSportPrompts } from "@/lib/ai/prompts";
+import { diagnoseRootCause } from "@/lib/analysis/rootCause";
+import {
+  humanLabelForWeakness,
+} from "@/lib/analysis/poseMetrics";
 import { getSportConfig } from "@/config/sports";
 import type {
   CoachingFeedback,
@@ -10,32 +14,7 @@ import type {
   SkillLevel,
   SportId,
 } from "@/types";
-
-interface PatternFinderResult {
-  primary_weakness: string;
-  human_title: string;
-  frequency: string;
-  confidence: number;
-  correlated_movements: string[];
-  fatigue_factor: boolean;
-  summary: string;
-}
-
-interface RootCauseResult {
-  what_is_happening: string;
-  root_cause: string;
-  fight_consequence: string;
-  mechanical_fix: string;
-  elite_reference: string;
-}
-
-interface ProgressResult {
-  trend: string;
-  percentage_change: number;
-  sessions_tracked: number;
-  insight: string;
-  pattern_insight: string;
-}
+import type { ObservedStrength } from "@/lib/analysis/positiveFinder";
 
 interface RawCoachingFeedback {
   positives: CoachingFeedback["positives"];
@@ -64,6 +43,21 @@ function normalizeFeedback(raw: RawCoachingFeedback): CoachingFeedback {
   };
 }
 
+function formatFrequency(
+  patternData: PatternAnalysisResult,
+  confirmedEvents: ConfirmedPoseEvent[]
+): string {
+  const total = patternData.session_landmarks.length;
+  const count = confirmedEvents.length || patternData.frequency;
+  if (count > 0 && total > 0) {
+    return `${count} confirmed instance${count === 1 ? "" : "s"} across ${total} analysed frames`;
+  }
+  if (patternData.frequency > 0) {
+    return `${patternData.frequency} detected instances in ${total} frames`;
+  }
+  return "Observed in this session footage";
+}
+
 export async function runPromptChain(input: {
   patternData: PatternAnalysisResult;
   sport: SportId;
@@ -73,63 +67,77 @@ export async function runPromptChain(input: {
   poseQuality?: PoseQualityReport;
   landmarkSummary?: Record<string, unknown>;
   confirmedEvents?: ConfirmedPoseEvent[];
+  observedStrengths?: ObservedStrength[];
+  frameSamples?: string[];
 }): Promise<CoachingFeedback> {
   const sportConfig = getSportConfig(input.sport);
   const prompts = getSportPrompts(input.sport);
+  const confirmedEvents = input.confirmedEvents ?? [];
+  const rootCause = diagnoseRootCause(input.patternData, input.sport);
+
+  const primaryEvent = confirmedEvents[0];
+  const verifiedPattern = {
+    primary_weakness: input.patternData.primary_weakness || primaryEvent?.weakness_type || "",
+    human_title:
+      primaryEvent?.label ??
+      humanLabelForWeakness(input.patternData.primary_weakness),
+    frequency: formatFrequency(input.patternData, confirmedEvents),
+    event_count: input.patternData.events.length,
+    confirmed_event_count: confirmedEvents.length,
+    fatigue_detected: input.patternData.fatigue_detected,
+    events: input.patternData.events.slice(0, 12),
+  };
 
   const sessionData = {
     sport: input.sport,
     sport_name: sportConfig.name,
     level: input.level,
-    primary_weakness: input.patternData.primary_weakness,
-    frequency: input.patternData.frequency,
-    fatigue_detected: input.patternData.fatigue_detected,
-    events: input.patternData.events,
-    pattern_data: input.patternData.pattern_data,
-    mechanics_standards: sportConfig.mechanics_standards,
-    common_weaknesses: sportConfig.common_weaknesses,
-    elite_references: sportConfig.elite_references,
-    session_history: input.sessionHistory ?? [],
+    verified_pattern: verifiedPattern,
+    root_cause_from_pose: rootCause,
+    confirmed_pose_events: confirmedEvents,
+    observed_strengths: input.observedStrengths ?? [],
     techniques_seen: input.techniquesSeen ?? [],
     pose_quality: input.poseQuality ?? null,
     landmark_summary: input.landmarkSummary ?? {},
-    confirmed_pose_events: input.confirmedEvents ?? [],
+    session_history: input.sessionHistory ?? [],
+    progress_note:
+      (input.sessionHistory?.length ?? 0) > 0
+        ? "Compare to prior sessions in session_history."
+        : "First tracked session — focus on this footage only.",
   };
 
-  const landmarkData = input.patternData.session_landmarks;
+  const landmarkData = input.patternData.session_landmarks.slice(0, 80);
 
-  const pattern = await callGemini<PatternFinderResult>(
-    prompts.patternFinder,
-    { sessionData, landmarkData: landmarkData.slice(0, 80) }
-  );
+  const coachingPayload = {
+    sessionData,
+    landmarkData,
+    instruction:
+      "Write coaching ONLY for what is supported by confirmed_pose_events, observed_strengths, techniques_seen, landmark_summary, and the attached video frames. Do not invent generic praise.",
+  };
 
-  const rootCause = await callGemini<RootCauseResult>(
-    prompts.rootCauseFinder,
-    { pattern, landmarkData: landmarkData.slice(0, 80) }
-  );
-
-  const progress = await callGemini<ProgressResult>(
-    prompts.progressChecker,
-    {
-      sessionHistory: input.sessionHistory ?? [],
-      currentSession: input.patternData,
-      primaryWeakness: pattern.primary_weakness,
-    }
-  );
-
-  const coachingPrompt = prompts.coachingVoice
-    .replace("{sessionData}", JSON.stringify({ ...sessionData, pattern, rootCause, progress }))
-    .replace("{landmarkData}", JSON.stringify(landmarkData.slice(0, 100)));
-
-  const raw = await callGemini<RawCoachingFeedback>(
-    coachingPrompt,
-    { note: "Return JSON only per schema in system prompt" }
-  );
+  const raw =
+    input.frameSamples && input.frameSamples.length > 0
+      ? await callGeminiVision<RawCoachingFeedback>(
+          prompts.coachingVoice,
+          input.frameSamples,
+          coachingPayload
+        )
+      : await callGemini<RawCoachingFeedback>(
+          prompts.coachingVoice,
+          coachingPayload
+        );
 
   const feedback = normalizeFeedback(raw);
 
+  const weaknessTimestamp =
+    feedback.main_weakness.timestamp ||
+    primaryEvent?.timestamp ||
+    input.patternData.events[0]?.start_timestamp ||
+    "0:00";
+
   feedback.main_weakness = {
     ...feedback.main_weakness,
+    timestamp: weaknessTimestamp,
     what_is_happening:
       feedback.main_weakness.what_is_happening || rootCause.what_is_happening,
     root_cause: feedback.main_weakness.root_cause || rootCause.root_cause,
@@ -139,12 +147,33 @@ export async function runPromptChain(input: {
       feedback.main_weakness.mechanical_fix || rootCause.mechanical_fix,
     elite_reference:
       feedback.main_weakness.elite_reference || rootCause.elite_reference,
-    frequency: feedback.main_weakness.frequency || String(pattern.frequency),
-    title: feedback.main_weakness.title || pattern.human_title,
+    frequency: feedback.main_weakness.frequency || verifiedPattern.frequency,
+    title:
+      feedback.main_weakness.title ||
+      primaryEvent?.label ||
+      verifiedPattern.human_title,
   };
 
-  feedback.pattern_insight =
-    feedback.pattern_insight || progress.pattern_insight;
+  if (input.observedStrengths?.length && feedback.positives.length > 0) {
+    feedback.positives = feedback.positives.map((positive, i) => {
+      const observed = input.observedStrengths?.[i];
+      if (!observed) return positive;
+      return {
+        ...positive,
+        timestamp: positive.timestamp || observed.timestamp,
+        title: positive.title || observed.title,
+        technical_detail:
+          positive.technical_detail || observed.detail,
+      };
+    });
+  }
+
+  if (!feedback.pattern_insight) {
+    feedback.pattern_insight =
+      confirmedEvents.length > 0
+        ? `${verifiedPattern.human_title} shows up as a repeatable mechanical pattern — fix the root cause and downstream errors resolve.`
+        : "Review the attached footage cues and drill focus for this session.";
+  }
 
   return feedback;
 }

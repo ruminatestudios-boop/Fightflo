@@ -17,7 +17,6 @@ import type {
 type DevSession = Session & {
   progress_step?: string;
   progress_message?: string;
-  cloudinary_public_id?: string | null;
 };
 
 const users = new Map<string, User>();
@@ -46,13 +45,26 @@ export async function createAnonymousUser(
     subscription_status: "none",
     free_analyses_used: 0,
     free_analyses_limit: 1,
+    bonus_scans: 0,
   };
   users.set(user.id, user);
   return user;
 }
 
 export async function getUserById(userId: string): Promise<User | null> {
-  return users.get(userId) ?? null;
+  const user = users.get(userId);
+  if (!user) return null;
+  return { ...user, bonus_scans: user.bonus_scans ?? 0 };
+}
+
+export async function updateUserEmail(
+  userId: string,
+  email: string
+): Promise<User | null> {
+  const user = users.get(userId);
+  if (!user) return null;
+  user.email = email.trim().toLowerCase();
+  return user;
 }
 
 export async function incrementFreeAnalyses(userId: string): Promise<void> {
@@ -122,6 +134,42 @@ export async function updateSessionSport(
   if (session) session.sport = sport;
 }
 
+export async function updateSessionMetadata(
+  sessionId: string,
+  patch: {
+    display_name?: string | null;
+    summary?: string | null;
+    thumbnail_url?: string | null;
+  }
+): Promise<DevSession | null> {
+  const session = sessions.get(sessionId);
+  if (!session) return null;
+
+  if (patch.display_name !== undefined) session.display_name = patch.display_name;
+  if (patch.summary !== undefined) session.summary = patch.summary;
+  if (patch.thumbnail_url !== undefined) session.thumbnail_url = patch.thumbnail_url;
+
+  return session;
+}
+
+export async function deleteSession(
+  sessionId: string,
+  userId: string
+): Promise<boolean> {
+  const session = sessions.get(sessionId);
+  if (!session || session.user_id !== userId) return false;
+
+  const reportId = reportsBySession.get(sessionId);
+  if (reportId) {
+    clips.delete(reportId);
+    reports.delete(reportId);
+    reportsBySession.delete(sessionId);
+  }
+
+  sessions.delete(sessionId);
+  return true;
+}
+
 export async function getReportBySessionId(
   sessionId: string
 ): Promise<Report | null> {
@@ -164,6 +212,11 @@ export async function saveReport(input: {
   };
   reports.set(report.id, report);
   reportsBySession.set(input.sessionId, report.id);
+
+  const session = sessions.get(input.sessionId);
+  if (session && !session.summary?.trim()) {
+    session.summary = input.feedback.coach_summary?.trim().slice(0, 160) ?? null;
+  }
 
   if (input.clips.length > 0) {
     clips.set(
@@ -258,6 +311,124 @@ export async function getClipsByReportId(
   return clips.get(reportId) ?? [];
 }
 
-export async function setUserPro(): Promise<void> {
-  /* noop in dev */
+export async function addBonusScans(
+  userId: string,
+  count: number
+): Promise<void> {
+  const user = users.get(userId);
+  if (!user) return;
+  user.bonus_scans = (user.bonus_scans ?? 0) + count;
+}
+
+export async function decrementBonusScans(userId: string): Promise<void> {
+  const user = users.get(userId);
+  if (!user || (user.bonus_scans ?? 0) <= 0) return;
+  user.bonus_scans -= 1;
+}
+
+export async function setUserPro(
+  stripeCustomerId: string,
+  subscriptionStatus: string,
+  userId?: string | null
+): Promise<void> {
+  const isActive =
+    subscriptionStatus === "active" || subscriptionStatus === "trialing";
+
+  if (userId) {
+    const user = users.get(userId);
+    if (user) {
+      user.is_pro = isActive;
+      user.subscription_status = subscriptionStatus as User["subscription_status"];
+      user.stripe_customer_id = stripeCustomerId;
+      return;
+    }
+  }
+
+  for (const user of users.values()) {
+    if (user.stripe_customer_id === stripeCustomerId) {
+      user.is_pro = isActive;
+      user.subscription_status = subscriptionStatus as User["subscription_status"];
+      return;
+    }
+  }
+}
+
+export async function linkStripeCustomer(
+  userId: string,
+  stripeCustomerId: string,
+  email?: string | null
+): Promise<void> {
+  const user = users.get(userId);
+  if (!user) return;
+  user.stripe_customer_id = stripeCustomerId;
+  if (email?.trim() && !user.email) {
+    user.email = email.trim().toLowerCase();
+  }
+}
+
+export interface ScheduledEmailUserRow {
+  user_id: string;
+  email: string;
+  is_pro: boolean;
+  session_count: number;
+  sessions_this_week: number;
+  days_since_last_session: number;
+  latest_session_id: string | null;
+  primary_weakness: string | null;
+  weakness_trend: string | null;
+}
+
+export async function listUsersForScheduledEmails(): Promise<
+  ScheduledEmailUserRow[]
+> {
+  const weekStart = (() => {
+    const d = new Date();
+    const day = d.getUTCDay();
+    const diff = day === 0 ? 6 : day - 1;
+    d.setUTCDate(d.getUTCDate() - diff);
+    d.setUTCHours(0, 0, 0, 0);
+    return d.getTime();
+  })();
+  const now = Date.now();
+  const rows: ScheduledEmailUserRow[] = [];
+
+  for (const user of users.values()) {
+    if (!user.email?.trim()) continue;
+
+    const userSessions = [...sessions.values()]
+      .filter((s) => s.user_id === user.id && s.status === "complete")
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+    if (userSessions.length === 0) continue;
+
+    const latest = userSessions[0];
+    const daysSince = Math.floor(
+      (now - new Date(latest.created_at).getTime()) / 86_400_000
+    );
+
+    const sessionsThisWeek = userSessions.filter(
+      (s) => new Date(s.created_at).getTime() >= weekStart
+    ).length;
+
+    const weakness = [...weaknesses.values()].find(
+      (w) => w.user_id === user.id && w.status === "active"
+    );
+
+    rows.push({
+      user_id: user.id,
+      email: user.email,
+      is_pro: user.is_pro,
+      session_count: userSessions.length,
+      sessions_this_week: sessionsThisWeek,
+      days_since_last_session: daysSince,
+      latest_session_id: latest.id,
+      primary_weakness: weakness?.weakness_type ?? null,
+      weakness_trend: weakness?.trend ?? null,
+    });
+  }
+
+  return rows;
 }

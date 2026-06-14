@@ -22,11 +22,9 @@ export async function findPatterns(
     }
   }
 
-  const primaryWeakness =
-    Object.entries(weaknessCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ??
-    sportConfig.common_weaknesses[0];
+  const primaryWeakness = pickPrimaryWeakness(weaknessCounts, timeline, sport);
 
-  const frequency = weaknessCounts[primaryWeakness] ?? 0;
+  const frequency = primaryWeakness ? (weaknessCounts[primaryWeakness] ?? 0) : 0;
   const fatigueDetected = detectFatigue(timeline, events);
 
   return {
@@ -60,8 +58,68 @@ function detectWeakness(
     case "no_unit_turn":
       return detectNoUnitTurn(timeline);
     default:
-      return detectGenericWeakness(timeline, weaknessType, sport);
+      return [];
   }
+}
+
+function pickPrimaryWeakness(
+  weaknessCounts: Record<string, number>,
+  timeline: LandmarkTimeline,
+  sport: SportId
+): string {
+  const ranked = Object.entries(weaknessCounts)
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1]);
+
+  if (ranked.length > 0) return ranked[0][0];
+
+  if (timeline.length < 8) return "";
+
+  let guardDropFrames = 0;
+  let lowElbowFrames = 0;
+  let chinUpFrames = 0;
+  let lowHipRotation = 0;
+
+  for (const frame of timeline) {
+    const lw = frame.landmarks.left_wrist;
+    const rw = frame.landmarks.right_wrist;
+    const ls = frame.landmarks.left_shoulder;
+    const rs = frame.landmarks.right_shoulder;
+    const re = frame.landmarks.right_elbow;
+    const lh = frame.landmarks.left_hip;
+    const rh = frame.landmarks.right_hip;
+
+    if (lw && rw && ls && rs && (lw.y > ls.y || rw.y > rs.y)) guardDropFrames++;
+    if (re && rs && Math.abs(re.x - rs.x) > 0.12) lowElbowFrames++;
+
+    const nose = frame.landmarks.nose;
+    if (nose && ls && rs && nose.y < (ls.y + rs.y) / 2 - 0.06) chinUpFrames++;
+
+    if (ls && rs && lh && rh) {
+      const shoulderAngle = Math.atan2(rs.y - ls.y, rs.x - ls.x);
+      const hipAngle = Math.atan2(rh.y - lh.y, rh.x - lh.x);
+      const deg = Math.abs(((shoulderAngle - hipAngle) * 180) / Math.PI);
+      if (deg < 20) lowHipRotation++;
+    }
+  }
+
+  const n = timeline.length;
+  const guardRatio = guardDropFrames / n;
+  const elbowRatio = lowElbowFrames / n;
+  const chinRatio = chinUpFrames / n;
+  const hipRatio = lowHipRotation / n;
+
+  if (sport === "muaythai" || sport === "mma") {
+    if (guardRatio > 0.22) return "dropping_guard_on_kick";
+    if (hipRatio > 0.35) return "no_pivot_on_roundhouse";
+  }
+
+  if (guardRatio > 0.22) return "guard_drop_after_cross";
+  if (elbowRatio > 0.18) return "elbow_flare_on_cross";
+  if (chinRatio > 0.25) return "chin_up";
+  if (hipRatio > 0.35 && sport === "boxing") return "overcommitting_weight";
+
+  return "";
 }
 
 function detectGuardDrop(
@@ -249,26 +307,6 @@ function detectNoUnitTurn(timeline: LandmarkTimeline): PatternEvent[] {
   }
 
   return events;
-}
-
-function detectGenericWeakness(
-  timeline: LandmarkTimeline,
-  weaknessType: string,
-  _sport: SportId
-): PatternEvent[] {
-  if (timeline.length < 10) return [];
-
-  const mid = Math.floor(timeline.length / 2);
-  return [
-    {
-      weakness_type: weaknessType,
-      start_frame: mid,
-      end_frame: mid + 5,
-      start_timestamp: timeline[mid].timestamp,
-      end_timestamp: timeline[Math.min(mid + 5, timeline.length - 1)].timestamp,
-      confidence: 0.5,
-    },
-  ];
 }
 
 function detectFatigue(

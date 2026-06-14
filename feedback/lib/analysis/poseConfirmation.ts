@@ -32,16 +32,19 @@ export function applyPoseConfirmation(
   }
 
   const primaryWeakness =
-    Object.entries(weaknessCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ??
-    patternData.primary_weakness;
+    Object.entries(weaknessCounts)
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
 
-  const confirmedFrequency = weaknessCounts[primaryWeakness] ?? 0;
+  const confirmedFrequency = primaryWeakness
+    ? (weaknessCounts[primaryWeakness] ?? 0)
+    : 0;
 
   return {
     ...patternData,
-    primary_weakness: primaryWeakness,
-    frequency: confirmedFrequency || patternData.frequency,
-    events: confirmedEvents.length > 0 ? confirmedEvents : patternData.events,
+    primary_weakness: primaryWeakness || patternData.primary_weakness,
+    frequency: confirmedFrequency,
+    events: confirmedEvents,
     pattern_data: {
       ...patternData.pattern_data,
       weaknessCounts,

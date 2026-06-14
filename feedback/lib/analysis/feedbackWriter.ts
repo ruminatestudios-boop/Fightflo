@@ -1,5 +1,6 @@
 import { runPromptChain } from "@/lib/ai/chainPrompts";
 import { diagnoseRootCause } from "@/lib/analysis/rootCause";
+import { humanLabelForWeakness } from "@/lib/analysis/poseMetrics";
 import { getSportConfig } from "@/config/sports";
 import type {
   CoachingFeedback,
@@ -9,6 +10,7 @@ import type {
   SkillLevel,
   SportId,
 } from "@/types";
+import type { ObservedStrength } from "@/lib/analysis/positiveFinder";
 
 export async function generateFeedback(
   patternData: PatternAnalysisResult,
@@ -20,6 +22,8 @@ export async function generateFeedback(
     poseQuality?: PoseQualityReport;
     landmarkSummary?: Record<string, unknown>;
     confirmedEvents?: ConfirmedPoseEvent[];
+    observedStrengths?: ObservedStrength[];
+    frameSamples?: string[];
   }
 ): Promise<CoachingFeedback> {
   const rootCause = diagnoseRootCause(patternData, sport);
@@ -34,9 +38,19 @@ export async function generateFeedback(
       poseQuality: options?.poseQuality,
       landmarkSummary: options?.landmarkSummary,
       confirmedEvents: options?.confirmedEvents,
+      observedStrengths: options?.observedStrengths,
+      frameSamples: options?.frameSamples,
     });
-  } catch {
-    return buildFallbackFeedback(patternData, sport, level, rootCause);
+  } catch (error) {
+    console.error("[generateFeedback] Gemini failed:", error);
+    return buildFallbackFeedback(
+      patternData,
+      sport,
+      level,
+      rootCause,
+      options?.confirmedEvents ?? [],
+      options?.observedStrengths ?? []
+    );
   }
 }
 
@@ -44,50 +58,63 @@ function buildFallbackFeedback(
   patternData: PatternAnalysisResult,
   sport: SportId,
   level: SkillLevel,
-  rootCause: ReturnType<typeof diagnoseRootCause>
+  rootCause: ReturnType<typeof diagnoseRootCause>,
+  confirmedEvents: ConfirmedPoseEvent[],
+  observedStrengths: ObservedStrength[]
 ): CoachingFeedback {
   const sportConfig = getSportConfig(sport);
+  const primary = confirmedEvents[0];
   const timestamp =
-    patternData.events[0]?.start_timestamp ?? "0:15";
+    primary?.timestamp ??
+    patternData.events[0]?.start_timestamp ??
+    observedStrengths[0]?.timestamp ??
+    "0:00";
+
+  const positives =
+    observedStrengths.length > 0
+      ? observedStrengths.slice(0, 3).map((s) => ({
+          timestamp: s.timestamp,
+          title: s.title,
+          technical_detail: s.detail,
+          why_it_matters: "Verified from pose tracking on your footage.",
+        }))
+      : [
+          {
+            timestamp: "—",
+            title: "Limited pose data for strengths",
+            technical_detail:
+              "Re-upload with full body visible for positive moment detection.",
+            why_it_matters: "Clearer angle improves tracking accuracy.",
+          },
+        ];
 
   return {
-    positives: [
-      {
-        timestamp: "0:08",
-        title: "Consistent stance width",
-        technical_detail: "Base stays within optimal width throughout movement.",
-        why_it_matters: "Stable base enables power transfer and balance.",
-      },
-      {
-        timestamp: "1:22",
-        title: "Good recovery rhythm",
-        technical_detail: "Return to neutral position between combinations.",
-        why_it_matters: "Prevents overcommitting and keeps defence available.",
-      },
-      {
-        timestamp: "2:45",
-        title: "Active foot positioning",
-        technical_detail: "Feet adjust to maintain angle on target.",
-        why_it_matters: "Angle control creates openings without chasing.",
-      },
-    ],
+    positives,
     main_weakness: {
       timestamp,
-      title: rootCause.weakness_type.replace(/_/g, " "),
+      title:
+        primary?.label ??
+        humanLabelForWeakness(patternData.primary_weakness || rootCause.weakness_type),
       what_is_happening: rootCause.what_is_happening,
       root_cause: rootCause.root_cause,
       fight_consequence: rootCause.fight_consequence,
-      frequency: `Found in ${patternData.frequency} instances`,
+      frequency:
+        confirmedEvents.length > 0
+          ? `${confirmedEvents.length} pose-confirmed instance${confirmedEvents.length === 1 ? "" : "s"}`
+          : `Pattern signal in ${patternData.frequency} frames`,
       mechanical_fix: rootCause.mechanical_fix,
       elite_reference: rootCause.elite_reference,
     },
     pattern_insight:
-      "This is mechanical, not mental. Fix the root cause and the downstream errors resolve automatically.",
+      confirmedEvents.length > 0
+        ? "Coaching derived from pose-confirmed moments in your video."
+        : "Analysis limited — improve camera angle and retry for fuller feedback.",
     drill: {
       name: `${sportConfig.name} correction drill`,
-      description: `3 rounds focusing on ${rootCause.mechanical_fix}`,
-      success_marker: "Weakness absent for 3 consecutive reps without conscious effort.",
+      description: rootCause.mechanical_fix,
+      success_marker:
+        "Weakness absent for 3 consecutive reps without conscious effort.",
     },
-    coach_summary: `${level} level — fix ${rootCause.weakness_type.replace(/_/g, " ")} first. Everything else follows.`,
+    coach_summary: `${level} — ${rootCause.mechanical_fix.slice(0, 120)}`,
   };
 }

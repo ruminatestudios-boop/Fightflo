@@ -10,6 +10,8 @@ interface TimelineMarkersProps {
   moments: TimelineMoment[];
   onSeek: (timeSeconds: number) => void;
   onScrub?: (timeSeconds: number) => void;
+  /** Glass overlay style for full-screen report */
+  variant?: "default" | "glass";
 }
 
 export function TimelineMarkers({
@@ -18,9 +20,11 @@ export function TimelineMarkers({
   moments,
   onSeek,
   onScrub,
+  variant = "default",
 }: TimelineMarkersProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [scrubbing, setScrubbing] = useState(false);
+  const isGlass = variant === "glass";
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -34,20 +38,86 @@ export function TimelineMarkers({
     onScrub?.(ratio * duration);
   };
 
+  const trackHandlers = {
+    onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
+      setScrubbing(true);
+      e.currentTarget.setPointerCapture(e.pointerId);
+      seekFromClientX(e.clientX, e.currentTarget.getBoundingClientRect());
+    },
+    onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!scrubbing) return;
+      seekFromClientX(e.clientX, e.currentTarget.getBoundingClientRect());
+    },
+    onPointerUp: (e: React.PointerEvent<HTMLDivElement>) => {
+      setScrubbing(false);
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    },
+  };
+
+  if (isGlass) {
+    return (
+      <div className="ff-scrub">
+        <div className="ff-scrub-row">
+          <span className="ff-scrub-time">{formatTime(currentTime)}</span>
+          <div
+            className="ff-scrub-track"
+            {...trackHandlers}
+            role="slider"
+            aria-valuemin={0}
+            aria-valuemax={duration}
+            aria-valuenow={currentTime}
+            aria-label="Video timeline"
+          >
+            <div className="ff-scrub-rail" />
+            <div
+              className="ff-scrub-fill"
+              style={{ width: `${progress}%` }}
+            />
+            <div
+              className="ff-scrub-head"
+              style={{ left: `${progress}%` }}
+            />
+            {sortedMoments.map((moment) => {
+              const left = duration > 0 ? (moment.timeSeconds / duration) * 100 : 0;
+              const isPositive = moment.kind === "positive";
+              const hovered = hoveredId === moment.id;
+
+              return (
+                <button
+                  key={moment.id}
+                  type="button"
+                  className={`ff-scrub-mark ff-scrub-mark--${moment.kind}`}
+                  style={{ left: `${left}%` }}
+                  onMouseEnter={() => setHoveredId(moment.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSeek(moment.timeSeconds);
+                  }}
+                  aria-label={`${moment.kind} at ${moment.timestamp}: ${moment.title}`}
+                >
+                  <span className={`ff-scrub-tick ${hovered ? "ff-scrub-tick--hover" : ""}`} />
+                  {hovered && (
+                    <span className="ff-scrub-tooltip">
+                      <span className="ff-scrub-tooltip-time">{moment.timestamp}</span>
+                      {moment.title}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <span className="ff-scrub-time ff-scrub-time--end">{formatTime(duration)}</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       <div
         className="relative h-2 cursor-pointer rounded-full bg-white/10"
-        onPointerDown={(e) => {
-          setScrubbing(true);
-          seekFromClientX(e.clientX, e.currentTarget.getBoundingClientRect());
-        }}
-        onPointerMove={(e) => {
-          if (!scrubbing) return;
-          seekFromClientX(e.clientX, e.currentTarget.getBoundingClientRect());
-        }}
-        onPointerUp={() => setScrubbing(false)}
-        onPointerLeave={() => setScrubbing(false)}
+        {...trackHandlers}
         role="slider"
         aria-valuemin={0}
         aria-valuemax={duration}

@@ -25,13 +25,13 @@ export function LogoHeader({
   return (
     <Link
       href="/"
-      className={`flex ${alignClass} ${className} transition-opacity hover:opacity-80 active:opacity-65`}
-      aria-label="Feedback home"
+      className={`flex ${alignClass} ${className} no-underline transition-opacity hover:opacity-80 active:opacity-65`}
+      aria-label="Fightflo home"
     >
       <span
         className={`font-display font-semibold text-white ${SIZE_CLASS[size]}`}
       >
-        FEEDBACK<span className="text-[#e6544e] tracking-[0]">.</span>
+        FIGHTFLO<span className="text-[#e6544e] tracking-[0]">.</span>
       </span>
     </Link>
   );

@@ -20,6 +20,10 @@ import {
   upsertWeakness,
 } from "@/lib/db/queries";
 import { detectSportFromFrames } from "@/lib/analysis/sportDetector";
+import { loadFrameSamples } from "@/lib/analysis/frameSamples";
+import { findObservedStrengths } from "@/lib/analysis/positiveFinder";
+import { humanLabelForWeakness } from "@/lib/analysis/poseMetrics";
+import { getSportConfig } from "@/config/sports";
 import type { ReportClip, SkillLevel, SportId } from "@/types";
 
 export async function runAnalysisPipeline(sessionId: string): Promise<void> {
@@ -29,43 +33,81 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
   try {
     await updateSessionStatus(sessionId, "processing", {
       step: "extracting_frames",
-      message: "Extracting frames...",
+      message: "Pulling frames from your video at 12 fps…",
     });
 
     const framePaths = await extractFrames(session.video_url, sessionId);
 
     await updateSessionStatus(sessionId, "processing", {
+      step: "extracting_frames",
+      message: `Extracted ${framePaths.length} frames — preparing for analysis…`,
+    });
+
+    await updateSessionStatus(sessionId, "processing", {
       step: "detecting_sport",
-      message: "Identifying techniques...",
+      message: `Checking whether this is ${getSportConfig(session.sport as SportId).name} footage…`,
     });
 
     let sport = session.sport as SportId;
     const detection = await detectSportFromFrames(framePaths, sport);
-    if (detection.confidence >= 0.65 && detection.sport !== sport) {
+    if (detection.confidence >= 0.8 && detection.sport !== sport) {
       sport = detection.sport;
       await updateSessionSport(sessionId, sport);
+      await updateSessionStatus(sessionId, "processing", {
+        step: "detecting_sport",
+        message: `Detected ${getSportConfig(sport).name} (${Math.round(detection.confidence * 100)}% confidence) — updating analysis…`,
+      });
+    } else if (detection.techniques_seen.length > 0) {
+      await updateSessionStatus(sessionId, "processing", {
+        step: "detecting_sport",
+        message: `Confirmed ${getSportConfig(sport).name} — spotted ${detection.techniques_seen.slice(0, 3).join(", ")}…`,
+      });
     }
 
     await updateSessionStatus(sessionId, "processing", {
       step: "analysing_movement",
-      message: "Tracking your movement...",
+      message: `Running pose tracking on ${framePaths.length} frames…`,
     });
 
     const poseResult = await detectPoseWithMeta(framePaths, sport);
     const { timeline, quality, landmark_summary } = poseResult;
 
     await updateSessionStatus(sessionId, "processing", {
+      step: "analysing_movement",
+      message: `Tracked ${timeline.length} body poses (${quality.frames_with_pose}/${quality.frames_total} frames with a clear figure)…`,
+    });
+
+    await updateSessionStatus(sessionId, "processing", {
       step: "finding_patterns",
-      message: "Finding patterns...",
+      message: "Scanning for dropped guard, chin position, and repeated mistakes…",
     });
 
     let patternData = await findPatterns(timeline, sport);
     patternData = applyPoseConfirmation(timeline, patternData);
     const confirmedEvents = buildConfirmedEvents(timeline, patternData);
+    const observedStrengths = findObservedStrengths(timeline);
+    const frameSamples = await loadFrameSamples(framePaths, 10);
+
+    const primaryLabel = patternData.primary_weakness
+      ? humanLabelForWeakness(patternData.primary_weakness)
+      : null;
+
+    await updateSessionStatus(sessionId, "processing", {
+      step: "finding_patterns",
+      message: primaryLabel
+        ? `Found ${confirmedEvents.length} confirmed issue${confirmedEvents.length === 1 ? "" : "s"} — main focus: ${primaryLabel}…`
+        : `Verified ${observedStrengths.length} strength${observedStrengths.length === 1 ? "" : "s"} from your movement…`,
+    });
+
+    if (!quality.usable && confirmedEvents.length === 0 && frameSamples.length === 0) {
+      throw new Error(
+        "Could not track your movement in this video. Film from the side or front with your full body in frame."
+      );
+    }
 
     await updateSessionStatus(sessionId, "processing", {
       step: "writing_report",
-      message: "Writing your coaching report...",
+      message: `Sending ${confirmedEvents.length} tracked moments and ${frameSamples.length} stills to Gemini…`,
     });
 
     const feedback = await generateFeedback(
@@ -77,18 +119,28 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
         poseQuality: quality,
         landmarkSummary: landmark_summary,
         confirmedEvents,
+        observedStrengths,
+        frameSamples,
       }
     );
 
     await updateSessionStatus(sessionId, "processing", {
+      step: "writing_report",
+      message: `Drafted report — main weakness: "${feedback.main_weakness.title}"…`,
+    });
+
+    await updateSessionStatus(sessionId, "processing", {
       step: "generating_clips",
-      message: "Almost ready...",
+      message: "Cutting highlight clips at each coaching timestamp…",
     });
 
     const clips = await generateClips(
       session.video_url,
       sessionId,
-      feedback
+      feedback,
+      async (id, progress) => {
+        await updateSessionStatus(id, "processing", progress);
+      }
     );
 
     await saveReport({
@@ -103,7 +155,7 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
       landmarkSummary: landmark_summary,
     });
 
-    if (session.user_id) {
+    if (session.user_id && patternData.primary_weakness) {
       await upsertWeakness(
         session.user_id,
         patternData.primary_weakness,
@@ -135,7 +187,11 @@ async function generateClips(
   feedback: {
     main_weakness: { timestamp: string; title: string };
     positives: { timestamp: string; title: string }[];
-  }
+  },
+  onProgress?: (
+    sessionId: string,
+    progress: { step: string; message: string }
+  ) => Promise<void>
 ): Promise<ReportClip[]> {
   const clips: ReportClip[] = [];
   const timestamps = [
@@ -153,7 +209,13 @@ async function generateClips(
     })),
   ];
 
-  for (const item of timestamps) {
+  for (let i = 0; i < timestamps.length; i++) {
+    const item = timestamps[i];
+    await onProgress?.(sessionId, {
+      step: "generating_clips",
+      message: `Exporting clip ${i + 1}/${timestamps.length} at ${item.ts} — ${item.description}…`,
+    });
+
     try {
       const seconds = parseTimestamp(item.ts);
       const clipPath = await extractClip(

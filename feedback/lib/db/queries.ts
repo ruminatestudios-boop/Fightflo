@@ -2,6 +2,17 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { startOfCurrentMonthUtc } from "@/config/limits";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import * as devStore from "@/lib/db/dev-store";
+import {
+  toSessionLibraryEntry,
+  type SessionLibraryEntry,
+} from "@/lib/sessions/library";
+import { cleanupSessionAssets } from "@/lib/storage/session-cleanup";
+import {
+  deleteSessionMetadata,
+  mergeSessionMetadata,
+  readSessionMetadata,
+  writeSessionMetadata,
+} from "@/lib/storage/session-metadata";
 import type {
   ClipRecord,
   CoachingFeedback,
@@ -59,7 +70,69 @@ export async function getUserById(userId: string): Promise<User | null> {
     .maybeSingle();
 
   if (error) throw error;
-  return data as User | null;
+  if (!data) return null;
+  return normalizeUser(data as User);
+}
+
+function normalizeUser(user: User): User {
+  return {
+    ...user,
+    bonus_scans: user.bonus_scans ?? 0,
+  };
+}
+
+export async function addBonusScans(
+  userId: string,
+  count: number
+): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    return devStore.addBonusScans(userId, count);
+  }
+
+  const user = await getUserById(userId);
+  if (!user) return;
+
+  const supabase = getSupabase();
+  await supabase
+    .from("users")
+    .update({ bonus_scans: user.bonus_scans + count })
+    .eq("id", userId);
+}
+
+export async function decrementBonusScans(userId: string): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    return devStore.decrementBonusScans(userId);
+  }
+
+  const user = await getUserById(userId);
+  if (!user || user.bonus_scans <= 0) return;
+
+  const supabase = getSupabase();
+  await supabase
+    .from("users")
+    .update({ bonus_scans: user.bonus_scans - 1 })
+    .eq("id", userId);
+}
+
+export async function updateUserEmail(
+  userId: string,
+  email: string
+): Promise<User | null> {
+  if (!isSupabaseConfigured()) {
+    return devStore.updateUserEmail(userId, email);
+  }
+
+  const supabase = getSupabase();
+  const normalized = email.trim().toLowerCase();
+  const { data, error } = await supabase
+    .from("users")
+    .update({ email: normalized })
+    .eq("id", userId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as User;
 }
 
 export async function incrementFreeAnalyses(userId: string): Promise<void> {
@@ -285,6 +358,24 @@ export async function saveReport(input: {
     message: "Your report is ready.",
   });
 
+  const session = await getSessionById(input.sessionId);
+  if (session && !session.summary?.trim() && input.feedback.coach_summary?.trim()) {
+    await updateSessionMetadata(input.sessionId, {
+      summary: input.feedback.coach_summary.trim().slice(0, 160),
+    });
+  }
+
+  void import("@/lib/email/notifications")
+    .then(({ notifyReportReady }) =>
+      notifyReportReady({
+        sessionId: input.sessionId,
+        userId: input.userId,
+        sport: input.sport,
+        feedback: input.feedback,
+      })
+    )
+    .catch(console.error);
+
   return report;
 }
 
@@ -300,6 +391,89 @@ export async function getUserSessions(userId: string): Promise<Session[]> {
 
   if (error) throw error;
   return (data ?? []) as Session[];
+}
+
+export async function updateSessionMetadata(
+  sessionId: string,
+  patch: {
+    display_name?: string | null;
+    summary?: string | null;
+    thumbnail_url?: string | null;
+  }
+): Promise<Session | null> {
+  await writeSessionMetadata(sessionId, patch);
+
+  if (!isSupabaseConfigured()) {
+    return devStore.updateSessionMetadata(sessionId, patch);
+  }
+
+  const supabase = getSupabase();
+  const payload: Record<string, string | null> = {};
+  if (patch.display_name !== undefined) payload.display_name = patch.display_name;
+  if (patch.summary !== undefined) payload.summary = patch.summary;
+  if (patch.thumbnail_url !== undefined) payload.thumbnail_url = patch.thumbnail_url;
+
+  if (Object.keys(payload).length > 0) {
+    const { error } = await supabase
+      .from("sessions")
+      .update(payload)
+      .eq("id", sessionId);
+
+    if (error) {
+      console.warn("[sessions] Supabase metadata update skipped:", error.message);
+    }
+  }
+
+  const session = await getSessionById(sessionId);
+  if (!session) return null;
+
+  const meta = await readSessionMetadata(sessionId);
+  return mergeSessionMetadata(session, meta);
+}
+
+export async function getUserSessionLibrary(
+  userId: string
+): Promise<SessionLibraryEntry[]> {
+  const sessions = await getUserSessions(userId);
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME ?? null;
+
+  const entries = await Promise.all(
+    sessions.map(async (session) => {
+      const meta = await readSessionMetadata(session.id);
+      const merged = mergeSessionMetadata(session, meta);
+      const report = await getReportBySessionId(session.id);
+      return toSessionLibraryEntry(merged, report, cloudName);
+    })
+  );
+
+  return entries;
+}
+
+export async function deleteSession(
+  sessionId: string,
+  userId: string
+): Promise<void> {
+  const session = await getSessionById(sessionId);
+  if (!session) throw new Error("Session not found");
+  if (session.user_id !== userId) throw new Error("Forbidden");
+
+  await cleanupSessionAssets(session);
+  await deleteSessionMetadata(sessionId);
+
+  if (!isSupabaseConfigured()) {
+    const deleted = await devStore.deleteSession(sessionId, userId);
+    if (!deleted) throw new Error("Session not found");
+    return;
+  }
+
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from("sessions")
+    .delete()
+    .eq("id", sessionId)
+    .eq("user_id", userId);
+
+  if (error) throw error;
 }
 
 export async function upsertWeakness(
@@ -400,18 +574,141 @@ export async function getClipsByReportId(
 
 export async function setUserPro(
   stripeCustomerId: string,
-  subscriptionStatus: string
+  subscriptionStatus: string,
+  userId?: string | null
 ): Promise<void> {
-  if (!isSupabaseConfigured()) return devStore.setUserPro();
+  if (!isSupabaseConfigured()) {
+    return devStore.setUserPro(stripeCustomerId, subscriptionStatus, userId);
+  }
 
   const supabase = getSupabase();
+  const isActive =
+    subscriptionStatus === "active" || subscriptionStatus === "trialing";
+
+  const payload = {
+    is_pro: isActive,
+    subscription_status: subscriptionStatus,
+    stripe_customer_id: stripeCustomerId,
+  };
+
+  if (userId) {
+    await supabase.from("users").update(payload).eq("id", userId);
+    return;
+  }
+
   await supabase
     .from("users")
-    .update({
-      is_pro:
-        subscriptionStatus === "active" || subscriptionStatus === "trialing",
-      subscription_status: subscriptionStatus,
-      stripe_customer_id: stripeCustomerId,
-    })
+    .update(payload)
     .eq("stripe_customer_id", stripeCustomerId);
+}
+
+export async function linkStripeCustomer(
+  userId: string,
+  stripeCustomerId: string,
+  email?: string | null
+): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    return devStore.linkStripeCustomer(userId, stripeCustomerId, email);
+  }
+
+  const supabase = getSupabase();
+  const patch: Record<string, string> = {
+    stripe_customer_id: stripeCustomerId,
+  };
+
+  if (email?.trim()) {
+    const user = await getUserById(userId);
+    if (user && !user.email?.trim()) {
+      patch.email = email.trim().toLowerCase();
+    }
+  }
+
+  await supabase.from("users").update(patch).eq("id", userId);
+}
+
+export interface ScheduledEmailUserRow {
+  user_id: string;
+  email: string;
+  is_pro: boolean;
+  session_count: number;
+  sessions_this_week: number;
+  days_since_last_session: number;
+  latest_session_id: string | null;
+  primary_weakness: string | null;
+  weakness_trend: string | null;
+}
+
+function startOfWeekUtc(date = new Date()): number {
+  const d = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  );
+  const day = d.getUTCDay();
+  const diff = day === 0 ? 6 : day - 1;
+  d.setUTCDate(d.getUTCDate() - diff);
+  return d.getTime();
+}
+
+export async function listUsersForScheduledEmails(): Promise<
+  ScheduledEmailUserRow[]
+> {
+  if (!isSupabaseConfigured()) {
+    return devStore.listUsersForScheduledEmails();
+  }
+
+  const supabase = getSupabase();
+  const { data: users, error } = await supabase
+    .from("users")
+    .select("*")
+    .not("email", "is", null)
+    .neq("email", "");
+
+  if (error) throw error;
+
+  const now = Date.now();
+  const weekStart = startOfWeekUtc();
+  const rows: ScheduledEmailUserRow[] = [];
+
+  for (const user of (users ?? []) as User[]) {
+    const { data: userSessions } = await supabase
+      .from("sessions")
+      .select("id, created_at, status")
+      .eq("user_id", user.id)
+      .eq("status", "complete")
+      .order("created_at", { ascending: false });
+
+    const sessions = userSessions ?? [];
+    if (sessions.length === 0) continue;
+
+    const latest = sessions[0];
+    const daysSince = Math.floor(
+      (now - new Date(latest.created_at).getTime()) / 86_400_000
+    );
+
+    const sessionsThisWeek = sessions.filter(
+      (s) => new Date(s.created_at).getTime() >= weekStart
+    ).length;
+
+    const { data: weakness } = await supabase
+      .from("weaknesses")
+      .select("weakness_type, trend")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    rows.push({
+      user_id: user.id,
+      email: user.email,
+      is_pro: user.is_pro,
+      session_count: sessions.length,
+      sessions_this_week: sessionsThisWeek,
+      days_since_last_session: daysSince,
+      latest_session_id: latest.id,
+      primary_weakness: weakness?.weakness_type ?? null,
+      weakness_trend: weakness?.trend ?? null,
+    });
+  }
+
+  return rows;
 }

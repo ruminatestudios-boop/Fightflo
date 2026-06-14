@@ -8,6 +8,10 @@ export function generateShareCard(input: {
   sport: string;
   accentColor: string;
 }): Promise<Blob> {
+  if (typeof document === "undefined") {
+    return Promise.reject(new Error("Share cards can only be generated in the browser"));
+  }
+
   return new Promise((resolve, reject) => {
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
@@ -28,7 +32,7 @@ export function generateShareCard(input: {
     ctx.fillStyle = input.accentColor;
     ctx.font = "bold 36px system-ui";
     ctx.textAlign = "center";
-    ctx.fillText("FEEDBACK AI ANALYSIS", canvas.width / 2, 200);
+    ctx.fillText("FIGHTFLO AI COACHING", canvas.width / 2, 200);
 
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 64px system-ui";

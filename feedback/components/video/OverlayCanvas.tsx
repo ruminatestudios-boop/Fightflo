@@ -44,6 +44,43 @@ function shouldShowGuardAlert(
   );
 }
 
+function drawVideoWatermark(
+  ctx: CanvasRenderingContext2D,
+  layout: ReturnType<typeof getVideoContentRect>
+) {
+  const mark = "FIGHTFLO";
+  const dot = ".";
+  const fontSize = Math.max(11, Math.min(14, layout.drawWidth * 0.038));
+  const padX = fontSize * 0.9;
+  const padY = fontSize * 0.45;
+  const bottomGap = Math.max(10, layout.drawHeight * 0.04);
+
+  ctx.save();
+  ctx.font = `700 ${fontSize}px var(--font-display, system-ui)`;
+  const markWidth = ctx.measureText(mark).width;
+  const dotWidth = ctx.measureText(dot).width;
+  const boxW = markWidth + dotWidth + padX * 2;
+  const boxH = fontSize + padY * 2;
+  const x = layout.offsetX + layout.drawWidth / 2 - boxW / 2;
+  const y = layout.offsetY + layout.drawHeight - boxH - bottomGap;
+
+  ctx.fillStyle = "rgba(0, 0, 0, 0.32)";
+  ctx.beginPath();
+  ctx.roundRect(x, y, boxW, boxH, 6);
+  ctx.fill();
+
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "left";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+  ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
+  ctx.shadowBlur = 6;
+  ctx.fillText(mark, x + padX, y + boxH / 2);
+
+  ctx.fillStyle = "#e6544e";
+  ctx.fillText(dot, x + padX + markWidth, y + boxH / 2);
+  ctx.restore();
+}
+
 export function drawOverlayFrame(
   ctx: CanvasRenderingContext2D,
   video: HTMLVideoElement,
@@ -63,12 +100,36 @@ export function drawOverlayFrame(
   const layout = getVideoContentRect(video, width, height);
   const lookupTime = currentTime + landmarkTimeOffset;
 
+  drawVideoWatermark(ctx, layout);
+
   const interpolated = getInterpolatedLandmarksAtTime(
     storedLandmarks,
     lookupTime
   );
 
   const frameLandmarks = liveLandmarks ?? interpolated;
+
+  if (frameLandmarks) {
+    const lw = frameLandmarks.left_wrist;
+    const rw = frameLandmarks.right_wrist;
+    if (lw) {
+      const p = {
+        x: layout.offsetX + lw.x * layout.drawWidth,
+        y: layout.offsetY + lw.y * layout.drawHeight,
+        age: 0,
+      };
+      wristTrails.left = [p, ...wristTrails.left.map((t) => ({ ...t, age: t.age + 1 }))].slice(0, 14);
+    }
+    if (rw) {
+      const p = {
+        x: layout.offsetX + rw.x * layout.drawWidth,
+        y: layout.offsetY + rw.y * layout.drawHeight,
+        age: 0,
+      };
+      wristTrails.right = [p, ...wristTrails.right.map((t) => ({ ...t, age: t.age + 1 }))].slice(0, 14);
+    }
+  }
+
   if (!frameLandmarks) return;
 
   const metrics = computeFrameMetrics(frameLandmarks);
@@ -201,54 +262,29 @@ export function OverlayCanvas({
 
     const draw = () => {
       const ctx = canvas.getContext("2d");
-      if (!ctx || video.readyState < 2) {
+      if (!ctx) {
         rafRef.current = requestAnimationFrame(draw);
         return;
       }
 
       pulseRef.current += 0.016;
       const rect = video.getBoundingClientRect();
-      const layout = getVideoContentRect(video, rect.width, rect.height);
-
-      const lookupTime = video.currentTime + landmarkTimeOffset;
-      const interpolated = getInterpolatedLandmarksAtTime(landmarks, lookupTime);
-      const frameLandmarks = liveLandmarks ?? interpolated;
-
-      if (frameLandmarks && layout) {
-        const lw = frameLandmarks.left_wrist;
-        const rw = frameLandmarks.right_wrist;
-        if (lw) {
-          const p = {
-            x: layout.offsetX + lw.x * layout.drawWidth,
-            y: layout.offsetY + lw.y * layout.drawHeight,
-            age: 0,
-          };
-          trailsRef.current.left = [p, ...trailsRef.current.left.map((t) => ({ ...t, age: t.age + 1 }))].slice(0, 14);
-        }
-        if (rw) {
-          const p = {
-            x: layout.offsetX + rw.x * layout.drawWidth,
-            y: layout.offsetY + rw.y * layout.drawHeight,
-            age: 0,
-          };
-          trailsRef.current.right = [p, ...trailsRef.current.right.map((t) => ({ ...t, age: t.age + 1 }))].slice(0, 14);
-        }
+      if (rect.width > 0 && rect.height > 0) {
+        drawOverlayFrame(
+          ctx,
+          video,
+          rect.width,
+          rect.height,
+          video.currentTime,
+          landmarks,
+          liveLandmarks,
+          annotations,
+          landmarkTimeOffset,
+          pulseRef.current,
+          confirmedEvents,
+          trailsRef.current
+        );
       }
-
-      drawOverlayFrame(
-        ctx,
-        video,
-        rect.width,
-        rect.height,
-        video.currentTime,
-        landmarks,
-        liveLandmarks,
-        annotations,
-        landmarkTimeOffset,
-        pulseRef.current,
-        confirmedEvents,
-        trailsRef.current
-      );
 
       rafRef.current = requestAnimationFrame(draw);
     };
@@ -277,7 +313,7 @@ export function OverlayCanvas({
   return (
     <canvas
       ref={canvasRef}
-      className={`pointer-events-none absolute inset-0 h-full w-full ${className}`}
+      className={`pointer-events-none absolute inset-0 z-[3] h-full w-full ${className}`}
       aria-hidden
     />
   );

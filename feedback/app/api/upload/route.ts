@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isLocalDevMode } from "@/lib/config/env";
+import { isRealAnalysisPipelineEnabled } from "@/lib/config/env";
 import { runDemoAnalysisPipeline } from "@/lib/analysis/demo-pipeline";
 import { storeVideo } from "@/lib/storage/video-upload";
 import {
@@ -14,9 +14,9 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 async function startPipeline(sessionId: string) {
-  const runPipeline = isLocalDevMode()
-    ? runDemoAnalysisPipeline
-    : (await import("@/lib/analysis/pipeline")).runAnalysisPipeline;
+  const runPipeline = isRealAnalysisPipelineEnabled()
+    ? (await import("@/lib/analysis/pipeline")).runAnalysisPipeline
+    : runDemoAnalysisPipeline;
 
   runPipeline(sessionId).catch(console.error);
 }

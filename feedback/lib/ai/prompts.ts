@@ -59,6 +59,15 @@ Fighter/athlete data from this session:
 Landmark data showing exact body positions frame by frame:
 {landmarkData}
 
+CRITICAL RULE — Grounding in THIS video:
+- You are given actual JPEG frames from the athlete's uploaded clip. Describe what you SEE.
+- confirmed_pose_events and observed_strengths are from computer vision on this footage — treat them as facts.
+- main_weakness.timestamp MUST come from confirmed_pose_events[0] when present.
+- positives timestamps MUST align with observed_strengths timestamps when provided.
+- NEVER use placeholder timestamps like 0:08, 1:22, 2:45 unless they match confirmed data.
+- If pose_quality.score is below 45, say tracking was limited but still coach from the frames you see.
+- If no confirmed weakness events, describe the most important fix visible in the frames — do not recycle generic sport clichés.
+
 CRITICAL RULE — Sport match:
 - Only analyse techniques that belong to {sportName}.
 - If techniques_seen in sessionData shows something else (e.g. kicks in a boxing session), analyse what is ACTUALLY in the video using {sportName} terminology where possible, or the closest applicable mechanics.

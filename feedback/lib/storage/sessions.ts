@@ -2,9 +2,11 @@ import {
   FREE_ANALYSIS_LIMIT,
   PRO_MONTHLY_ANALYSIS_LIMIT,
 } from "@/config/limits";
+import { PRICING } from "@/config/pricing";
 import { isAnalysisLimitBypassed } from "@/lib/config/env";
 import {
   createAnonymousUser,
+  decrementBonusScans,
   getMonthlySessionCount,
   getUserById,
   incrementFreeAnalyses,
@@ -37,6 +39,7 @@ export async function getAnalysisAllowance(
       isPro: false,
       used: 0,
       limit: FREE_ANALYSIS_LIMIT,
+      bonusScans: 0,
       message: "",
     };
   }
@@ -49,6 +52,7 @@ export async function getAnalysisAllowance(
       isPro: false,
       used: 0,
       limit: FREE_ANALYSIS_LIMIT,
+      bonusScans: 0,
       message: "",
     };
   }
@@ -56,16 +60,18 @@ export async function getAnalysisAllowance(
   if (user.is_pro) {
     const used = await getMonthlySessionCount(userId);
     const limit = PRO_MONTHLY_ANALYSIS_LIMIT;
-    const canAnalyse = used < limit;
+    const bonusScans = user.bonus_scans;
+    const canAnalyse = used < limit || bonusScans > 0;
 
     return {
       canAnalyse,
       isPro: true,
       used,
       limit,
+      bonusScans,
       message: canAnalyse
         ? ""
-        : `Pro limit reached (${limit}/month). Resets on the 1st.`,
+        : `Monthly limit reached (${limit}). Buy ${PRICING.topUp.scans} more for ${PRICING.topUp.displayShort} or wait until the 1st.`,
     };
   }
 
@@ -78,9 +84,10 @@ export async function getAnalysisAllowance(
     isPro: false,
     used,
     limit,
+    bonusScans: 0,
     message: canAnalyse
       ? ""
-      : "Free analysis used. Upgrade to Pro for 15/month.",
+      : `Free analysis used. Upgrade to Pro (${PRICING.pro.displayMonthly}) for ${PRO_MONTHLY_ANALYSIS_LIMIT}/month.`,
   };
 }
 
@@ -91,8 +98,16 @@ export async function canUserAnalyse(userId: string): Promise<boolean> {
 
 export async function recordAnalysisUsed(userId: string): Promise<void> {
   const user = await getUserById(userId);
-  if (user && !user.is_pro) {
+  if (!user) return;
+
+  if (!user.is_pro) {
     await incrementFreeAnalyses(userId);
+    return;
+  }
+
+  const used = await getMonthlySessionCount(userId);
+  if (used > PRO_MONTHLY_ANALYSIS_LIMIT) {
+    await decrementBonusScans(userId);
   }
 }
 

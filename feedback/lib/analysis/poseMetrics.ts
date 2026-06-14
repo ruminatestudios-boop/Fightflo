@@ -128,7 +128,7 @@ export function isWeaknessConfirmedInFrame(
     case "overcommitting_weight":
       return metrics.hip_rotation_deg !== null && metrics.hip_rotation_deg > 55;
     default:
-      return metrics.guard_dropped;
+      return false;
   }
 }
 

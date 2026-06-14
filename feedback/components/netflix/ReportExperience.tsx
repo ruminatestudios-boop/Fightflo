@@ -124,7 +124,7 @@ export function ReportExperience({
               />
             </div>
             <div className="netflix-slide-footer shrink-0">
-              <p className="netflix-eyebrow text-[#e50914]">Annotated footage</p>
+              <p className="netflix-eyebrow text-[#fa4141]">Annotated footage</p>
               <h2 className="netflix-title mt-1">AI overlay on your video</h2>
               <div className="mt-2">
                 <PoseQualityBanner quality={report.pose_quality} />
@@ -170,8 +170,8 @@ export function ReportExperience({
         content: (
           <div className="netflix-slide-inner netflix-gradient-warn">
             <div className="netflix-slide-content justify-end pb-28">
-              <p className="netflix-eyebrow text-[#e50914]">Main weakness</p>
-              <p className="mt-2 font-mono text-sm text-[#e50914]/80">
+              <p className="netflix-eyebrow text-[#fa4141]">Main weakness</p>
+              <p className="mt-2 font-mono text-sm text-[#fa4141]/80">
                 {report.main_weakness.timestamp}
               </p>
               <h2 className="netflix-display mt-4 max-w-[15rem] capitalize">
@@ -320,7 +320,7 @@ export function ReportExperience({
                 </p>
               </div>
             ))}
-            <p className="font-mono text-xs text-[#e50914]/80">
+            <p className="font-mono text-xs text-[#fa4141]/80">
               {modal.data.frequency}
             </p>
           </div>

@@ -36,19 +36,22 @@ const HEAVY_MODEL =
   "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task";
 
 import type { PoseLandmarker } from "@mediapipe/tasks-vision";
+import {
+  getMediaPipeVisionWasmBaseUrl,
+} from "@/lib/analysis/mediaPipeServerRuntime";
 
 let landmarkerInstance: PoseLandmarker | null = null;
 
 async function getLandmarker() {
   if (landmarkerInstance) return landmarkerInstance;
 
+  const wasmBaseUrl = getMediaPipeVisionWasmBaseUrl();
+
   const { FilesetResolver, PoseLandmarker } = await import(
     "@mediapipe/tasks-vision"
   );
 
-  const vision = await FilesetResolver.forVisionTasks(
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
-  );
+  const vision = await FilesetResolver.forVisionTasks(wasmBaseUrl);
 
   landmarkerInstance = await PoseLandmarker.createFromOptions(vision, {
     baseOptions: {
@@ -220,25 +223,6 @@ export function buildConfirmedEvents(
       label: humanLabelForWeakness(event.weakness_type),
       confidence: event.confidence,
     });
-  }
-
-  if (events.length === 0 && patternData.primary_weakness) {
-    const mid = timeline[Math.floor(timeline.length / 2)];
-    if (mid) {
-      const metrics = computeFrameMetrics(mid.landmarks);
-      if (isWeaknessConfirmedInFrame(patternData.primary_weakness, metrics)) {
-        const parts = mid.timestamp.split(":").map(Number);
-        events.push({
-          weakness_type: patternData.primary_weakness,
-          timestamp: mid.timestamp,
-          timeSeconds:
-            parts.length === 2 ? parts[0] * 60 + parts[1] : parts[0] ?? 0,
-          jointHighlight: jointForWeakness(patternData.primary_weakness),
-          label: humanLabelForWeakness(patternData.primary_weakness),
-          confidence: 0.5,
-        });
-      }
-    }
   }
 
   return events;

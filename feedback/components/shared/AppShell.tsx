@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { LogoHeader } from "@/components/shared/LogoHeader";
 
 interface AppShellProps {
   children: ReactNode;
@@ -20,16 +21,11 @@ export function AppShell({
 }: AppShellProps) {
   return (
     <div
-      className={`app-shell flex min-h-dvh flex-col bg-black px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] ${className}`}
+      className={`mx-auto flex min-h-dvh w-full max-w-sm flex-col bg-black px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] text-white ${className}`}
     >
       {showLogo && (
         <header className="relative mb-6 flex min-h-8 items-center justify-center">
-          <Link
-            href="/"
-            className="text-xs font-medium tracking-[0.28em] text-white/90"
-          >
-            FEEDBACK<span className="text-[#ff9500]">.</span>
-          </Link>
+          <LogoHeader size="sm" />
           {backHref && (
             <Link
               href={backHref}
@@ -52,7 +48,7 @@ export function AppShell({
         </div>
       )}
 
-      <div className="scrollbar-none flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain">
         {children}
       </div>
 

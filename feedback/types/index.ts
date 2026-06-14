@@ -36,6 +36,7 @@ export interface User {
   subscription_status: SubscriptionStatus;
   free_analyses_used: number;
   free_analyses_limit: number;
+  bonus_scans: number;
 }
 
 export interface AnalysisAllowance {
@@ -43,6 +44,7 @@ export interface AnalysisAllowance {
   isPro: boolean;
   used: number;
   limit: number;
+  bonusScans: number;
   message: string;
 }
 
@@ -56,6 +58,10 @@ export interface Session {
   video_duration: number;
   status: SessionStatus;
   session_number: number;
+  display_name?: string | null;
+  summary?: string | null;
+  thumbnail_url?: string | null;
+  cloudinary_public_id?: string | null;
 }
 
 export interface PositiveFinding {

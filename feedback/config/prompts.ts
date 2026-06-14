@@ -2,6 +2,9 @@ export interface AnalysisStepConfig {
   percent: number;
   eyebrow: string;
   headline: string;
+  /** Single-line fallback when server has not sent a message yet */
+  detail: string;
+  /** @deprecated Use detail — kept for legacy loaders */
   ticks: string[];
 }
 
@@ -10,77 +13,57 @@ export const ANALYSIS_STEPS: Record<string, AnalysisStepConfig> = {
     percent: 10,
     eyebrow: "Uploading",
     headline: "Sending your video",
-    ticks: [
-      "Uploading to secure storage…",
-      "Transferring video data…",
-      "Almost uploaded…",
-    ],
+    detail: "Transferring your clip to secure storage…",
+    ticks: ["Transferring your clip to secure storage…"],
   },
   extracting_frames: {
     percent: 22,
-    eyebrow: "Processing",
-    headline: "Reading your movement",
-    ticks: [
-      "Pulling frames from your video…",
-      "Scanning each moment…",
-      "Building your timeline…",
-    ],
+    eyebrow: "Frame extraction",
+    headline: "Reading your footage",
+    detail: "Pulling frames from your video at 12 fps for analysis…",
+    ticks: ["Pulling frames from your video at 12 fps for analysis…"],
   },
   detecting_sport: {
     percent: 32,
-    eyebrow: "Processing",
-    headline: "Reading your movement",
-    ticks: [
-      "Spotting techniques in footage…",
-      "Identifying strikes and stances…",
-      "Matching movement to your sport…",
-    ],
+    eyebrow: "Sport check",
+    headline: "Confirming your discipline",
+    detail: "Checking stances and strikes to confirm boxing vs Muay Thai…",
+    ticks: ["Checking stances and strikes to confirm boxing vs Muay Thai…"],
   },
   analysing_movement: {
     percent: 48,
     eyebrow: "Pose tracking",
     headline: "Mapping your body",
-    ticks: [
-      "Tracking joints frame by frame…",
-      "Measuring angles and rotation…",
-      "Checking guard and balance…",
-    ],
+    detail: "Running MediaPipe pose tracking on each frame…",
+    ticks: ["Running MediaPipe pose tracking on each frame…"],
   },
   finding_patterns: {
     percent: 62,
     eyebrow: "Pattern scan",
     headline: "Finding habits",
-    ticks: [
-      "Detecting repeated mistakes…",
-      "Spotting timing issues…",
-      "Cross-checking movement patterns…",
-    ],
+    detail: "Measuring guard height, chin tuck, elbow angles, and timing…",
+    ticks: ["Measuring guard height, chin tuck, elbow angles, and timing…"],
   },
   writing_report: {
     percent: 78,
-    eyebrow: "Coaching",
+    eyebrow: "AI coaching",
     headline: "Writing your report",
-    ticks: [
-      "AI coach reviewing your footage…",
-      "Explaining exactly what to fix…",
-      "Adding timestamped notes…",
-    ],
+    detail: "Gemini is reviewing tracked moments and drafting your breakdown…",
+    ticks: ["Gemini is reviewing tracked moments and drafting your breakdown…"],
   },
   generating_clips: {
     percent: 92,
-    eyebrow: "Finishing",
-    headline: "Almost ready",
-    ticks: [
-      "Cutting highlight clips…",
-      "Syncing coaching overlays…",
-      "Putting the final touches on…",
-    ],
+    eyebrow: "Highlight clips",
+    headline: "Cutting key moments",
+    detail: "Exporting timestamped clips for each coaching moment…",
+    ticks: ["Exporting timestamped clips for each coaching moment…"],
   },
   complete: {
     percent: 100,
     eyebrow: "Done",
     headline: "Report ready",
-    ticks: ["Your coaching report is ready."],
+    detail: "Your coaching report is ready to view.",
+    ticks: ["Your coaching report is ready to view."],
   },
 };
 
@@ -89,7 +72,7 @@ export const DEFAULT_ANALYSIS_STEP = ANALYSIS_STEPS.extracting_frames;
 export const LOADING_MESSAGES = Object.entries(ANALYSIS_STEPS).map(
   ([step, config]) => ({
     step,
-    message: config.ticks[0],
+    message: config.detail,
     percent: config.percent,
   })
 );
