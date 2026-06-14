@@ -77,13 +77,13 @@ export function getDemoClips(
   return [
     {
       timestamp: feedback.main_weakness.timestamp,
-      clip_url: "",
+      clip_url: DEMO_VIDEO_URL,
       clip_type: "weakness",
       description: feedback.main_weakness.title,
     },
     ...feedback.positives.map((p) => ({
       timestamp: p.timestamp,
-      clip_url: "",
+      clip_url: DEMO_VIDEO_URL,
       clip_type: "positive" as const,
       description: p.title,
     })),

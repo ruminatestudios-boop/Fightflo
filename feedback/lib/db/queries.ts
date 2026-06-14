@@ -225,41 +225,59 @@ export async function saveReport(input: {
 
   const supabase = getSupabase();
 
-  const { data, error } = await supabase
+  const basePayload = {
+    session_id: input.sessionId,
+    user_id: input.userId ?? null,
+    sport: input.sport,
+    positives: input.feedback.positives,
+    main_weakness: input.feedback.main_weakness,
+    pattern_insight: input.feedback.pattern_insight,
+    drill: input.feedback.drill,
+    coach_summary: input.feedback.coach_summary,
+    raw_landmark_data: input.landmarkData,
+    clips: input.clips,
+  };
+
+  const extendedPayload = {
+    ...basePayload,
+    pose_quality: input.poseQuality ?? null,
+    confirmed_events: input.confirmedEvents ?? [],
+    landmark_summary: input.landmarkSummary ?? null,
+  };
+
+  let { data, error } = await supabase
     .from("reports")
-    .insert({
-      session_id: input.sessionId,
-      user_id: input.userId ?? null,
-      sport: input.sport,
-      positives: input.feedback.positives,
-      main_weakness: input.feedback.main_weakness,
-      pattern_insight: input.feedback.pattern_insight,
-      drill: input.feedback.drill,
-      coach_summary: input.feedback.coach_summary,
-      raw_landmark_data: input.landmarkData,
-      clips: input.clips,
-      pose_quality: input.poseQuality ?? null,
-      confirmed_events: input.confirmedEvents ?? [],
-      landmark_summary: input.landmarkSummary ?? null,
-    })
+    .insert(extendedPayload)
     .select()
     .single();
+
+  if (error) {
+    ({ data, error } = await supabase
+      .from("reports")
+      .insert(basePayload)
+      .select()
+      .single());
+  }
 
   if (error) throw error;
 
   const report = data as Report;
 
   if (input.clips.length > 0) {
-    await supabase.from("clips").insert(
-      input.clips.map((clip) => ({
+    const clipRows = input.clips
+      .filter((clip) => clip.clip_url)
+      .map((clip) => ({
         session_id: input.sessionId,
         report_id: report.id,
         timestamp: clip.timestamp,
         clip_url: clip.clip_url,
         clip_type: clip.clip_type,
         description: clip.description,
-      }))
-    );
+      }));
+
+    if (clipRows.length > 0) {
+      await supabase.from("clips").insert(clipRows);
+    }
   }
 
   await updateSessionStatus(input.sessionId, "complete", {

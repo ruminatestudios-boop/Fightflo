@@ -6,8 +6,9 @@ import {
   getDemoFeedback,
   getDemoPoseQuality,
 } from "@/lib/demo/sampleData";
-import { createSession, ensureUser } from "@/lib/storage/sessions";
+import { formatDbError } from "@/lib/db/formatError";
 import { saveReport } from "@/lib/db/queries";
+import { createSession, ensureUser } from "@/lib/storage/sessions";
 import type { SkillLevel, SportId } from "@/types";
 
 export const runtime = "nodejs";
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[demo]", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Demo failed" },
+      { error: formatDbError(error) },
       { status: 500 }
     );
   }
