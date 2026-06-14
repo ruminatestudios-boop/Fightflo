@@ -2,11 +2,7 @@
 
 import { HeroMedia } from "@/components/shared/HeroMedia";
 import { INTRO_COPY } from "@/lib/copy";
-import {
-  INTRO_POSTER,
-  INTRO_VIDEO,
-  INTRO_VIDEO_FALLBACK,
-} from "@/lib/media";
+import { INTRO_VIDEO, INTRO_VIDEO_FALLBACK } from "@/lib/media";
 
 interface FeedbackIntroScreenProps {
   onGetStarted: () => void;
@@ -23,7 +19,6 @@ export function FeedbackIntroScreen({ onGetStarted }: FeedbackIntroScreenProps) 
         <HeroMedia
           videoSrc={INTRO_VIDEO}
           fallbackVideoSrc={INTRO_VIDEO_FALLBACK}
-          posterSrc={INTRO_POSTER}
           overlay="strava"
           eager
         />
