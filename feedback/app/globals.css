@@ -1549,6 +1549,265 @@ button.stepguide-card-ts:active {
   letter-spacing: -0.01em;
 }
 
+.glass-card-label--hero {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.glass-card--hero {
+  min-height: 6.5rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.glass-card--hero .glass-card-label {
+  flex: 1;
+}
+
+.glass-card--disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.glass-card--disabled:active {
+  transform: none;
+}
+
+.home-feature-grid {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.home-feature-grid-secondary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.home-feature-hint {
+  position: relative;
+  z-index: 1;
+  margin-top: 0.35rem;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.home-settings-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+}
+
+.home-settings-chip {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: capitalize;
+}
+
+.home-settings-chip:hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.home-settings-dot,
+.home-settings-hint {
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.home-sample-link {
+  margin-top: 0.75rem;
+  width: 100%;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.home-sample-link:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.home-sample-link:disabled {
+  opacity: 0.5;
+}
+
+.home-flow-panel {
+  margin-top: 1rem;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1rem 1.1rem;
+}
+
+.home-flow-panel--accent {
+  border-color: rgba(250, 65, 65, 0.25);
+  background: rgba(250, 65, 65, 0.08);
+}
+
+.home-flow-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.home-flow-heading {
+  margin-top: 0.35rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #fff;
+}
+
+.home-flow-heading--sm {
+  font-size: 1rem;
+}
+
+.home-flow-label {
+  margin-top: 0.85rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.home-flow-body {
+  margin-top: 0.35rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.home-flow-body--center {
+  text-align: center;
+}
+
+.home-flow-stat {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.home-flow-trend {
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+.home-flow-trend--improving {
+  color: #4ade80;
+}
+
+.home-flow-trend--worse {
+  color: #fa4141;
+}
+
+.home-flow-trend--stable {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.home-flow-chart {
+  margin-top: 1rem;
+  height: 220px;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.5rem 0.25rem 0;
+}
+
+.home-flow-hint {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.38);
+  text-align: center;
+}
+
+.home-flow-empty {
+  margin-top: 2rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+}
+
+.home-flow-link {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  word-break: break-all;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.home-flow-action {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.75rem;
+  min-height: 3rem;
+  border-radius: 9999px;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.home-flow-action--primary {
+  background: #fff;
+  color: #000;
+}
+
+.home-flow-action--primary:active {
+  background: #e8e8e8;
+}
+
+.home-flow-action--secondary {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.home-flow-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.home-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.home-compare-card {
+  border-radius: 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.85rem;
+  text-align: left;
+}
+
+.home-compare-card:active {
+  transform: scale(0.98);
+}
+
+.home-compare-meta {
+  margin-top: 0.65rem;
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
 .glass-dock {
   position: absolute;
   bottom: 0;

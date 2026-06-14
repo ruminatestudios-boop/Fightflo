@@ -11,3 +11,16 @@ export function withBasePath(path: string): string {
 export function apiPath(path: string): string {
   return withBasePath(path.startsWith("/") ? path : `/${path}`);
 }
+
+export function reportPath(sessionId: string): string {
+  return withBasePath(`/report/${sessionId}`);
+}
+
+export function absoluteReportUrl(sessionId: string): string {
+  const base =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_APP_URL?.replace(/\/feedback\/?$/, "") ??
+        "https://fightflo.app";
+  return `${base}${reportPath(sessionId)}`;
+}

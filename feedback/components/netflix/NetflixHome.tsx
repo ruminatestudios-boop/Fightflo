@@ -2,6 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { HomeFeatureGrid, type HomeFeatureId } from "@/components/home/HomeFeatureGrid";
+import { HomeSettingsChips } from "@/components/home/HomeSettingsChips";
+import { CoachShareFlow } from "@/components/home/flows/CoachShareFlow";
+import { CompareFlow } from "@/components/home/flows/CompareFlow";
+import { ProgressFlow } from "@/components/home/flows/ProgressFlow";
+import { ReuploadFlow } from "@/components/home/flows/ReuploadFlow";
+import { WeeklyFocusFlow } from "@/components/home/flows/WeeklyFocusFlow";
 import { DevModeBanner } from "@/components/shared/DevModeBanner";
 import { PaywallSheet } from "@/components/shared/PaywallSheet";
 import { HomeStickyNav } from "@/components/netflix/HomeStickyNav";
@@ -11,11 +18,12 @@ import { ProgressBar } from "@/components/upload/ProgressBar";
 import { UploadZone, type UploadZoneHandle } from "@/components/upload/UploadZone";
 import { PRICING } from "@/config/pricing";
 import { SELECTABLE_SPORTS, SPORTS } from "@/config/sports";
+import { useHomeInsights } from "@/hooks/useHomeInsights";
 import { useSessionLibrary } from "@/hooks/useSessionLibrary";
 import { useUpload } from "@/hooks/useUpload";
 import { useUploadStatusTicker } from "@/hooks/useUploadStatusTicker";
 import { parseJsonResponse } from "@/lib/api/parseResponse";
-import { apiPath } from "@/lib/paths";
+import { apiPath, reportPath } from "@/lib/paths";
 import { storeUserId } from "@/lib/storage/client";
 import type { SkillLevel, SportId } from "@/types";
 
@@ -26,7 +34,16 @@ const LEVELS: { id: SkillLevel; label: string }[] = [
   { id: "pro", label: "Pro" },
 ];
 
-type HomeView = "home" | "sport" | "level";
+type HomeView =
+  | "home"
+  | "sport"
+  | "level"
+  | "reupload"
+  | "progress"
+  | "compare"
+  | "weekly"
+  | "coach-share";
+
 type MainTab = "home" | "library";
 
 function IconBadge({ children }: { children: React.ReactNode }) {
@@ -58,19 +75,27 @@ export function NetflixHome() {
     error: libraryError,
     refetch: refetchLibrary,
   } = useSessionLibrary(true);
+  const {
+    insights,
+    loading: insightsLoading,
+    refetch: refetchInsights,
+  } = useHomeInsights(true);
 
   const handleFile = useCallback(
     async (file: File) => {
       const sessionId = await upload(file, sport, level);
-      if (sessionId) router.push(`/report/${sessionId}`);
+      if (sessionId) {
+        void refetchInsights();
+        void refetchLibrary();
+        router.push(reportPath(sessionId));
+      }
     },
-    [upload, sport, level, router]
+    [upload, sport, level, router, refetchInsights, refetchLibrary]
   );
 
   const handleDemo = useCallback(async () => {
     setDemoError(null);
     setDemoLoading(true);
-    setActiveCard("demo");
 
     try {
       const storedUserId =
@@ -95,18 +120,20 @@ export function NetflixHome() {
       }
 
       if (data.userId) storeUserId(data.userId);
-      router.push(`/report/${data.sessionId}`);
+      void refetchInsights();
+      router.push(reportPath(data.sessionId));
     } catch (err) {
       setDemoError(err instanceof Error ? err.message : "Demo failed");
       setDemoLoading(false);
     }
-  }, [sport, level, router]);
+  }, [sport, level, router, refetchInsights]);
 
-  const openUpload = () => {
+  const openUpload = useCallback(() => {
     setMainTab("home");
+    setView("home");
     setActiveCard("upload");
     uploadRef.current?.open();
-  };
+  }, []);
 
   const goToLibrary = () => {
     setView("home");
@@ -117,7 +144,27 @@ export function NetflixHome() {
   const goToHome = () => {
     setView("home");
     setMainTab("home");
+    void refetchInsights();
   };
+
+  const openReport = useCallback(
+    (sessionId: string) => {
+      router.push(reportPath(sessionId));
+    },
+    [router]
+  );
+
+  const handleFeatureSelect = useCallback(
+    (id: HomeFeatureId) => {
+      setActiveCard(id);
+      if (id === "upload") {
+        openUpload();
+        return;
+      }
+      setView(id);
+    },
+    [openUpload]
+  );
 
   useEffect(() => {
     if (error && paywallMode) setShowPaywall(true);
@@ -138,6 +185,53 @@ export function NetflixHome() {
     const data = await res.json();
     if (data.url) window.location.href = data.url;
   }, [paywallMode]);
+
+  const renderFlow = () => {
+    switch (view) {
+      case "reupload":
+        return (
+          <ReuploadFlow
+            insight={insights?.reupload ?? null}
+            onBack={() => setView("home")}
+            onUpload={openUpload}
+            onViewReport={openReport}
+          />
+        );
+      case "progress":
+        return (
+          <ProgressFlow
+            insight={insights?.progress ?? null}
+            onBack={() => setView("home")}
+          />
+        );
+      case "compare":
+        return (
+          <CompareFlow
+            insight={insights?.compare ?? null}
+            onBack={() => setView("home")}
+            onOpenSession={openReport}
+          />
+        );
+      case "weekly":
+        return (
+          <WeeklyFocusFlow
+            insight={insights?.weeklyFocus ?? null}
+            onBack={() => setView("home")}
+            onUpload={openUpload}
+            onViewReport={openReport}
+          />
+        );
+      case "coach-share":
+        return (
+          <CoachShareFlow
+            insight={insights?.coachShare ?? null}
+            onBack={() => setView("home")}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <NetflixShell backHref="">
@@ -176,74 +270,19 @@ export function NetflixHome() {
               <h1 className="glass-greeting-title">
                 How can we help your training today?
               </h1>
+              <HomeSettingsChips
+                sport={sport}
+                level={level}
+                onSportClick={() => setView("sport")}
+                onLevelClick={() => setView("level")}
+              />
             </header>
 
-            <div className="glass-grid">
-              <button
-                type="button"
-                className={`glass-card ${activeCard === "upload" ? "glass-card--active" : ""}`}
-                onClick={openUpload}
-              >
-                <IconBadge>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </IconBadge>
-                <span className="glass-card-label">
-                  Upload a clip and get timestamped coaching
-                </span>
-              </button>
-
-              <button
-                type="button"
-                className={`glass-card ${activeCard === "demo" ? "glass-card--active" : ""}`}
-                onClick={handleDemo}
-              >
-                <IconBadge>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </IconBadge>
-                <span className="glass-card-label">
-                  See a sample breakdown report
-                </span>
-              </button>
-
-              <button
-                type="button"
-                className={`glass-card ${activeCard === "sport" ? "glass-card--active" : ""}`}
-                onClick={() => {
-                  setActiveCard("sport");
-                  setView("sport");
-                }}
-              >
-                <IconBadge>
-                  <span className="text-base leading-none">{SPORTS[sport].emoji}</span>
-                </IconBadge>
-                <span className="glass-card-label">
-                  Choose your sport — {SPORTS[sport].name}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                className={`glass-card ${activeCard === "level" ? "glass-card--active" : ""}`}
-                onClick={() => {
-                  setActiveCard("level");
-                  setView("level");
-                }}
-              >
-                <IconBadge>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                </IconBadge>
-                <span className="glass-card-label">
-                  Set your level — {level}
-                </span>
-              </button>
-            </div>
+            <HomeFeatureGrid
+              insights={insightsLoading ? null : insights}
+              activeId={activeCard}
+              onSelect={handleFeatureSelect}
+            />
 
             {(error || demoError) && (
               <div className="mt-4 space-y-3">
@@ -259,6 +298,15 @@ export function NetflixHome() {
                 )}
               </div>
             )}
+
+            <button
+              type="button"
+              className="home-sample-link"
+              onClick={() => void handleDemo()}
+              disabled={demoLoading}
+            >
+              {demoLoading ? "Loading sample…" : "See a sample breakdown report"}
+            </button>
 
             <p className="glass-meta glass-meta--footer">
               1 free analysis · Pro {PRICING.pro.displayMonthly} · Top-up{" "}
@@ -298,7 +346,7 @@ export function NetflixHome() {
               })}
             </div>
           </div>
-        ) : (
+        ) : view === "level" ? (
           <div className="glass-home-inner">
             <header className="glass-greeting">
               <button type="button" className="glass-back" onClick={() => setView("home")}>
@@ -332,6 +380,8 @@ export function NetflixHome() {
               })}
             </div>
           </div>
+        ) : (
+          renderFlow()
         )}
 
         <UploadZone ref={uploadRef} hidden onFileSelect={handleFile} />
