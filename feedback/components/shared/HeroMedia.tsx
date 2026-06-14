@@ -77,7 +77,7 @@ export function HeroMedia({
         <video
           ref={videoRef}
           className={`pointer-events-none absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ${
-            videoReady ? "opacity-100" : "opacity-40"
+            videoReady || !posterSrc ? "opacity-100" : "opacity-40"
           }`}
           autoPlay
           muted
