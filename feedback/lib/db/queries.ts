@@ -92,6 +92,7 @@ export async function getMonthlySessionCount(userId: string): Promise<number> {
 }
 
 export async function createSession(input: {
+  id?: string;
   userId?: string | null;
   sport: SportId;
   level: SkillLevel;
@@ -115,6 +116,7 @@ export async function createSession(input: {
   const { data, error } = await supabase
     .from("sessions")
     .insert({
+      ...(input.id ? { id: input.id } : {}),
       user_id: input.userId ?? null,
       sport: input.sport,
       level: input.level,

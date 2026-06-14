@@ -64,12 +64,13 @@ export async function deleteVideo(publicId: string): Promise<void> {
 export function getSignedUploadParams(sessionId: string) {
   const timestamp = Math.round(Date.now() / 1000);
   const folder = `feedback/sessions/${sessionId}`;
+  const publicId = `session_${sessionId}`;
 
   const signature = cloudinary.utils.api_sign_request(
     {
       timestamp,
       folder,
-      resource_type: "video",
+      public_id: publicId,
     },
     process.env.CLOUDINARY_API_SECRET!
   );
@@ -80,5 +81,7 @@ export function getSignedUploadParams(sessionId: string) {
     apiKey: process.env.CLOUDINARY_API_KEY!,
     cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
     folder,
+    publicId,
+    uploadUrl: `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/video/upload`,
   };
 }

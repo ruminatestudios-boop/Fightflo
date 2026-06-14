@@ -61,6 +61,7 @@ export async function incrementFreeAnalyses(userId: string): Promise<void> {
 }
 
 export async function createSession(input: {
+  id?: string;
   userId?: string | null;
   sport: SportId;
   level: SkillLevel;
@@ -76,7 +77,7 @@ export async function createSession(input: {
   }
 
   const session: DevSession = {
-    id: randomUUID(),
+    id: input.id ?? randomUUID(),
     user_id: input.userId ?? null,
     created_at: now(),
     sport: input.sport,
