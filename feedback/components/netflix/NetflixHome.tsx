@@ -10,6 +10,8 @@ import { SportSelector } from "@/components/shared/SportSelector";
 import { UploadZone, type UploadZoneHandle } from "@/components/upload/UploadZone";
 import { useUpload } from "@/hooks/useUpload";
 import { useUploadStatusTicker } from "@/hooks/useUploadStatusTicker";
+import { parseJsonResponse } from "@/lib/api/parseResponse";
+import { storeUserId } from "@/lib/storage/client";
 import { getSportConfig } from "@/config/sports";
 import type { SkillLevel, SportId } from "@/types";
 
@@ -19,9 +21,11 @@ export function NetflixHome() {
   const [sport, setSport] = useState<SportId>("boxing");
   const [level, setLevel] = useState<SkillLevel>("intermediate");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
   const { phase, progress, message, error, upload } = useUpload();
   const sportConfig = getSportConfig(sport);
-  const isBusy = phase === "uploading" || phase === "processing";
+  const isBusy = phase === "uploading" || phase === "processing" || demoLoading;
   const uploadStatus = useUploadStatusTicker(isBusy, message, progress);
 
   const handleFile = useCallback(
@@ -31,6 +35,41 @@ export function NetflixHome() {
     },
     [upload, sport, level, router]
   );
+
+  const handleDemo = useCallback(async () => {
+    setDemoError(null);
+    setDemoLoading(true);
+    setSheetOpen(false);
+
+    try {
+      const storedUserId =
+        typeof window !== "undefined"
+          ? localStorage.getItem("feedback_anon_user_id")
+          : null;
+
+      const response = await fetch("/api/demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sport, level, userId: storedUserId }),
+      });
+
+      const data = await parseJsonResponse<{
+        sessionId?: string;
+        userId?: string;
+        error?: string;
+      }>(response);
+
+      if (!response.ok || !data.sessionId) {
+        throw new Error(data.error ?? "Demo failed");
+      }
+
+      if (data.userId) storeUserId(data.userId);
+      router.push(`/report/${data.sessionId}`);
+    } catch (err) {
+      setDemoError(err instanceof Error ? err.message : "Demo failed");
+      setDemoLoading(false);
+    }
+  }, [sport, level, router]);
 
   return (
     <NetflixShell>
@@ -60,20 +99,31 @@ export function NetflixHome() {
               />
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => setSheetOpen(true)}
-              className="netflix-cta-primary mt-10"
-            >
-              Upload session
-            </button>
+            <div className="mt-10 flex w-full max-w-sm flex-col items-stretch gap-3">
+              <button
+                type="button"
+                onClick={() => setSheetOpen(true)}
+                className="netflix-cta-primary"
+              >
+                Upload session
+              </button>
+              <button
+                type="button"
+                onClick={handleDemo}
+                className="rounded-full border border-white/20 bg-white/5 px-6 py-3 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                Try demo report
+              </button>
+            </div>
           )}
-          {error && (
-            <p className="mt-4 text-sm text-[#e50914]">{error}</p>
+          {(error || demoError) && (
+            <p className="mt-4 text-sm text-[#e50914]">{error ?? demoError}</p>
           )}
-          <p className="mt-6 text-xs text-white/30">
-            1 free analysis · Pro £9.99/mo
-          </p>
+          {!error && !demoError && (
+            <p className="mt-6 text-xs text-white/30">
+              1 free analysis · Pro £9.99/mo
+            </p>
+          )}
         </div>
       </div>
 
@@ -116,6 +166,13 @@ export function NetflixHome() {
                 className="netflix-cta-primary w-full py-3 text-sm"
               >
                 Choose video
+              </button>
+              <button
+                type="button"
+                onClick={handleDemo}
+                className="w-full rounded-full border border-white/15 py-2.5 text-xs font-medium text-white/50 hover:text-white/75"
+              >
+                Skip upload — try demo report
               </button>
               <p className="text-center text-[10px] text-white/30">
                 MP4, MOV, AVI · Max 500MB
