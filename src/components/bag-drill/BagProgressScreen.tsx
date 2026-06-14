@@ -51,7 +51,7 @@ export function BagProgressScreen({ data, onHome }: BagProgressScreenProps) {
   const { allTimeStats } = data;
 
   return (
-    <BagScreenWrapper hubScreen onHome={onHome} className="overflow-y-auto">
+    <BagScreenWrapper hubScreen onHome={onHome}>
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}

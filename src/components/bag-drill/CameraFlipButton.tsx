@@ -41,7 +41,7 @@ export function CameraFlipButton({
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/55 disabled:opacity-50 ${className}`}
+      className={`flex h-11 w-11 items-center justify-center rounded-xl border border-white/20 bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/55 disabled:opacity-50 ${className}`}
     >
       <CameraFlipIcon />
     </button>

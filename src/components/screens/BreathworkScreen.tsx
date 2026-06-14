@@ -122,7 +122,7 @@ export function BreathworkScreen({
             <button
               type="button"
               onClick={onStop}
-              className="rounded-full border border-white/[0.12] px-4 py-2 text-xs text-[#8e9297] transition-colors hover:text-white"
+              className="rounded-xl border border-white/[0.12] px-4 py-2 text-xs text-[#8e9297] transition-colors hover:text-white"
             >
               End
             </button>

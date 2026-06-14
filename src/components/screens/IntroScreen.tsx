@@ -37,10 +37,10 @@ export function IntroScreen({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-40 h-[100dvh] w-full overflow-hidden bg-black"
+      className="intro-screen-root fixed inset-0 z-40 h-[100dvh] w-full overflow-hidden bg-black"
       style={{ minHeight: "100dvh" }}
     >
-      <div className="pointer-events-none absolute inset-0 z-0">
+      <div className="intro-screen-media pointer-events-none absolute inset-0 z-0">
         <HeroMedia
           videoSrc={ONBOARDING_VIDEO}
           fallbackVideoSrc={ONBOARDING_VIDEO_CDN}
@@ -50,10 +50,10 @@ export function IntroScreen({
         />
       </div>
 
-      <div className="pointer-events-none relative z-10 flex h-full min-h-[100dvh] w-full flex-col">
+      <div className="intro-screen-content pointer-events-none relative z-10 flex h-full min-h-[100dvh] w-full flex-col">
         <div className="flex-1" />
 
-        <div className="pointer-events-auto relative px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-6">
+        <div className="intro-screen-footer pointer-events-auto relative px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-6">
           <div
             className="pointer-events-none absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black via-black/80 to-transparent"
             aria-hidden
@@ -71,7 +71,7 @@ export function IntroScreen({
             <button
               type="button"
               onClick={onGetStarted}
-              className="font-display flex h-14 w-full cursor-pointer items-center justify-center rounded-full bg-white text-[13px] tracking-[0.14em] text-black transition-colors hover:bg-[#e8e8e8] active:bg-[#d4d4d4]"
+              className="font-display flex h-14 w-full cursor-pointer items-center justify-center rounded-xl bg-white text-[13px] tracking-[0.14em] text-black transition-colors hover:bg-[#e8e8e8] active:bg-[#d4d4d4]"
               style={{ touchAction: "manipulation" }}
             >
               {getStartedLabel}

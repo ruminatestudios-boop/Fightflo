@@ -5,19 +5,17 @@ import { FlowAction, FlowEmpty, FlowPanel, FlowShell } from "../FlowShell";
 
 interface WeeklyFocusFlowProps {
   insight: WeeklyFocusInsight | null;
-  onBack: () => void;
   onUpload: () => void;
   onViewReport: (sessionId: string) => void;
 }
 
 export function WeeklyFocusFlow({
   insight,
-  onBack,
   onUpload,
   onViewReport,
 }: WeeklyFocusFlowProps) {
   return (
-    <FlowShell title="This week's focus" subtitle="One thing to fix" onBack={onBack}>
+    <FlowShell title="This week's focus" subtitle="One thing to fix">
       {!insight ? (
         <FlowEmpty message="Your weekly focus appears after your first analysed clip." />
       ) : (

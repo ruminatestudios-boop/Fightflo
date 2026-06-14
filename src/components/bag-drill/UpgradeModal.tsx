@@ -56,13 +56,13 @@ export function UpgradeModal({ sessionsUsed, onClose }: UpgradeModalProps) {
           {BAG_COPY.upgradeBody}
         </p>
 
-        <div className="mt-6 flex rounded-full border border-white/10 bg-white/[0.03] p-1">
+        <div className="mt-6 flex rounded-xl border border-white/10 bg-white/[0.03] p-1">
           {FLOWBAG_PLANS.map((p) => (
             <button
               key={p.id}
               type="button"
               onClick={() => setPlan(p.id)}
-              className={`flex-1 rounded-full py-2 text-xs font-medium uppercase tracking-[0.1em] transition-colors ${
+              className={`flex-1 rounded-lg py-2 text-xs font-medium uppercase tracking-[0.1em] transition-colors ${
                 plan === p.id
                   ? "bg-[#fa4141] text-white"
                   : "text-white/50 hover:text-white/80"
@@ -83,7 +83,7 @@ export function UpgradeModal({ sessionsUsed, onClose }: UpgradeModalProps) {
           type="button"
           disabled={loading}
           onClick={handleCheckout}
-          className="mt-6 w-full rounded-full bg-[#fa4141] py-4 text-sm font-semibold uppercase tracking-[0.12em] text-white disabled:opacity-50"
+          className="mt-6 w-full rounded-xl bg-[#fa4141] py-4 text-sm font-semibold uppercase tracking-[0.12em] text-white disabled:opacity-50"
         >
           {loading
             ? "Opening checkout…"

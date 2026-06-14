@@ -24,15 +24,17 @@ export function BagScreenWrapper({
   hideLogo = false,
   hubScreen = false,
 }: BagScreenWrapperProps) {
+  const scrollPad = hubScreen
+    ? BAG_TAB_BAR_PAD
+    : "pb-[max(1.25rem,env(safe-area-inset-bottom))]";
+
   return (
     <motion.div
       initial={false}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-      className={`fixed inset-0 z-10 flex h-dvh w-full flex-col overflow-hidden bg-black px-5 pt-[max(2rem,env(safe-area-inset-top))] ${
-        hubScreen ? BAG_TAB_BAR_PAD : "pb-[max(1.25rem,env(safe-area-inset-bottom))]"
-      } ${className}`}
+      className="fixed inset-0 z-10 flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-black px-5 pt-[max(2rem,env(safe-area-inset-top))]"
     >
       {!hideLogo && (
         <AppTopBar
@@ -41,7 +43,11 @@ export function BagScreenWrapper({
           className="mb-4 shrink-0"
         />
       )}
-      {children}
+      <div
+        className={`min-h-0 flex-1 overflow-y-auto overscroll-y-contain [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden ${scrollPad} ${className}`}
+      >
+        {children}
+      </div>
     </motion.div>
   );
 }

@@ -154,7 +154,7 @@ export function BagFlurryTrainingScreen({
               <button
                 type="button"
                 onClick={tapPunch}
-                className="min-h-[3rem] min-w-[10rem] rounded-full border border-white/15 bg-white/[0.06] px-8 py-3 text-xs font-medium uppercase tracking-[0.14em] text-white/70 active:bg-white/10"
+                className="min-h-[3rem] min-w-[10rem] rounded-xl border border-white/15 bg-white/[0.06] px-8 py-3 text-xs font-medium uppercase tracking-[0.14em] text-white/70 active:bg-white/10"
               >
                 +1 hit
               </button>

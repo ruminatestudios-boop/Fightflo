@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 interface AnalysisSheetProps {
   open: boolean;
@@ -35,9 +36,9 @@ export function AnalysisSheet({
     };
   }, [open]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div className="netflix-modal-root" role="dialog" aria-modal="true">
       <button
         type="button"
@@ -71,6 +72,7 @@ export function AnalysisSheet({
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

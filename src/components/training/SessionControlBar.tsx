@@ -30,7 +30,7 @@ function IconButton({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className={`flex h-14 w-14 items-center justify-center rounded-full border transition-colors active:scale-95 ${
+      className={`flex h-14 w-14 items-center justify-center rounded-xl border transition-colors active:scale-95 ${
         accent
           ? "border-[#fa4141]/50 bg-[#fa4141]/10 text-[#fa4141]"
           : "border-white/10 bg-white/[0.04] text-white hover:border-white/20"

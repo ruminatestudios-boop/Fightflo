@@ -167,7 +167,7 @@ export function ReportPageClient({
       />
 
       {hasEmail === false && showEmailCapture && userId && (
-        <div className="fixed inset-x-0 bottom-0 z-40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="fixed inset-x-0 bottom-0 z-30 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto max-w-lg">
             <ReportEmailCapture
               email={emailCapture.email}

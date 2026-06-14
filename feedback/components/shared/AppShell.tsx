@@ -1,13 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { BackButton } from "@/components/shared/BackButton";
 import { LogoHeader } from "@/components/shared/LogoHeader";
 
 interface AppShellProps {
   children: ReactNode;
   showLogo?: boolean;
   backHref?: string;
+  onBack?: () => void;
   className?: string;
   dock?: ReactNode;
 }
@@ -16,37 +17,34 @@ export function AppShell({
   children,
   showLogo = false,
   backHref,
+  onBack,
   className = "",
   dock,
 }: AppShellProps) {
+  const showBack = Boolean(backHref || onBack);
+
   return (
     <div
       className={`mx-auto flex min-h-dvh w-full max-w-sm flex-col bg-black px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] text-white ${className}`}
     >
       {showLogo && (
-        <header className="relative mb-6 flex min-h-8 items-center justify-center">
+        <header className="relative mb-6 flex min-h-10 items-center justify-center">
+          {showBack ? (
+            backHref ? (
+              <BackButton href={backHref} className="absolute left-0" />
+            ) : (
+              <BackButton onClick={onBack} className="absolute left-0" />
+            )
+          ) : null}
           <LogoHeader size="sm" />
-          {backHref && (
-            <Link
-              href={backHref}
-              className="absolute right-0 text-xs text-[#6b6b6b] transition-colors hover:text-white"
-            >
-              Back
-            </Link>
-          )}
         </header>
       )}
 
-      {!showLogo && backHref && (
-        <div className="mb-4 flex justify-end">
-          <Link
-            href={backHref}
-            className="text-xs text-[#6b6b6b] transition-colors hover:text-white"
-          >
-            Back
-          </Link>
+      {!showLogo && showBack ? (
+        <div className="mb-4 flex justify-start">
+          {backHref ? <BackButton href={backHref} /> : <BackButton onClick={onBack} />}
         </div>
-      )}
+      ) : null}
 
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain">
         {children}

@@ -51,6 +51,64 @@ html,
 body {
   overscroll-behavior: none;
   min-height: 100%;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+/* Intro hero — critical layout even if utility CSS fails to load */
+.feedback-intro-root {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  width: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: #000;
+}
+
+.feedback-intro-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.feedback-intro-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  pointer-events: none;
+}
+
+.feedback-intro-footer {
+  position: relative;
+  margin-top: auto;
+  padding: 1.5rem 1.5rem max(2rem, env(safe-area-inset-bottom));
+  pointer-events: auto;
+}
+
+.hero-media-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.hero-media-root video,
+.hero-media-root img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
 }
 
 ::selection {
@@ -189,16 +247,25 @@ body {
   background: transparent;
 }
 
-.netflix-back-btn {
+.netflix-back-btn,
+.ff-back-btn {
   display: flex;
   height: 2.5rem;
   width: 2.5rem;
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
   color: white;
   backdrop-filter: blur(8px);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.netflix-back-btn:active,
+.ff-back-btn:active {
+  transform: scale(0.96);
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .netflix-logo {
@@ -344,7 +411,7 @@ body {
   justify-content: center;
   min-height: 3.5rem;
   width: 100%;
-  border-radius: 0.75rem;
+  border-radius: 9999px;
   background: white;
   padding: 0 1.5rem;
   font-family: var(--font-display), system-ui, sans-serif;
@@ -368,7 +435,7 @@ body {
 .netflix-modal-root {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 200;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -523,7 +590,7 @@ body {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  z-index: 35;
+  z-index: 45;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -938,15 +1005,33 @@ button.stepguide-card-ts:active {
 }
 
 .stepguide-card-link {
-  margin-top: 0.35rem;
-  align-self: flex-start;
-  font-size: 0.75rem;
+  pointer-events: auto;
+  margin-top: 0.65rem;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.65rem 1rem;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 0.6875rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .stepguide-card-link:hover {
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
+}
+
+.stepguide-card-link:active {
+  transform: scale(0.98);
 }
 
 /* Full-bleed vertical video */
@@ -1716,12 +1801,64 @@ button.stepguide-card-ts:active {
 }
 
 .home-flow-chart {
+  position: relative;
   margin-top: 1rem;
-  height: 220px;
+  height: 240px;
   border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(0, 0, 0, 0.45) 100%
+  );
+  padding: 0.75rem 0.5rem 1.75rem;
+}
+
+.home-flow-chart--embedded {
+  margin-top: 0;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(0, 0, 0, 0.35);
-  padding: 0.5rem 0.25rem 0;
+}
+
+.home-chart-caption {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.home-chart-tooltip {
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(18, 18, 18, 0.96);
+  padding: 0.55rem 0.75rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.home-chart-tooltip-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.home-chart-tooltip-date {
+  margin: 0.15rem 0 0;
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.home-chart-tooltip-value {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fa4141;
 }
 
 .home-flow-hint {
@@ -1806,6 +1943,110 @@ button.stepguide-card-ts:active {
   margin-top: 0.65rem;
   font-size: 0.6875rem;
   color: rgba(255, 255, 255, 0.4);
+}
+
+.home-coach-clips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-coach-clip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.65rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.home-coach-clip--selected {
+  border-color: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.home-coach-clip:active {
+  transform: scale(0.99);
+}
+
+.home-coach-clip-thumb {
+  height: 3.25rem;
+  width: 3.25rem;
+  shrink: 0;
+  border-radius: 0.65rem;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.home-coach-clip-thumb--preset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.home-coach-clip-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.home-coach-clip-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-coach-clip-meta {
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.38);
+  text-transform: capitalize;
+}
+
+.home-coach-clip-summary {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.home-coach-clip-check {
+  display: flex;
+  height: 1.25rem;
+  width: 1.25rem;
+  shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  color: transparent;
+}
+
+.home-coach-clip-check--selected {
+  border-color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.95);
+  color: #111;
+}
+
+.home-coach-clip-check svg {
+  height: 0.75rem;
+  width: 0.75rem;
 }
 
 .glass-dock {
@@ -2049,25 +2290,84 @@ button.stepguide-card-ts:active {
   position: relative;
 }
 
+.session-library-swipe {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+}
+
+.session-library-swipe-back {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-right: 0.75rem;
+  background: rgba(185, 28, 28, 0.92);
+  border-radius: 1rem;
+}
+
+.session-library-swipe-hint {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.session-library-swipe-keep,
+.session-library-swipe-delete {
+  border-radius: 9999px;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.session-library-swipe-keep {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.session-library-swipe-delete {
+  border: none;
+  background: rgba(255, 255, 255, 0.95);
+  color: #991b1b;
+}
+
+.session-library-swipe-front {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: stretch;
+  touch-action: pan-y;
+  transition: transform 0.22s ease;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #111111;
+}
+
+.session-library-swipe-front--dragging {
+  transition: none;
+}
+
 .session-library-item {
   display: flex;
   align-items: center;
   gap: 0.875rem;
+  flex: 1;
+  min-width: 0;
   border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.06) 0%,
-    rgba(255, 255, 255, 0.02) 100%
-  );
-  padding: 0.75rem 2.75rem 0.75rem 0.75rem;
+  border: none;
+  background: transparent;
+  padding: 0.75rem 0.5rem 0.75rem 0.75rem;
   text-decoration: none;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition: background 0.2s ease;
 }
 
 .session-library-item:hover {
-  border-color: rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .session-library-item:active {
@@ -2105,25 +2405,57 @@ button.stepguide-card-ts:active {
 }
 
 .session-library-edit {
-  position: absolute;
-  top: 50%;
-  right: 0.5rem;
-  z-index: 2;
   display: flex;
   height: 2rem;
   width: 2rem;
+  shrink: 0;
+  align-self: center;
+  margin-right: 0.5rem;
   align-items: center;
   justify-content: center;
-  transform: translateY(-50%);
   border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(0, 0, 0, 0.45);
   color: rgba(255, 255, 255, 0.65);
 }
 
+.session-library-download {
+  display: flex;
+  height: 2rem;
+  width: 2rem;
+  shrink: 0;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.session-library-download--locked {
+  opacity: 0.55;
+}
+
+.session-library-download:hover,
 .session-library-edit:hover {
   color: rgba(255, 255, 255, 0.9);
   background: rgba(255, 255, 255, 0.08);
+}
+
+.session-library-download-spinner {
+  height: 0.875rem;
+  width: 0.875rem;
+  border-radius: 9999px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: rgba(255, 255, 255, 0.9);
+  animation: session-library-spin 0.7s linear infinite;
+}
+
+@keyframes session-library-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .session-library-body {
@@ -2314,7 +2646,8 @@ button.stepguide-card-ts:active {
 
 .session-edit-thumb-actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 

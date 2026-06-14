@@ -13,7 +13,7 @@ export function ProUpsell({ onUpgrade, compact = false }: ProUpsellProps) {
       <button
         type="button"
         onClick={onUpgrade}
-        className="font-display mt-3 w-full rounded-full border border-[#fa4141]/30 bg-[#fa4141]/10 px-4 py-3 text-[11px] tracking-[0.14em] text-[#fa4141] transition-colors hover:bg-[#fa4141]/15"
+        className="font-display mt-3 w-full rounded-xl border border-[#fa4141]/30 bg-[#fa4141]/10 px-4 py-3 text-[11px] tracking-[0.14em] text-[#fa4141] transition-colors hover:bg-[#fa4141]/15"
       >
         Unlock Pro →
       </button>

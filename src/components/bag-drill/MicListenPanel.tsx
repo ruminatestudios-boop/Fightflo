@@ -150,7 +150,7 @@ export function MicListenPanel({
               type="button"
               onClick={onEnableMic}
               disabled={enabling}
-              className="font-display flex h-11 w-full items-center justify-center rounded-full bg-[#fa4141] text-[11px] tracking-[0.14em] text-white disabled:opacity-60"
+              className="font-display flex h-11 w-full items-center justify-center rounded-xl bg-[#fa4141] text-[11px] tracking-[0.14em] text-white disabled:opacity-60"
             >
               {enabling ? "Opening mic…" : "Enable microphone"}
             </button>

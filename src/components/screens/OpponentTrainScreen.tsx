@@ -155,7 +155,7 @@ export function OpponentTrainScreen({
                 setQuery(example);
                 void runBuild(example);
               }}
-              className="rounded-full border border-white/[0.08] px-3 py-1.5 text-xs text-[#a3a3a3] transition-colors hover:border-white/[0.15] hover:text-white disabled:opacity-50"
+              className="rounded-xl border border-white/[0.08] px-3 py-1.5 text-xs text-[#a3a3a3] transition-colors hover:border-white/[0.15] hover:text-white disabled:opacity-50"
             >
               {example}
             </button>

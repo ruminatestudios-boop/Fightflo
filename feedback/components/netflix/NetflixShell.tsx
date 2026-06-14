@@ -1,12 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { BackButton } from "@/components/shared/BackButton";
 import { LogoHeader } from "@/components/shared/LogoHeader";
 
 interface NetflixShellProps {
   children: ReactNode;
   backHref?: string;
+  onBack?: () => void;
+  onLogoClick?: () => void;
   topBar?: ReactNode;
   /** Float chrome over full-bleed content (report video) */
   immersive?: boolean;
@@ -14,35 +16,34 @@ interface NetflixShellProps {
 
 export function NetflixShell({
   children,
-  backHref = "/",
+  backHref,
+  onBack,
+  onLogoClick,
   topBar,
   immersive = false,
 }: NetflixShellProps) {
+  const showBack = Boolean(backHref || onBack);
+
   return (
     <div
       className={`netflix-viewport relative bg-black text-white ${immersive ? "netflix-viewport--immersive" : ""}`}
     >
       <div className="netflix-topbar">
-        {backHref ? (
-          <Link href={backHref} className="netflix-back-btn" aria-label="Back">
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </Link>
+        {showBack ? (
+          backHref ? (
+            <BackButton href={backHref} />
+          ) : (
+            <BackButton onClick={onBack} />
+          )
         ) : (
           <div className="w-10" />
         )}
-        <LogoHeader size="sm" align="center" className="pointer-events-auto" />
+        <LogoHeader
+          size="sm"
+          align="center"
+          className="pointer-events-auto"
+          onClick={onLogoClick}
+        />
         <div className="w-10" />
       </div>
       {topBar}

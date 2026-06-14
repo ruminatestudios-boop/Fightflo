@@ -11,6 +11,20 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    if (process.env.NODE_ENV !== "development") return [];
+
+    return [
+      {
+        source: "/feedback",
+        destination: "http://localhost:3001/feedback",
+      },
+      {
+        source: "/feedback/:path*",
+        destination: "http://localhost:3001/feedback/:path*",
+      },
+    ];
+  },
   // Allow phone on local network to load dev JS bundles
   allowedDevOrigins: [
     "192.168.1.119",

@@ -311,7 +311,7 @@ export function BagSetupCameraScreen({
             whileTap={{ scale: 0.98 }}
             onClick={primaryAction}
             disabled={starting}
-            className={`font-display flex h-14 w-full items-center justify-center rounded-full text-[15px] tracking-[0.14em] disabled:opacity-60 ${
+            className={`font-display flex h-14 w-full items-center justify-center rounded-xl text-[15px] tracking-[0.14em] disabled:opacity-60 ${
               primaryReady
                 ? "bg-white text-black tracking-[0.2em]"
                 : "bg-[#fa4141] text-white"
@@ -325,7 +325,7 @@ export function BagSetupCameraScreen({
               type="button"
               onClick={() => void startMic()}
               disabled={starting}
-              className="font-display flex h-11 w-full items-center justify-center rounded-full border border-white/20 text-[11px] tracking-[0.12em] text-white/75 disabled:opacity-60"
+              className="font-display flex h-11 w-full items-center justify-center rounded-xl border border-white/20 text-[11px] tracking-[0.12em] text-white/75 disabled:opacity-60"
             >
               I&apos;ve allowed mic — retry
             </button>
@@ -335,7 +335,7 @@ export function BagSetupCameraScreen({
             <button
               type="button"
               onClick={handleContinue}
-              className="font-display flex h-11 w-full items-center justify-center rounded-full border border-white/20 text-[11px] tracking-[0.12em] text-white/75"
+              className="font-display flex h-11 w-full items-center justify-center rounded-xl border border-white/20 text-[11px] tracking-[0.12em] text-white/75"
             >
               Continue without mic — tap each punch
             </button>

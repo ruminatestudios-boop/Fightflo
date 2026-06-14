@@ -23,6 +23,7 @@ import { useSessionLibrary } from "@/hooks/useSessionLibrary";
 import { useUpload } from "@/hooks/useUpload";
 import { useUploadStatusTicker } from "@/hooks/useUploadStatusTicker";
 import { parseJsonResponse } from "@/lib/api/parseResponse";
+import { displayNameFromEmail } from "@/lib/user/displayName";
 import { apiPath, reportPath } from "@/lib/paths";
 import { storeUserId } from "@/lib/storage/client";
 import type { SkillLevel, SportId } from "@/types";
@@ -65,6 +66,11 @@ export function NetflixHome() {
   const [demoLoading, setDemoLoading] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [libraryPaywallMode, setLibraryPaywallMode] = useState<"pro" | "topup" | null>(
+    null
+  );
   const { phase, progress, message, error, paywallMode, upload, reset } =
     useUpload();
   const isBusy = phase === "uploading" || phase === "processing" || demoLoading;
@@ -166,25 +172,60 @@ export function NetflixHome() {
     [openUpload]
   );
 
+  const showShellBack = view !== "home" || mainTab === "library";
+
+  const handleShellBack = useCallback(() => {
+    if (view !== "home") {
+      setView("home");
+      return;
+    }
+    if (mainTab === "library") {
+      goToHome();
+    }
+  }, [view, mainTab, goToHome]);
+
+  const handleLogoHome = useCallback(() => {
+    goToHome();
+    setView("home");
+    setActiveCard("upload");
+    reset();
+  }, [goToHome, reset]);
+
   useEffect(() => {
     if (error && paywallMode) setShowPaywall(true);
   }, [error, paywallMode]);
 
+  useEffect(() => {
+    const userId = localStorage.getItem("feedback_anon_user_id");
+    if (!userId) return;
+
+    void fetch(apiPath(`/api/user/status?userId=${userId}`))
+      .then((res) => res.json())
+      .then((data: { isPro?: boolean; email?: string | null }) => {
+        if (data.isPro) setIsPro(true);
+        const name = displayNameFromEmail(data.email);
+        if (name) setUserName(name);
+      })
+      .catch(() => {});
+  }, []);
+
+  const activePaywallMode = libraryPaywallMode ?? paywallMode;
+
   const handlePaywallCheckout = useCallback(async () => {
     const userId = localStorage.getItem("feedback_anon_user_id");
-    if (!userId || !paywallMode) return;
+    if (!userId || !activePaywallMode) return;
 
     const res = await fetch(apiPath("/api/checkout"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        plan: paywallMode === "topup" ? "topup" : "pro_monthly",
+        plan: activePaywallMode === "topup" ? "topup" : "pro_monthly",
         userId,
       }),
     });
     const data = await res.json();
     if (data.url) window.location.href = data.url;
-  }, [paywallMode]);
+  }, [activePaywallMode]);
 
   const renderFlow = () => {
     switch (view) {
@@ -192,23 +233,18 @@ export function NetflixHome() {
         return (
           <ReuploadFlow
             insight={insights?.reupload ?? null}
-            onBack={() => setView("home")}
             onUpload={openUpload}
             onViewReport={openReport}
           />
         );
       case "progress":
         return (
-          <ProgressFlow
-            insight={insights?.progress ?? null}
-            onBack={() => setView("home")}
-          />
+          <ProgressFlow insight={insights?.progress ?? null} />
         );
       case "compare":
         return (
           <CompareFlow
             insight={insights?.compare ?? null}
-            onBack={() => setView("home")}
             onOpenSession={openReport}
           />
         );
@@ -216,7 +252,6 @@ export function NetflixHome() {
         return (
           <WeeklyFocusFlow
             insight={insights?.weeklyFocus ?? null}
-            onBack={() => setView("home")}
             onUpload={openUpload}
             onViewReport={openReport}
           />
@@ -224,8 +259,8 @@ export function NetflixHome() {
       case "coach-share":
         return (
           <CoachShareFlow
-            insight={insights?.coachShare ?? null}
-            onBack={() => setView("home")}
+            sessions={sessions}
+            defaultSessionId={insights?.coachShare?.sessionId}
           />
         );
       default:
@@ -234,7 +269,10 @@ export function NetflixHome() {
   };
 
   return (
-    <NetflixShell backHref="">
+    <NetflixShell
+      onBack={showShellBack ? handleShellBack : undefined}
+      onLogoClick={handleLogoHome}
+    >
       <div className="glass-home">
         <div className="glass-orb glass-orb--a" aria-hidden />
         <div className="glass-orb glass-orb--b" aria-hidden />
@@ -261,6 +299,11 @@ export function NetflixHome() {
               loading={libraryLoading}
               error={libraryError}
               onRetry={() => void refetchLibrary()}
+              isPro={isPro}
+              onUpgrade={() => {
+                setLibraryPaywallMode(isPro ? "topup" : "pro");
+                setShowPaywall(true);
+              }}
             />
           </div>
         ) : view === "home" ? (
@@ -268,7 +311,9 @@ export function NetflixHome() {
             <header className="glass-greeting">
               <p className="glass-greeting-sub">Ready to improve</p>
               <h1 className="glass-greeting-title">
-                How can we help your training today?
+                {userName
+                  ? `How can we help ${userName}'s training today?`
+                  : "How can we help your training today?"}
               </h1>
               <HomeSettingsChips
                 sport={sport}
@@ -316,9 +361,6 @@ export function NetflixHome() {
         ) : view === "sport" ? (
           <div className="glass-home-inner">
             <header className="glass-greeting">
-              <button type="button" className="glass-back" onClick={() => setView("home")}>
-                ← Back
-              </button>
               <h1 className="glass-greeting-title glass-greeting-title--sm">
                 What are you training?
               </h1>
@@ -349,9 +391,6 @@ export function NetflixHome() {
         ) : view === "level" ? (
           <div className="glass-home-inner">
             <header className="glass-greeting">
-              <button type="button" className="glass-back" onClick={() => setView("home")}>
-                ← Back
-              </button>
               <h1 className="glass-greeting-title glass-greeting-title--sm">
                 How experienced are you?
               </h1>
@@ -399,10 +438,11 @@ export function NetflixHome() {
       </div>
 
       <PaywallSheet
-        open={showPaywall && Boolean(paywallMode)}
-        mode={paywallMode ?? "pro"}
+        open={showPaywall && Boolean(activePaywallMode)}
+        mode={activePaywallMode ?? "pro"}
         onClose={() => {
           setShowPaywall(false);
+          setLibraryPaywallMode(null);
           reset();
         }}
         onCheckout={() => void handlePaywallCheckout()}

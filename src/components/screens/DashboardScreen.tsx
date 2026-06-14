@@ -185,7 +185,7 @@ function AdvancedDashboard({
               <button
                 type="button"
                 onClick={onRecords}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] text-[#737373] transition-colors hover:border-white/[0.15] hover:text-white"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] text-[#737373] transition-colors hover:border-white/[0.15] hover:text-white"
                 aria-label="Records"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -196,7 +196,7 @@ function AdvancedDashboard({
                 <button
                   type="button"
                   onClick={onPro}
-                  className="font-display rounded-full border border-[#fa4141]/40 px-3 py-1.5 text-[10px] tracking-[0.14em] text-[#fa4141]"
+                  className="font-display rounded-xl border border-[#fa4141]/40 px-3 py-1.5 text-[10px] tracking-[0.14em] text-[#fa4141]"
                 >
                   Pro
                 </button>

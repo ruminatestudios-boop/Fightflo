@@ -6,6 +6,8 @@ interface LogoHeaderProps {
   size?: "sm" | "md" | "lg";
   className?: string;
   align?: "left" | "center";
+  href?: string;
+  onClick?: () => void;
 }
 
 const SIZE_CLASS = {
@@ -18,13 +20,20 @@ export function LogoHeader({
   size = "md",
   className = "",
   align = "center",
+  href = "/",
+  onClick,
 }: LogoHeaderProps) {
   const alignClass =
     align === "center" ? "w-full justify-center" : "justify-start";
 
   return (
     <Link
-      href="/"
+      href={href}
+      onClick={(event) => {
+        if (!onClick) return;
+        event.preventDefault();
+        onClick();
+      }}
       className={`flex ${alignClass} ${className} no-underline transition-opacity hover:opacity-80 active:opacity-65`}
       aria-label="Fightflo home"
     >

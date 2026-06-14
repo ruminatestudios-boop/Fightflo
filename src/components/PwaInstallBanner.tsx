@@ -19,14 +19,14 @@ export function PwaInstallBanner() {
           type="button"
           disabled={installing}
           onClick={() => void install()}
-          className="rounded-full bg-[#fa4141] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.1em] text-white disabled:opacity-50"
+          className="rounded-xl bg-[#fa4141] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.1em] text-white disabled:opacity-50"
         >
           {installing ? "Installing…" : BAG_COPY.installCta}
         </button>
         <button
           type="button"
           onClick={dismiss}
-          className="rounded-full border border-white/15 px-5 py-2.5 text-xs uppercase tracking-[0.1em] text-white/50"
+          className="rounded-xl border border-white/15 px-5 py-2.5 text-xs uppercase tracking-[0.1em] text-white/50"
         >
           {BAG_COPY.installDismiss}
         </button>

@@ -5,17 +5,15 @@ import { FlowAction, FlowEmpty, FlowPanel, FlowShell } from "../FlowShell";
 
 interface CompareFlowProps {
   insight: CompareInsight | null;
-  onBack: () => void;
   onOpenSession: (sessionId: string) => void;
 }
 
 export function CompareFlow({
   insight,
-  onBack,
   onOpenSession,
 }: CompareFlowProps) {
   return (
-    <FlowShell title="Compare sessions" subtitle="Before vs after" onBack={onBack}>
+    <FlowShell title="Compare sessions" subtitle="Before vs after">
       {!insight ? (
         <FlowEmpty message="You need at least two analysed clips to compare sessions." />
       ) : (

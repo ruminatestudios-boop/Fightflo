@@ -77,7 +77,7 @@ export function BagSpeedPunchScreen({
           type="button"
           onClick={() => onStart(selected)}
           disabled={micLive && !micConfirmed}
-          className="font-display mt-10 flex h-14 w-full items-center justify-center rounded-full bg-[#fa4141] text-[13px] tracking-[0.14em] text-white disabled:opacity-40"
+          className="font-display mt-10 flex h-14 w-full items-center justify-center rounded-xl bg-[#fa4141] text-[13px] tracking-[0.14em] text-white disabled:opacity-40"
         >
           {!micLive ? copy.ctaWithoutMic : micConfirmed ? copy.cta : copy.ctaNeedTest}
         </button>

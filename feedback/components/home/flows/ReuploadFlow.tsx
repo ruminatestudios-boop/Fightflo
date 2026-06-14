@@ -5,14 +5,12 @@ import { FlowAction, FlowEmpty, FlowPanel, FlowShell } from "../FlowShell";
 
 interface ReuploadFlowProps {
   insight: ReuploadInsight | null;
-  onBack: () => void;
   onUpload: () => void;
   onViewReport: (sessionId: string) => void;
 }
 
 export function ReuploadFlow({
   insight,
-  onBack,
   onUpload,
   onViewReport,
 }: ReuploadFlowProps) {
@@ -20,7 +18,6 @@ export function ReuploadFlow({
     <FlowShell
       title="Did you fix it?"
       subtitle="Fix verification"
-      onBack={onBack}
     >
       {!insight ? (
         <FlowEmpty message="Upload and analyse your first clip — then come back to verify the fix." />

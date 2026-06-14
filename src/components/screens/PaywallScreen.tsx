@@ -72,7 +72,7 @@ export function PaywallScreen({
           }
         />
         <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-[#fa4141]/30 bg-[#fa4141]/10">
+          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-xl border border-[#fa4141]/30 bg-[#fa4141]/10">
             <span className="font-display text-sm text-[#fa4141]">Pro</span>
           </div>
           <h1 className="font-display text-2xl tracking-wide text-white">You&apos;re on Pro</h1>
@@ -164,7 +164,7 @@ export function PaywallScreen({
                     )}
                   </div>
                   <div
-                    className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+                    className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-xl border-2 ${
                       isSelected ? "border-[#fa4141] bg-[#fa4141]" : "border-[#525252]"
                     }`}
                   >

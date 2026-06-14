@@ -68,7 +68,7 @@ export function StartRoundPanel({
         <button
           type="button"
           onClick={isNew ? onQuickStart : onCustomStart}
-          className="font-display mt-6 flex h-14 w-full items-center justify-center rounded-full bg-white text-[13px] tracking-[0.18em] text-black transition-transform active:scale-[0.98]"
+          className="font-display mt-6 flex h-14 w-full items-center justify-center rounded-xl bg-white text-[13px] tracking-[0.18em] text-black transition-transform active:scale-[0.98]"
         >
           {isNew ? "2-min easy round" : "Go"}
         </button>
@@ -77,7 +77,7 @@ export function StartRoundPanel({
           <button
             type="button"
             onClick={onCustomStart}
-            className="mt-3 w-full rounded-full border border-white/[0.12] py-3 text-sm text-[#737373] transition-colors hover:border-white/[0.2] hover:text-white"
+            className="mt-3 w-full rounded-xl border border-white/[0.12] py-3 text-sm text-[#737373] transition-colors hover:border-white/[0.2] hover:text-white"
           >
             Custom session
           </button>
@@ -87,7 +87,7 @@ export function StartRoundPanel({
           <button
             type="button"
             onClick={onTrainOpponent}
-            className="mt-3 w-full rounded-full border border-white/[0.12] py-3.5 text-sm text-[#a3a3a3] transition-colors hover:border-white/[0.2] hover:text-white"
+            className="mt-3 w-full rounded-xl border border-white/[0.12] py-3.5 text-sm text-[#a3a3a3] transition-colors hover:border-white/[0.2] hover:text-white"
           >
             Train vs a fighter
           </button>

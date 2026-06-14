@@ -44,7 +44,7 @@ export function AvatarStack({
         ))}
         {overflow && (
           <div
-            className="relative z-0 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-black bg-[#2a2a2a] text-[11px] font-medium text-white/55"
+            className="relative z-0 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2 border-black bg-[#2a2a2a] text-[11px] font-medium text-white/55"
             style={{ marginLeft: -12 }}
           >
             {overflow}

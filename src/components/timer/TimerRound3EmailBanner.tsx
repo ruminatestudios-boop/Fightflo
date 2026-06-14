@@ -68,7 +68,7 @@ export function TimerRound3EmailBanner({
                 onOpenModal();
                 dismiss();
               }}
-              className="shrink-0 rounded-full bg-[#fa4141] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-white"
+              className="shrink-0 rounded-xl bg-[#fa4141] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-white"
             >
               Get free access →
             </button>

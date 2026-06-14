@@ -123,7 +123,7 @@ export function TimerHomeScreen({
             <button
               type="button"
               onClick={() => onConfigChange({ comboPulses: !config.comboPulses })}
-              className={`rounded-full border px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider ${chipClass(config.comboPulses)}`}
+              className={`rounded-xl border px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider ${chipClass(config.comboPulses)}`}
             >
               Combo calls
             </button>
@@ -132,7 +132,7 @@ export function TimerHomeScreen({
               onClick={() =>
                 onConfigChange({ voiceCoaching: !config.voiceCoaching })
               }
-              className={`rounded-full border px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider ${chipClass(config.voiceCoaching)}`}
+              className={`rounded-xl border px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider ${chipClass(config.voiceCoaching)}`}
             >
               Corner voice
             </button>

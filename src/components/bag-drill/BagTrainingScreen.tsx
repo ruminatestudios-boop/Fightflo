@@ -279,7 +279,7 @@ export function BagTrainingScreen({
                 <button
                   type="button"
                   onClick={micBackupPunch}
-                  className="h-12 min-w-[10rem] rounded-full border border-amber-500/30 bg-amber-500/10 px-8 text-xs font-medium uppercase tracking-[0.14em] text-amber-200/90 active:bg-amber-500/20"
+                  className="h-12 min-w-[10rem] rounded-xl border border-amber-500/30 bg-amber-500/10 px-8 text-xs font-medium uppercase tracking-[0.14em] text-amber-200/90 active:bg-amber-500/20"
                 >
                   Mic backup — count hit
                 </button>
@@ -289,7 +289,7 @@ export function BagTrainingScreen({
                 <button
                   type="button"
                   onClick={tapPunch}
-                  className="h-12 min-w-[10rem] rounded-full border border-white/15 bg-white/[0.06] px-8 text-xs font-medium uppercase tracking-[0.14em] text-white/70 active:bg-white/10"
+                  className="h-12 min-w-[10rem] rounded-xl border border-white/15 bg-white/[0.06] px-8 text-xs font-medium uppercase tracking-[0.14em] text-white/70 active:bg-white/10"
                 >
                   {tapOnly ? "Tap per strike" : "+1 hit"}
                 </button>

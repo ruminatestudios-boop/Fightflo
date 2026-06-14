@@ -175,7 +175,7 @@ export function ComingSoonModal({ open, onClose }: ComingSoonModalProps) {
                   <button
                     type="submit"
                     disabled={capture.status === "submitting"}
-                    className="font-display flex h-12 w-full items-center justify-center rounded-full bg-[#fa4141] text-sm tracking-[0.12em] text-white disabled:opacity-60"
+                    className="font-display flex h-12 w-full items-center justify-center rounded-xl bg-[#fa4141] text-sm tracking-[0.12em] text-white disabled:opacity-60"
                   >
                     {capture.status === "submitting"
                       ? "Saving…"

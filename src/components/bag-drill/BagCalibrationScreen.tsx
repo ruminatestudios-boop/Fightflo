@@ -611,7 +611,7 @@ export function BagCalibrationScreen({
                 <button
                   type="button"
                   onClick={() => setGuideOpen(true)}
-                  className="rounded-full border border-white/15 bg-black/40 px-3 py-2 text-[9px] font-medium uppercase tracking-wider text-white/70 hover:bg-white/10"
+                  className="rounded-xl border border-white/15 bg-black/40 px-3 py-2 text-[9px] font-medium uppercase tracking-wider text-white/70 hover:bg-white/10"
                 >
                   Camera tips
                 </button>
@@ -626,7 +626,7 @@ export function BagCalibrationScreen({
                   type="button"
                   onClick={() => void switchToYou()}
                   disabled={starting}
-                  className="rounded-full border border-[#fa4141]/35 bg-black/40 px-3 py-2 text-[9px] font-medium uppercase tracking-wider text-[#fa4141] hover:bg-white/10 disabled:opacity-50"
+                  className="rounded-xl border border-[#fa4141]/35 bg-black/40 px-3 py-2 text-[9px] font-medium uppercase tracking-wider text-[#fa4141] hover:bg-white/10 disabled:opacity-50"
                 >
                   Switch to You
                 </button>
@@ -657,7 +657,7 @@ export function BagCalibrationScreen({
                 key={item.id}
                 type="button"
                 onClick={() => skipToStep(item.id)}
-                className={`rounded-full border px-3 py-1.5 text-[10px] font-medium uppercase tracking-wide ${
+                className={`rounded-xl border px-3 py-1.5 text-[10px] font-medium uppercase tracking-wide ${
                   step === item.id
                     ? "border-[#fa4141]/60 bg-[#fa4141]/15 text-[#fa4141]"
                     : "border-white/15 bg-white/[0.04] text-white/50 hover:text-white/75"
@@ -755,7 +755,7 @@ export function BagCalibrationScreen({
                 <button
                   type="button"
                   onClick={finish}
-                  className="font-display flex h-14 w-full items-center justify-center rounded-full bg-white text-[15px] tracking-[0.18em] text-black"
+                  className="font-display flex h-14 w-full items-center justify-center rounded-xl bg-white text-[15px] tracking-[0.18em] text-black"
                 >
                   Continue
                 </button>
@@ -764,7 +764,7 @@ export function BagCalibrationScreen({
                   <button
                     type="button"
                     onClick={finish}
-                    className="font-display flex h-11 w-full items-center justify-center rounded-full border border-white/15 text-[11px] tracking-[0.14em] text-white/70"
+                    className="font-display flex h-11 w-full items-center justify-center rounded-xl border border-white/15 text-[11px] tracking-[0.14em] text-white/70"
                   >
                     {micCopy?.skip ?? "Skip calibration"}
                   </button>
@@ -792,7 +792,7 @@ export function BagCalibrationScreen({
                 type="button"
                 onClick={() => void bootCamera()}
                 disabled={starting}
-                className="font-display flex h-14 w-full items-center justify-center rounded-full bg-[#fa4141] text-[15px] tracking-[0.14em] text-white disabled:opacity-60"
+                className="font-display flex h-14 w-full items-center justify-center rounded-xl bg-[#fa4141] text-[15px] tracking-[0.14em] text-white disabled:opacity-60"
               >
                 {starting ? "Opening camera…" : "Allow camera & microphone"}
               </button>

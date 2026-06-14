@@ -39,14 +39,14 @@ export function PushReminderBanner() {
           type="button"
           disabled={loading}
           onClick={handleYes}
-          className="rounded-full bg-[#fa4141] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.1em] text-white disabled:opacity-50"
+          className="rounded-xl bg-[#fa4141] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.1em] text-white disabled:opacity-50"
         >
           {loading ? "Setting up…" : "Yes, remind me"}
         </button>
         <button
           type="button"
           onClick={handleNo}
-          className="rounded-full border border-white/15 px-5 py-2.5 text-xs uppercase tracking-[0.1em] text-white/50"
+          className="rounded-xl border border-white/15 px-5 py-2.5 text-xs uppercase tracking-[0.1em] text-white/50"
         >
           Not now
         </button>

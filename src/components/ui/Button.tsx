@@ -27,7 +27,7 @@ export function Button({
   disabled = false,
 }: ButtonProps) {
   const base =
-    "font-display inline-flex w-full cursor-pointer items-center justify-center rounded-full tracking-[0.14em] transition-colors duration-200 disabled:opacity-40";
+    "font-display inline-flex w-full cursor-pointer items-center justify-center rounded-xl tracking-[0.14em] transition-colors duration-200 disabled:opacity-40";
 
   const variants = {
     primary: `${base} bg-white text-black hover:bg-[#e8e8e8] active:bg-[#d4d4d4]`,

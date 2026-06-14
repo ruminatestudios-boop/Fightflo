@@ -149,8 +149,8 @@ export function HeroCarousel({
                       }}
                       className={
                         action.primary
-                          ? "rounded-full bg-[#fa4141] px-4 py-2 text-sm font-medium text-white"
-                          : "rounded-full border border-white/30 bg-black/40 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm"
+                           ? "rounded-xl bg-[#fa4141] px-4 py-2 text-sm font-medium text-white"
+                          : "rounded-xl border border-white/30 bg-black/40 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm"
                       }
                     >
                       {action.label}

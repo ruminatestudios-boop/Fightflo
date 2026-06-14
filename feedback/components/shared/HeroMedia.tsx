@@ -57,7 +57,7 @@ export function HeroMedia({
         : "bg-gradient-to-t from-[#111111] via-[#111111]/40 to-transparent";
 
   return (
-    <div className={`absolute inset-0 overflow-hidden bg-black ${className}`}>
+    <div className={`hero-media-root absolute inset-0 overflow-hidden bg-black ${className}`}>
       <div className="absolute inset-0 bg-gradient-to-b from-[#1a0808] via-[#111111] to-[#050505]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_20%,rgba(250,65,65,0.18),transparent_55%)]" />
 

@@ -110,7 +110,7 @@ export function BagSetupIntroScreen({
               type="button"
               whileTap={{ scale: 0.98 }}
               onClick={onStartCalibration}
-              className="font-display flex h-14 w-full items-center justify-center rounded-full bg-[#fa4141] text-[15px] tracking-[0.14em] text-white"
+              className="font-display flex h-14 w-full items-center justify-center rounded-xl bg-[#fa4141] text-[15px] tracking-[0.14em] text-white"
             >
               {copy.cta}
             </motion.button>

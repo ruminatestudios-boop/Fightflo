@@ -58,7 +58,7 @@ export function SignalFlash({ signal, clearMode = false, coachCue }: SignalFlash
             className="flex w-full flex-col items-center"
           >
             <div
-              className="relative flex h-36 w-36 flex-col items-center justify-center rounded-full border sm:h-40 sm:w-40"
+              className="relative flex h-36 w-36 flex-col items-center justify-center rounded-xl border sm:h-40 sm:w-40"
               style={{
                 borderColor: `${config.color}40`,
                 background: `${config.bgFlash}`,

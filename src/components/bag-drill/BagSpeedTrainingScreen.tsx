@@ -161,14 +161,14 @@ export function BagSpeedTrainingScreen({
               <button
                 type="button"
                 onClick={retrySpeedPunch}
-                className="h-12 rounded-full border border-white/20 bg-white/[0.06] text-xs font-medium uppercase tracking-[0.14em] text-white/80 transition-colors hover:bg-white/[0.1]"
+                className="h-12 rounded-xl border border-white/20 bg-white/[0.06] text-xs font-medium uppercase tracking-[0.14em] text-white/80 transition-colors hover:bg-white/[0.1]"
               >
                 {COPY.tryAgain}
               </button>
               <button
                 type="button"
                 onClick={onStop}
-                className="h-12 rounded-full bg-[#fa4141] text-xs font-medium uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90"
+                className="h-12 rounded-xl bg-[#fa4141] text-xs font-medium uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90"
               >
                 {COPY.done}
               </button>
@@ -221,7 +221,7 @@ export function BagSpeedTrainingScreen({
                 <button
                   type="button"
                   onClick={micBackupPunch}
-                  className="h-11 rounded-full border border-amber-500/30 bg-amber-500/10 px-6 text-xs font-medium uppercase tracking-[0.14em] text-amber-200/90"
+                  className="h-11 rounded-xl border border-amber-500/30 bg-amber-500/10 px-6 text-xs font-medium uppercase tracking-[0.14em] text-amber-200/90"
                 >
                   Count hit
                 </button>
@@ -230,7 +230,7 @@ export function BagSpeedTrainingScreen({
                 <button
                   type="button"
                   onClick={tapPunch}
-                  className="h-11 rounded-full border border-white/15 bg-white/[0.06] px-6 text-xs font-medium uppercase tracking-[0.14em] text-white/70"
+                  className="h-11 rounded-xl border border-white/15 bg-white/[0.06] px-6 text-xs font-medium uppercase tracking-[0.14em] text-white/70"
                 >
                   {tapOnly ? "Tap punch" : "Count hit"}
                 </button>

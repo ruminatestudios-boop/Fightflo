@@ -187,7 +187,7 @@ export function RoundSettingsScreen({
                       await audioEngine.unlock();
                       audioEngine.previewSignal(type, settings.cueStyle);
                     }}
-                    className="rounded-full border border-[#3a3a3a] px-4 py-2 text-sm font-medium transition-colors hover:border-[#525252]"
+                    className="rounded-xl border border-[#3a3a3a] px-4 py-2 text-sm font-medium transition-colors hover:border-[#525252]"
                     style={{ color: SIGNAL_CONFIG[type].color }}
                   >
                     {SIGNAL_CONFIG[type].label}
@@ -210,7 +210,7 @@ export function RoundSettingsScreen({
                     await audioEngine.unlock();
                       audioEngine.previewSignal(type, settings.cueStyle);
                   }}
-                  className="rounded-full border border-[#3a3a3a] px-4 py-2 text-sm font-medium transition-colors hover:border-[#525252]"
+                  className="rounded-xl border border-[#3a3a3a] px-4 py-2 text-sm font-medium transition-colors hover:border-[#525252]"
                   style={{ color: SIGNAL_CONFIG[type].color }}
                 >
                   {SIGNAL_CONFIG[type].label}

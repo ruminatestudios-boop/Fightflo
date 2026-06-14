@@ -17,7 +17,7 @@ interface FighterResearchLoaderProps {
 function StepIcon({ state }: { state: "done" | "active" | "pending" }) {
   if (state === "done") {
     return (
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#fa4141]/20 text-[#fa4141]">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-[#fa4141]/20 text-[#fa4141]">
         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
@@ -29,7 +29,7 @@ function StepIcon({ state }: { state: "done" | "active" | "pending" }) {
     return (
       <span className="relative flex h-7 w-7 shrink-0 items-center justify-center">
         <span className="absolute inset-0 animate-ping rounded-full bg-[#fa4141]/25" />
-        <span className="relative flex h-7 w-7 items-center justify-center rounded-full border border-[#fa4141]/50 bg-[#fa4141]/10">
+        <span className="relative flex h-7 w-7 items-center justify-center rounded-xl border border-[#fa4141]/50 bg-[#fa4141]/10">
           <span className="h-2 w-2 rounded-full bg-[#fa4141]" />
         </span>
       </span>
@@ -37,7 +37,7 @@ function StepIcon({ state }: { state: "done" | "active" | "pending" }) {
   }
 
   return (
-    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/[0.08]">
+    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-white/[0.08]">
       <span className="h-1.5 w-1.5 rounded-full bg-[#525252]" />
     </span>
   );

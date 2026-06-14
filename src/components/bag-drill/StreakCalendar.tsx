@@ -103,7 +103,7 @@ export function StreakCalendar({ data, compact = false }: StreakCalendarProps) {
           <button
             type="button"
             onClick={() => setView((v) => shiftMonth(v.year, v.month, -1))}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-white/40 hover:bg-white/5 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 hover:bg-white/5 hover:text-white"
             aria-label="Previous month"
           >
             ‹
@@ -112,7 +112,7 @@ export function StreakCalendar({ data, compact = false }: StreakCalendarProps) {
             <button
               type="button"
               onClick={() => setView((v) => shiftMonth(v.year, v.month, 1))}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-white/40 hover:bg-white/5 hover:text-white"
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 hover:bg-white/5 hover:text-white"
               aria-label="Next month"
             >
               ›
@@ -140,7 +140,7 @@ export function StreakCalendar({ data, compact = false }: StreakCalendarProps) {
                         className="flex aspect-square items-center justify-center"
                       >
                         <div
-                          className={`flex items-center justify-center rounded-full bg-white text-black shadow-[0_0_0_1px_rgba(255,255,255,0.08)] ${
+                          className={`flex items-center justify-center rounded-xl bg-white text-black shadow-[0_0_0_1px_rgba(255,255,255,0.08)] ${
                             compact ? "h-9 w-9" : "h-11 w-11"
                           }`}
                         >
@@ -187,7 +187,7 @@ export function StreakCalendar({ data, compact = false }: StreakCalendarProps) {
               >
                 {weekRowActive(week) ? (
                   <span
-                    className={`flex items-center justify-center rounded-full bg-[#fa4141] text-white ${
+                    className={`flex items-center justify-center rounded-xl bg-[#fa4141] text-white ${
                       compact ? "h-5 w-5 text-[10px]" : "h-6 w-6 text-xs"
                     }`}
                   >

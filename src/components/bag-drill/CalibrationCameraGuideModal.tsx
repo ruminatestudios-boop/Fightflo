@@ -80,7 +80,7 @@ export function CalibrationCameraGuideModal({
             <button
               type="button"
               onClick={onClose}
-              className="font-display mt-5 flex h-12 w-full items-center justify-center rounded-full bg-[#fa4141] text-[13px] tracking-[0.14em] text-white"
+              className="font-display mt-5 flex h-12 w-full items-center justify-center rounded-xl bg-[#fa4141] text-[13px] tracking-[0.14em] text-white"
             >
               Got it — show my camera
             </button>

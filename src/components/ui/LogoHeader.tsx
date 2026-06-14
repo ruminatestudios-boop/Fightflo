@@ -31,7 +31,7 @@ export function LogoHeader({
         variant === "light" ? "text-white" : "text-white"
       }`}
     >
-      FIGHTFLO
+      FIGHTFLO<span className="text-[#e6544e] tracking-[0]">.</span>
     </span>
   );
 

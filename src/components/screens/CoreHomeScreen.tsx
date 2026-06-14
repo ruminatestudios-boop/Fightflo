@@ -97,7 +97,7 @@ export function CoreHomeScreen({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.4 }}
           onClick={onStart}
-          className="font-display mt-12 flex h-16 w-full items-center justify-center rounded-full bg-[#fa4141] text-[15px] tracking-[0.2em] text-white transition-transform active:scale-[0.98]"
+          className="font-display mt-12 flex h-16 w-full items-center justify-center rounded-xl bg-[#fa4141] text-[15px] tracking-[0.2em] text-white transition-transform active:scale-[0.98]"
         >
           Start
         </motion.button>

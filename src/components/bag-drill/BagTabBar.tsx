@@ -93,6 +93,6 @@ export function BagTabBar({ active, onTrain, onProgress }: BagTabBarProps) {
   );
 }
 
-/** Bottom padding when hub tab bar is visible */
+/** Bottom padding when hub tab bar is visible (tab chrome + safe area) */
 export const BAG_TAB_BAR_PAD =
-  "pb-[calc(4.25rem+max(0.5rem,env(safe-area-inset-bottom)))]";
+  "pb-[calc(4.5rem+env(safe-area-inset-bottom))]";

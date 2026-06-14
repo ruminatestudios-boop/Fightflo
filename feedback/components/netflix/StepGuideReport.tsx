@@ -42,7 +42,7 @@ interface ReportStep {
   accent: StepAccent;
   timestamp?: string;
   seekTime?: number;
-  detailType?: "positive" | "weakness" | "drill" | "finish";
+  detailType?: "intro" | "positive" | "weakness" | "drill" | "finish";
   positive?: PositiveFinding;
   weakness?: MainWeakness;
   drill?: DrillRecommendation;
@@ -206,6 +206,7 @@ export function StepGuideReport({
         accent: "neutral",
         timestamp: "0:00",
         seekTime: 0,
+        detailType: "intro",
       },
     ];
 
@@ -325,7 +326,27 @@ export function StepGuideReport({
     return () => el.removeEventListener("scroll", onScroll);
   }, [steps.length]);
 
+  const openBreakdown = useCallback((index: number) => {
+    setStepIndex(index);
+    setSheetOpen(true);
+  }, []);
+
   const renderSheetContent = () => {
+    if (step.detailType === "intro") {
+      return (
+        <div className="space-y-4 text-sm leading-relaxed text-white/70">
+          <p>{report.coach_summary}</p>
+          <div className="rounded-xl bg-white/[0.04] p-4">
+            <p className="text-[10px] uppercase tracking-[0.12em] text-white/35">
+              Main fault preview
+            </p>
+            <p className="mt-2 font-medium text-white">{report.main_weakness.title}</p>
+            <p className="mt-2">{report.main_weakness.what_is_happening}</p>
+          </div>
+        </div>
+      );
+    }
+
     if (!step.detailType || step.detailType === "finish") {
       return (
         <div className="space-y-4 text-sm leading-relaxed text-white/70">
@@ -557,11 +578,10 @@ export function StepGuideReport({
                       className="stepguide-card-link"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setStepIndex(i);
-                        setSheetOpen(true);
+                        openBreakdown(i);
                       }}
                     >
-                      Full breakdown →
+                      Full breakdown
                     </button>
                   )}
                 </article>
