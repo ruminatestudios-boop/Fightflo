@@ -10,11 +10,12 @@ import {
 import type { LandmarkTimeline, ReportClip, SkillLevel, SportId } from "@/types";
 
 const STEPS = [
-  { step: "extracting_frames", message: "Extracting frames...", ms: 1200 },
-  { step: "analysing_movement", message: "Analysing your movement...", ms: 1500 },
-  { step: "finding_patterns", message: "Finding patterns...", ms: 1200 },
-  { step: "writing_report", message: "Writing your coaching report...", ms: 1800 },
-  { step: "generating_clips", message: "Almost ready...", ms: 800 },
+  { step: "extracting_frames", message: "Pulling frames from your video…", ms: 1200 },
+  { step: "detecting_sport", message: "Spotting techniques in footage…", ms: 900 },
+  { step: "analysing_movement", message: "Tracking joints frame by frame…", ms: 1500 },
+  { step: "finding_patterns", message: "Detecting repeated mistakes…", ms: 1200 },
+  { step: "writing_report", message: "AI coach reviewing your footage…", ms: 1800 },
+  { step: "generating_clips", message: "Putting the final touches on…", ms: 800 },
 ] as const;
 
 function sleep(ms: number) {

@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { AnalysisProgressView } from "@/components/shared/AnalysisProgressView";
 import { ReportExperience } from "@/components/netflix/ReportExperience";
 import { NetflixShell } from "@/components/netflix/NetflixShell";
-import { ProgressBar } from "@/components/upload/ProgressBar";
-import { useReport } from "@/hooks/useReport";
+import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { SHARE_CAPTIONS } from "@/config/prompts";
 import type { Report, Session, SportId } from "@/types";
 
@@ -19,7 +19,7 @@ export function ReportPageClient({
   initialReport,
   initialSession,
 }: ReportPageClientProps) {
-  const polled = useReport(initialReport ? null : sessionId);
+  const polled = useAnalysisProgress(initialReport ? null : sessionId);
   const report = initialReport ?? polled.report;
   const session = initialSession ?? polled.session;
   const loading = !initialReport && polled.loading;
@@ -60,18 +60,13 @@ export function ReportPageClient({
     return (
       <NetflixShell backHref="/">
         <div className="netflix-slide-inner netflix-gradient-hero">
-          <div className="netflix-slide-content justify-center pb-28 text-center">
-            <p className="netflix-eyebrow">Analysing</p>
-            <h1 className="netflix-display mt-4 max-w-[12rem] mx-auto">
-              Reading your movement
-            </h1>
-            <div className="mx-auto mt-10 w-full max-w-xs">
-              <ProgressBar
-                progress={polled.progressPercent}
-                message={polled.progressMessage}
-              />
-            </div>
-            <p className="mt-4 text-xs text-white/35">Usually 2–5 minutes</p>
+          <div className="netflix-slide-content justify-center pb-28">
+            <AnalysisProgressView
+              eyebrow={polled.eyebrow}
+              headline={polled.headline}
+              message={polled.message}
+              progress={polled.progressPercent}
+            />
           </div>
         </div>
       </NetflixShell>

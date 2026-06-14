@@ -1,0 +1,179 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import {
+  ANALYSIS_STEPS,
+  DEFAULT_ANALYSIS_STEP,
+} from "@/config/prompts";
+import { hapticStep, hapticSuccess, hapticTick } from "@/lib/haptics";
+import type { Report, Session } from "@/types";
+
+interface AnalysisProgressState {
+  report: Report | null;
+  session: Session | null;
+  loading: boolean;
+  error: string | null;
+  step: string;
+  eyebrow: string;
+  headline: string;
+  message: string;
+  progressPercent: number;
+}
+
+function getStepConfig(step?: string) {
+  if (step && ANALYSIS_STEPS[step]) return ANALYSIS_STEPS[step];
+  return DEFAULT_ANALYSIS_STEP;
+}
+
+export function useAnalysisProgress(sessionId: string | null) {
+  const [state, setState] = useState<AnalysisProgressState>(() => {
+    const config = ANALYSIS_STEPS.uploading;
+    return {
+      report: null,
+      session: null,
+      loading: !!sessionId,
+      error: null,
+      step: "uploading",
+      eyebrow: config.eyebrow,
+      headline: config.headline,
+      message: config.ticks[0],
+      progressPercent: config.percent,
+    };
+  });
+
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastStepRef = useRef("uploading");
+  const tickIndexRef = useRef(0);
+  const targetProgressRef = useRef(10);
+
+  const fetchReport = async () => {
+    if (!sessionId) return true;
+
+    try {
+      const res = await fetch(`/api/report?sessionId=${sessionId}`);
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error ?? "Failed to load report");
+
+      const session = data.session as Session;
+      const step =
+        (session as { progress_step?: string }).progress_step ?? "uploading";
+      const serverMessage =
+        (session as { progress_message?: string }).progress_message ?? "";
+      const config = getStepConfig(step);
+
+      targetProgressRef.current = config.percent;
+
+      if (data.report && session.status === "complete") {
+        if (lastStepRef.current !== "complete") {
+          hapticSuccess();
+          lastStepRef.current = "complete";
+        }
+
+        setState({
+          report: data.report,
+          session,
+          loading: false,
+          error: null,
+          step: "complete",
+          eyebrow: ANALYSIS_STEPS.complete.eyebrow,
+          headline: ANALYSIS_STEPS.complete.headline,
+          message: ANALYSIS_STEPS.complete.ticks[0],
+          progressPercent: 100,
+        });
+        return true;
+      }
+
+      if (session.status === "failed") {
+        setState((s) => ({
+          ...s,
+          loading: false,
+          error: serverMessage || "Analysis failed",
+        }));
+        return true;
+      }
+
+      if (step !== lastStepRef.current) {
+        hapticStep();
+        lastStepRef.current = step;
+        tickIndexRef.current = 0;
+      }
+
+      setState((s) => ({
+        ...s,
+        session,
+        step,
+        eyebrow: config.eyebrow,
+        headline: config.headline,
+        message: config.ticks[tickIndexRef.current] ?? serverMessage,
+        progressPercent: Math.max(s.progressPercent, config.percent - 8),
+      }));
+
+      return false;
+    } catch (error) {
+      setState((s) => ({
+        ...s,
+        loading: false,
+        error: error instanceof Error ? error.message : "Failed to load report",
+      }));
+      return true;
+    }
+  };
+
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const poll = async () => {
+      const done = await fetchReport();
+      if (done && intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+
+    poll();
+    intervalRef.current = setInterval(poll, 2000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (!sessionId || !state.loading) return;
+
+    tickRef.current = setInterval(() => {
+      const config = getStepConfig(lastStepRef.current);
+      tickIndexRef.current = (tickIndexRef.current + 1) % config.ticks.length;
+
+      if (tickIndexRef.current === 0) return;
+
+      hapticTick();
+      setState((s) => ({
+        ...s,
+        message: config.ticks[tickIndexRef.current],
+      }));
+    }, 2800);
+
+    progressRef.current = setInterval(() => {
+      setState((s) => {
+        const target = targetProgressRef.current;
+        if (s.progressPercent >= target) return s;
+        return {
+          ...s,
+          progressPercent: Math.min(target, s.progressPercent + 0.6),
+        };
+      });
+    }, 400);
+
+    return () => {
+      if (tickRef.current) clearInterval(tickRef.current);
+      if (progressRef.current) clearInterval(progressRef.current);
+    };
+  }, [sessionId, state.loading]);
+
+  return state;
+}

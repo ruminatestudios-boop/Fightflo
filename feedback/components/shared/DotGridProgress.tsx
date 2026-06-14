@@ -20,11 +20,12 @@ export function DotGridProgress({
   return (
     <div className="w-full">
       {message && (
-        <div className="mb-5 flex items-center gap-2.5 text-sm text-white/75">
-          <span className="flex h-5 w-5 items-center justify-center">
-            <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
+        <div
+          key={message}
+          className="analysis-status-message mb-5 flex items-center gap-2.5 text-sm text-white/75"
+        >
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+            <span className="analysis-status-pulse h-2 w-2 rounded-full bg-white/80" />
           </span>
           <span>{message}</span>
         </div>

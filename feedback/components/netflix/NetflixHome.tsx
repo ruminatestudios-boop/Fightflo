@@ -3,12 +3,13 @@
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { NetflixShell } from "@/components/netflix/NetflixShell";
+import { AnalysisProgressView } from "@/components/shared/AnalysisProgressView";
 import { DevModeBanner } from "@/components/shared/DevModeBanner";
 import { LevelSelector } from "@/components/shared/LevelSelector";
 import { SportSelector } from "@/components/shared/SportSelector";
 import { UploadZone, type UploadZoneHandle } from "@/components/upload/UploadZone";
-import { ProgressBar } from "@/components/upload/ProgressBar";
 import { useUpload } from "@/hooks/useUpload";
+import { useUploadStatusTicker } from "@/hooks/useUploadStatusTicker";
 import { getSportConfig } from "@/config/sports";
 import type { SkillLevel, SportId } from "@/types";
 
@@ -21,6 +22,7 @@ export function NetflixHome() {
   const { phase, progress, message, error, upload } = useUpload();
   const sportConfig = getSportConfig(sport);
   const isBusy = phase === "uploading" || phase === "processing";
+  const uploadStatus = useUploadStatusTicker(isBusy, message, progress);
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -49,10 +51,13 @@ export function NetflixHome() {
 
           {isBusy ? (
             <div className="mt-10 w-full max-w-sm">
-              <ProgressBar progress={progress} message={message} />
-              <p className="mt-4 text-center text-xs text-white/40">
-                Analysing movement…
-              </p>
+              <AnalysisProgressView
+                eyebrow={uploadStatus.eyebrow}
+                headline={uploadStatus.headline}
+                message={uploadStatus.message}
+                progress={progress}
+                footer="Preparing your analysis…"
+              />
             </div>
           ) : (
             <button

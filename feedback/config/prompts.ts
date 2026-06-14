@@ -1,12 +1,98 @@
-export const LOADING_MESSAGES = [
-  { step: "uploading", message: "Uploading your video...", percent: 10 },
-  { step: "extracting_frames", message: "Extracting frames...", percent: 25 },
-  { step: "analysing_movement", message: "Analysing your movement...", percent: 45 },
-  { step: "finding_patterns", message: "Finding patterns...", percent: 60 },
-  { step: "writing_report", message: "Writing your coaching report...", percent: 80 },
-  { step: "generating_clips", message: "Almost ready...", percent: 95 },
-  { step: "complete", message: "Your report is ready.", percent: 100 },
-] as const;
+export interface AnalysisStepConfig {
+  percent: number;
+  eyebrow: string;
+  headline: string;
+  ticks: string[];
+}
+
+export const ANALYSIS_STEPS: Record<string, AnalysisStepConfig> = {
+  uploading: {
+    percent: 10,
+    eyebrow: "Uploading",
+    headline: "Sending your video",
+    ticks: [
+      "Uploading to secure storage…",
+      "Transferring video data…",
+      "Almost uploaded…",
+    ],
+  },
+  extracting_frames: {
+    percent: 22,
+    eyebrow: "Processing",
+    headline: "Reading your movement",
+    ticks: [
+      "Pulling frames from your video…",
+      "Scanning each moment…",
+      "Building your timeline…",
+    ],
+  },
+  detecting_sport: {
+    percent: 32,
+    eyebrow: "Processing",
+    headline: "Reading your movement",
+    ticks: [
+      "Spotting techniques in footage…",
+      "Identifying strikes and stances…",
+      "Matching movement to your sport…",
+    ],
+  },
+  analysing_movement: {
+    percent: 48,
+    eyebrow: "Pose tracking",
+    headline: "Mapping your body",
+    ticks: [
+      "Tracking joints frame by frame…",
+      "Measuring angles and rotation…",
+      "Checking guard and balance…",
+    ],
+  },
+  finding_patterns: {
+    percent: 62,
+    eyebrow: "Pattern scan",
+    headline: "Finding habits",
+    ticks: [
+      "Detecting repeated mistakes…",
+      "Spotting timing issues…",
+      "Cross-checking movement patterns…",
+    ],
+  },
+  writing_report: {
+    percent: 78,
+    eyebrow: "Coaching",
+    headline: "Writing your report",
+    ticks: [
+      "AI coach reviewing your footage…",
+      "Explaining exactly what to fix…",
+      "Adding timestamped notes…",
+    ],
+  },
+  generating_clips: {
+    percent: 92,
+    eyebrow: "Finishing",
+    headline: "Almost ready",
+    ticks: [
+      "Cutting highlight clips…",
+      "Syncing coaching overlays…",
+      "Putting the final touches on…",
+    ],
+  },
+  complete: {
+    percent: 100,
+    eyebrow: "Done",
+    headline: "Report ready",
+    ticks: ["Your coaching report is ready."],
+  },
+};
+
+export const DEFAULT_ANALYSIS_STEP = ANALYSIS_STEPS.extracting_frames;
+
+export const LOADING_MESSAGES = Object.entries(ANALYSIS_STEPS).map(
+  ([step, config]) => ({
+    step,
+    message: config.ticks[0],
+    percent: config.percent,
+  })
+);
 
 export const SHARE_CAPTIONS: Record<string, string> = {
   boxing:

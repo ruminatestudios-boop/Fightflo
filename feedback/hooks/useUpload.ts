@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { UPLOAD_CONFIG } from "@/config/prompts";
 import { parseJsonResponse } from "@/lib/api/parseResponse";
+import { hapticStep, hapticTick } from "@/lib/haptics";
 import { storeUserId } from "@/lib/storage/client";
 import type { SkillLevel, SportId } from "@/types";
 
@@ -168,6 +169,7 @@ export function useUpload() {
             progress: 75,
             message: "Starting analysis...",
           }));
+          hapticStep();
 
           const completeResponse = await fetch("/api/upload", {
             method: "POST",
@@ -203,6 +205,7 @@ export function useUpload() {
             userId: data.userId,
             error: null,
           });
+          hapticStep();
 
           return data.sessionId;
         }
@@ -238,6 +241,7 @@ export function useUpload() {
           userId: data.userId,
           error: null,
         });
+        hapticStep();
 
         return data.sessionId;
       } catch (error) {
