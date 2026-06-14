@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LOADING_MESSAGES } from "@/config/prompts";
+import { apiPath } from "@/lib/paths";
 import type { Report, Session } from "@/types";
 
 interface ReportState {
@@ -28,7 +29,7 @@ export function useReport(sessionId: string | null) {
     if (!sessionId) return;
 
     try {
-      const res = await fetch(`/api/report?sessionId=${sessionId}`);
+      const res = await fetch(apiPath(`/api/report?sessionId=${sessionId}`));
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error ?? "Failed to load report");

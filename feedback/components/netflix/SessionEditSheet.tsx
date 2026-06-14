@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getStoredUserId } from "@/lib/storage/client";
+import { apiPath } from "@/lib/paths";
 import { isPresetThumbnail, type SessionLibraryEntry } from "@/lib/sessions/library";
 
 async function compressImageFile(file: File): Promise<string> {
@@ -65,7 +66,7 @@ export function SessionEditSheet({
     setError(null);
 
     try {
-      const res = await fetch(`/api/sessions/${session.id}`, {
+      const res = await fetch(apiPath(`/api/sessions/${session.id}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -97,7 +98,7 @@ export function SessionEditSheet({
     setError(null);
 
     try {
-      const res = await fetch(`/api/sessions/${session.id}`, {
+      const res = await fetch(apiPath(`/api/sessions/${session.id}`), {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId }),

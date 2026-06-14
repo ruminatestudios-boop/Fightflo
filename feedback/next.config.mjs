@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
+const basePath = process.env.FEEDBACK_BASE_PATH ?? "/feedback";
+
 const nextConfig = {
+  basePath,
   env: {
+    NEXT_PUBLIC_BASE_PATH: basePath,
     NEXT_PUBLIC_REAL_ANALYSIS: process.env.GEMINI_API_KEY ? "true" : "false",
   },
   experimental: {

@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { UPLOAD_CONFIG } from "@/config/prompts";
 import { parseJsonResponse } from "@/lib/api/parseResponse";
+import { apiPath } from "@/lib/paths";
 import { hapticStep, hapticTick } from "@/lib/haptics";
 import { storeUserId } from "@/lib/storage/client";
 import type { AnalysisAllowance, SkillLevel, SportId } from "@/types";
@@ -156,7 +157,7 @@ export function useUpload() {
             ? localStorage.getItem("feedback_anon_user_id")
             : null;
 
-        const signResponse = await fetch("/api/upload/sign", {
+        const signResponse = await fetch(apiPath("/api/upload/sign"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -193,7 +194,7 @@ export function useUpload() {
           }));
           hapticStep();
 
-          const completeResponse = await fetch("/api/upload", {
+          const completeResponse = await fetch(apiPath("/api/upload"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -241,7 +242,7 @@ export function useUpload() {
         formData.append("level", level);
         if (storedUserId) formData.append("userId", storedUserId);
 
-        const response = await fetch("/api/upload", {
+        const response = await fetch(apiPath("/api/upload"), {
           method: "POST",
           body: formData,
         });

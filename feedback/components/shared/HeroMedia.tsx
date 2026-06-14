@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { withBasePath } from "@/lib/paths";
 
 interface HeroMediaProps {
   videoSrc?: string;
@@ -63,7 +64,7 @@ export function HeroMedia({
       {posterSrc ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={posterSrc}
+          src={withBasePath(posterSrc)}
           alt=""
           className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
           onError={(e) => {
@@ -83,7 +84,7 @@ export function HeroMedia({
           loop
           playsInline
           preload={eager ? "auto" : "metadata"}
-          poster={posterSrc}
+          poster={posterSrc ? withBasePath(posterSrc) : undefined}
         >
           <source src={videoSrc} type="video/mp4" />
           {fallbackVideoSrc ? (

@@ -1,4 +1,11 @@
 {
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/feedback",
+      "permanent": false
+    }
+  ],
   "crons": [
     {
       "path": "/api/cron/emails",

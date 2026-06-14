@@ -21,7 +21,7 @@ import {
 import type { CoachingFeedback, SportId } from "@/types";
 
 function appUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
+  return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001/feedback";
 }
 
 function isValidEmail(email: string): boolean {

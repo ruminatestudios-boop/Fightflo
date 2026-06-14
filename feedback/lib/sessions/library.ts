@@ -1,4 +1,5 @@
 import { SPORTS } from "@/config/sports";
+import { apiPath } from "@/lib/paths";
 import type { Report, Session, SportId } from "@/types";
 
 export interface SessionLibraryEntry extends Session {
@@ -72,7 +73,7 @@ export function resolveSessionThumbnail(
     return null;
   }
 
-  return `/api/video/thumbnail?sessionId=${session.id}`;
+  return apiPath(`/api/video/thumbnail?sessionId=${session.id}`);
 }
 
 export function toSessionLibraryEntry(

@@ -4,5 +4,15 @@
       "path": "/api/cron/notifications",
       "schedule": "0 17 * * *"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/feedback",
+      "destination": "https://feedback.fightflo.app/feedback"
+    },
+    {
+      "source": "/feedback/:path*",
+      "destination": "https://feedback.fightflo.app/feedback/:path*"
+    }
   ]
 }

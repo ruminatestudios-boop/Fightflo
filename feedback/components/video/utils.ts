@@ -1,5 +1,6 @@
 import type { FrameLandmarks } from "@/types";
 import type { Annotation, LandmarkFrame } from "./types";
+import { apiPath } from "@/lib/paths";
 
 /** Parse M:SS or H:MM:SS timestamp strings to seconds */
 export function parseTimestamp(timestamp: string): number {
@@ -21,7 +22,7 @@ export function resolvePlaybackUrl(session: { id: string; video_url: string }): 
   if (videoUrl.startsWith("http://") || videoUrl.startsWith("https://")) {
     return videoUrl;
   }
-  return `/api/video?sessionId=${id}`;
+  return apiPath(`/api/video?sessionId=${id}`);
 }
 
 export function landmarksNearTime(

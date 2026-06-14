@@ -7,6 +7,7 @@ import {
 } from "@/config/prompts";
 import { hapticStep, hapticSuccess } from "@/lib/haptics";
 import { parseJsonResponse } from "@/lib/api/parseResponse";
+import { apiPath } from "@/lib/paths";
 import type { Report, Session } from "@/types";
 
 interface AnalysisProgressState {
@@ -57,7 +58,7 @@ export function useAnalysisProgress(sessionId: string | null) {
     if (!sessionId) return true;
 
     try {
-      const res = await fetch(`/api/report?sessionId=${sessionId}`);
+      const res = await fetch(apiPath(`/api/report?sessionId=${sessionId}`));
       const data = await parseJsonResponse<{
         session?: Session;
         report?: Report | null;

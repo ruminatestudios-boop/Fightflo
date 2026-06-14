@@ -15,6 +15,7 @@ import { useSessionLibrary } from "@/hooks/useSessionLibrary";
 import { useUpload } from "@/hooks/useUpload";
 import { useUploadStatusTicker } from "@/hooks/useUploadStatusTicker";
 import { parseJsonResponse } from "@/lib/api/parseResponse";
+import { apiPath } from "@/lib/paths";
 import { storeUserId } from "@/lib/storage/client";
 import type { SkillLevel, SportId } from "@/types";
 
@@ -77,7 +78,7 @@ export function NetflixHome() {
           ? localStorage.getItem("feedback_anon_user_id")
           : null;
 
-      const response = await fetch("/api/demo", {
+      const response = await fetch(apiPath("/api/demo"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sport, level, userId: storedUserId }),
@@ -126,7 +127,7 @@ export function NetflixHome() {
     const userId = localStorage.getItem("feedback_anon_user_id");
     if (!userId || !paywallMode) return;
 
-    const res = await fetch("/api/checkout", {
+    const res = await fetch(apiPath("/api/checkout"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

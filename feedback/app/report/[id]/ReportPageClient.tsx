@@ -9,6 +9,7 @@ import { ProgressBar } from "@/components/upload/ProgressBar";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { useReportEmailCapture } from "@/hooks/useReportEmailCapture";
 import { SHARE_CAPTIONS } from "@/config/prompts";
+import { apiPath } from "@/lib/paths";
 import type { AnalysisAllowance, Report, Session, SportId } from "@/types";
 
 interface ReportPageClientProps {
@@ -48,7 +49,7 @@ export function ReportPageClient({
         : null);
     if (!uid) return;
 
-    fetch(`/api/user/status?userId=${uid}`)
+    fetch(apiPath(`/api/user/status?userId=${uid}`))
       .then((r) => r.json())
       .then(
         (
@@ -96,7 +97,7 @@ export function ReportPageClient({
         userId ?? localStorage.getItem("feedback_anon_user_id");
       if (!storedUserId) return;
 
-      const res = await fetch("/api/checkout", {
+      const res = await fetch(apiPath("/api/checkout"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

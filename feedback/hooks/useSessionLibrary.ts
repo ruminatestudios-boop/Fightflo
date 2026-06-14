@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getStoredUserId } from "@/lib/storage/client";
+import { apiPath } from "@/lib/paths";
 import type { SessionLibraryEntry } from "@/lib/sessions/library";
 
 export function useSessionLibrary(enabled = true) {
@@ -21,7 +22,9 @@ export function useSessionLibrary(enabled = true) {
     setError(null);
 
     try {
-      const res = await fetch(`/api/sessions?userId=${encodeURIComponent(userId)}`);
+      const res = await fetch(
+        apiPath(`/api/sessions?userId=${encodeURIComponent(userId)}`)
+      );
       const json = (await res.json()) as { sessions?: SessionLibraryEntry[]; error?: string };
 
       if (!res.ok) {

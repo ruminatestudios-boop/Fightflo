@@ -12,6 +12,7 @@ import { OverlayCanvas } from "@/components/video/OverlayCanvas";
 import { ImmersiveVideoStage } from "@/components/video/ImmersiveVideoStage";
 import { TimelineMarkers } from "@/components/video/TimelineMarkers";
 import { parseTimestamp, resolvePlaybackUrl, formatTime } from "@/components/video/utils";
+import { apiPath } from "@/lib/paths";
 import type { TimelineMoment } from "@/components/video/types";
 import { getSportConfig } from "@/config/sports";
 import type {
@@ -124,7 +125,7 @@ export function StepGuideReport({
     setDownloading(true);
     try {
       const res = await fetch(
-        `/api/video/download?sessionId=${session.id}&userId=${userId}`
+        apiPath(`/api/video/download?sessionId=${session.id}&userId=${userId}`)
       );
       if (res.status === 402) {
         onUpgrade?.();

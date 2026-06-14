@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { parseJsonResponse } from "@/lib/api/parseResponse";
+import { apiPath } from "@/lib/paths";
 import type { SportId } from "@/types";
 
 export type ReportEmailStatus =
@@ -31,7 +32,7 @@ export function useReportEmailCapture(userId: string | null, sport?: SportId) {
     setStatus("submitting");
 
     try {
-      const res = await fetch("/api/user/email", {
+      const res = await fetch(apiPath("/api/user/email"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, email: trimmed, sport }),

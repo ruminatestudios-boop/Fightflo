@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { apiPath } from "@/lib/paths";
 import type { ProgressDataPoint } from "@/types";
 
 export function useProgress(userId: string | null, weaknessType?: string) {
@@ -12,7 +13,7 @@ export function useProgress(userId: string | null, weaknessType?: string) {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/sessions?userId=${userId}`);
+      const res = await fetch(apiPath(`/api/sessions?userId=${userId}`));
       const json = await res.json();
       const sessions = json.sessions ?? [];
 
