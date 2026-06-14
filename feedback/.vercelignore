@@ -1,0 +1,6 @@
+.local-data
+.next
+node_modules
+*.mp4
+*.mov
+*.avi

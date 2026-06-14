@@ -1,0 +1,457 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #000000;
+  --foreground: #f5f5f5;
+  --muted: #6b6b6b;
+  --muted-light: #9a9a9a;
+  --surface: #141414;
+  --surface-raised: #1c1c1c;
+  --surface-pill: #2a2a2a;
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #ff9500;
+  --accent-soft: rgba(255, 149, 0, 0.15);
+  --accent-red: #fa4141;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+html {
+  background: #000000;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+  overscroll-behavior: none;
+  min-height: 100%;
+}
+
+::selection {
+  background: rgba(255, 149, 0, 0.25);
+  color: white;
+}
+
+.font-display {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.text-hero {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  line-height: 1.25;
+}
+
+.meta-text {
+  font-size: 0.8125rem;
+  color: var(--muted-light);
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+.section-kicker {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.app-shell {
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: 24rem;
+}
+
+.surface-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+}
+
+.gradient-card {
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.pill-btn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: var(--surface-pill);
+  padding: 1rem 1.5rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: white;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.pill-btn:active {
+  transform: scale(0.98);
+}
+
+.pill-btn-accent {
+  color: var(--accent);
+}
+
+.pill-btn-primary {
+  background: white;
+  color: black;
+}
+
+.dock-btn {
+  display: flex;
+  height: 3.5rem;
+  width: 3.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--surface-pill);
+  color: white;
+  transition: opacity 0.15s;
+}
+
+.dock-btn-primary {
+  height: 4rem;
+  width: 4rem;
+  background: white;
+  color: black;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── Netflix-style full-screen UI ─── */
+
+.netflix-viewport {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-width: none;
+}
+
+.netflix-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: max(0.75rem, env(safe-area-inset-top)) 1rem 0.5rem;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), transparent);
+}
+
+.netflix-back-btn {
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  backdrop-filter: blur(8px);
+}
+
+.netflix-logo {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.netflix-track {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.netflix-slide {
+  width: 100vw;
+  height: 100%;
+  min-height: 0;
+}
+
+.netflix-slide-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.netflix-slide-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  padding: 5rem 1.75rem 1rem;
+}
+
+.netflix-slide-footer {
+  position: relative;
+  z-index: 10;
+  padding: 1.25rem 1.75rem max(5rem, calc(env(safe-area-inset-bottom) + 4rem));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.95), transparent);
+}
+
+.netflix-display {
+  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
+  font-size: clamp(2.5rem, 10vw, 3.75rem);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: white;
+  text-transform: capitalize;
+}
+
+.netflix-title {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.netflix-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.netflix-body {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.netflix-tag {
+  display: inline-flex;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: capitalize;
+  backdrop-filter: blur(8px);
+}
+
+.netflix-gradient-hero {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(229, 9, 20, 0.35), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(255, 149, 0, 0.12), transparent),
+    #000;
+}
+
+.netflix-gradient-good {
+  background:
+    radial-gradient(ellipse 70% 50% at 30% 80%, rgba(34, 197, 94, 0.2), transparent),
+    linear-gradient(165deg, #0a120e 0%, #000 60%);
+}
+
+.netflix-gradient-warn {
+  background:
+    radial-gradient(ellipse 80% 55% at 70% 90%, rgba(229, 9, 20, 0.45), transparent),
+    linear-gradient(165deg, #1a0808 0%, #000 55%);
+}
+
+.netflix-gradient-drill {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(255, 149, 0, 0.25), transparent),
+    linear-gradient(165deg, #141008 0%, #000 60%);
+}
+
+.netflix-gradient-finish {
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 50%, rgba(255, 255, 255, 0.06), transparent),
+    #000;
+}
+
+.netflix-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.875rem 1.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  backdrop-filter: blur(12px);
+  transition: transform 0.15s, background 0.15s;
+}
+
+.netflix-cta:active {
+  transform: scale(0.97);
+}
+
+.netflix-cta-danger {
+  border-color: rgba(229, 9, 20, 0.5);
+  background: rgba(229, 9, 20, 0.15);
+}
+
+.netflix-cta-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: white;
+  padding: 1rem 2rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: black;
+  transition: transform 0.15s;
+}
+
+.netflix-cta-primary:active {
+  transform: scale(0.97);
+}
+
+.netflix-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.netflix-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.netflix-modal-sheet {
+  position: relative;
+  z-index: 1;
+  max-height: min(420px, 72vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 1.5rem 1.5rem 0 0;
+  background: linear-gradient(to bottom, #1a1a1a, #0a0a0a);
+  padding: 0.875rem 1.25rem max(1rem, env(safe-area-inset-bottom));
+  animation: netflix-sheet-up 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes netflix-sheet-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0.5;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.netflix-pick-card {
+  border-radius: 1.5rem;
+  background: #fff;
+  color: #111;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.netflix-pick-card:hover:not(:disabled) {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+}
+
+.netflix-pick-card:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.netflix-pick-card--selected {
+  border-color: #111;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+.netflix-pick-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.netflix-pick-label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.netflix-pick-title {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #111;
+}
+
+.netflix-pick-sub {
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+/* legacy aliases */
+.nike-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+}
+
+.nike-card-selected {
+  background: var(--surface-raised);
+  border: 1.5px solid rgba(255, 149, 0, 0.6);
+  box-shadow: 0 0 0 1px rgba(255, 149, 0, 0.12);
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--muted);
+}

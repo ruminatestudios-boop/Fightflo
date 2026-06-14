@@ -1,0 +1,84 @@
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
+
+export interface CloudinaryUploadResult {
+  url: string;
+  publicId: string;
+  duration: number;
+  bytes: number;
+}
+
+export async function uploadVideo(
+  fileBuffer: Buffer,
+  sessionId: string
+): Promise<CloudinaryUploadResult> {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: "video",
+        folder: `feedback/sessions/${sessionId}`,
+        public_id: `session_${sessionId}`,
+        overwrite: true,
+      },
+      (error, result) => {
+        if (error || !result) {
+          reject(error ?? new Error("Cloudinary upload failed"));
+          return;
+        }
+        resolve({
+          url: result.secure_url,
+          publicId: result.public_id,
+          duration: result.duration ?? 0,
+          bytes: result.bytes ?? 0,
+        });
+      }
+    );
+    stream.end(fileBuffer);
+  });
+}
+
+export async function uploadClip(
+  filePath: string,
+  sessionId: string,
+  label: string
+): Promise<string> {
+  const result = await cloudinary.uploader.upload(filePath, {
+    resource_type: "video",
+    folder: `feedback/clips/${sessionId}`,
+    public_id: `${sessionId}_${label}`,
+    overwrite: true,
+  });
+  return result.secure_url;
+}
+
+export async function deleteVideo(publicId: string): Promise<void> {
+  await cloudinary.uploader.destroy(publicId, { resource_type: "video" });
+}
+
+export function getSignedUploadParams(sessionId: string) {
+  const timestamp = Math.round(Date.now() / 1000);
+  const folder = `feedback/sessions/${sessionId}`;
+
+  const signature = cloudinary.utils.api_sign_request(
+    {
+      timestamp,
+      folder,
+      resource_type: "video",
+    },
+    process.env.CLOUDINARY_API_SECRET!
+  );
+
+  return {
+    timestamp,
+    signature,
+    apiKey: process.env.CLOUDINARY_API_KEY!,
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
+    folder,
+  };
+}
