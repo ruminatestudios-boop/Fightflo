@@ -89,7 +89,7 @@ export function CoachShareFlow({
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2500);
     } catch {
-      setShareError("Could not copy — select the link below and copy manually.");
+      setShareError("Could not copy — try again.");
     }
   }, [shareUrl]);
 
@@ -164,10 +164,6 @@ export function CoachShareFlow({
 
           {selectedSession ? (
             <>
-              <FlowPanel>
-                <p className="home-flow-label">Coach link</p>
-                <p className="home-flow-link">{shareUrl}</p>
-              </FlowPanel>
               <FlowAction onClick={() => void copyLink()}>
                 {copied ? "Link copied" : "Copy coach link"}
               </FlowAction>
