@@ -118,7 +118,6 @@ function uploadToCloudinary(
     formData.append("signature", params.signature);
     formData.append("folder", params.folder);
     formData.append("public_id", params.publicId);
-    formData.append("resource_type", "video");
 
     xhr.send(formData);
   });

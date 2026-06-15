@@ -9,6 +9,10 @@ import {
 import { exportCacheVersion } from "@/lib/video/exportManifest";
 import { cleanupSessionAssets } from "@/lib/storage/session-cleanup";
 import {
+  formatSupabaseError,
+  isMissingColumnError,
+} from "@/lib/db/supabaseErrors";
+import {
   deleteSessionMetadata,
   mergeSessionMetadata,
   readSessionMetadata,
@@ -189,24 +193,51 @@ export async function createSession(input: {
     sessionNumber = (count ?? 0) + 1;
   }
 
-  const { data, error } = await supabase
+  const minimalPayload = {
+    ...(input.id ? { id: input.id } : {}),
+    user_id: input.userId ?? null,
+    sport: input.sport,
+    level: input.level,
+    video_url: input.videoUrl,
+    video_duration: input.videoDuration ?? 0,
+    status: "uploading",
+    session_number: sessionNumber,
+  };
+
+  const withCloudinaryPayload = {
+    ...minimalPayload,
+    cloudinary_public_id: input.cloudinaryPublicId ?? null,
+  };
+
+  const withParentPayload = input.parentSessionId
+    ? { ...withCloudinaryPayload, parent_session_id: input.parentSessionId }
+    : withCloudinaryPayload;
+
+  let { data, error } = await supabase
     .from("sessions")
-    .insert({
-      ...(input.id ? { id: input.id } : {}),
-      user_id: input.userId ?? null,
-      sport: input.sport,
-      level: input.level,
-      video_url: input.videoUrl,
-      video_duration: input.videoDuration ?? 0,
-      status: "uploading",
-      session_number: sessionNumber,
-      cloudinary_public_id: input.cloudinaryPublicId ?? null,
-      parent_session_id: input.parentSessionId ?? null,
-    })
+    .insert(withParentPayload)
     .select()
     .single();
 
-  if (error) throw error;
+  if (error && isMissingColumnError(error)) {
+    ({ data, error } = await supabase
+      .from("sessions")
+      .insert(withCloudinaryPayload)
+      .select()
+      .single());
+  }
+
+  if (error && isMissingColumnError(error)) {
+    ({ data, error } = await supabase
+      .from("sessions")
+      .insert(minimalPayload)
+      .select()
+      .single());
+  }
+
+  if (error) {
+    throw new Error(formatSupabaseError(error));
+  }
   return data as Session;
 }
 
@@ -384,7 +415,7 @@ export async function saveReport(input: {
     .select()
     .single();
 
-  if (error) {
+  if (error && isMissingColumnError(error)) {
     ({ data, error } = await supabase
       .from("reports")
       .insert(basePayload)
@@ -392,7 +423,9 @@ export async function saveReport(input: {
       .single());
   }
 
-  if (error) throw error;
+  if (error) {
+    throw new Error(formatSupabaseError(error));
+  }
 
   const report = data as Report;
 

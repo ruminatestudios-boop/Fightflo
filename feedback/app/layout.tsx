@@ -6,6 +6,8 @@ import { NavigationTracker } from "@/components/shared/NavigationTracker";
 import { PWARegister } from "@/components/shared/PWARegister";
 import "./globals.css";
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "/feedback";
+
 const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
@@ -22,6 +24,7 @@ export const metadata: Metadata = {
   title: "Fightflo — AI Coaching",
   description:
     "Film your training. AI tracks your movement and tells you exactly what to improve.",
+  manifest: `${basePath}/manifest.webmanifest`,
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

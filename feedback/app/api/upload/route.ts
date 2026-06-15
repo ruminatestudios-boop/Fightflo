@@ -153,9 +153,8 @@ export async function POST(request: NextRequest) {
     return handleDirectUpload(request);
   } catch (error) {
     console.error("[upload]", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Upload failed" },
-      { status: 500 }
-    );
+    const message =
+      error instanceof Error ? error.message : "Upload failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
