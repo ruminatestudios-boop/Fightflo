@@ -92,6 +92,16 @@ export const SHARE_CAPTIONS: Record<string, string> = {
 
 export const UPLOAD_CONFIG = {
   maxSizeBytes: 500 * 1024 * 1024,
-  acceptedMimeTypes: ["video/mp4", "video/quicktime", "video/x-msvideo"],
-  acceptedExtensions: [".mp4", ".mov", ".avi"],
+  acceptedMimeTypes: [
+    "video/mp4",
+    "video/quicktime",
+    "video/x-msvideo",
+    "video/3gpp",
+    "video/3gpp2",
+    "video/hevc",
+    "video/x-m4v",
+  ],
+  acceptedExtensions: [".mp4", ".mov", ".avi", ".m4v", ".3gp"],
+  /** Broad accept list — required for reliable iOS video picker */
+  acceptAttribute: "video/*,.mp4,.mov,.m4v,.avi",
 };

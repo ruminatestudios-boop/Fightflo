@@ -33,11 +33,12 @@ export const UploadZone = forwardRef<UploadZoneHandle, UploadZoneProps>(
         <input
           ref={inputRef}
           type="file"
-          accept={UPLOAD_CONFIG.acceptedMimeTypes.join(",")}
+          accept={UPLOAD_CONFIG.acceptAttribute}
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) handleFile(file);
+            e.target.value = "";
           }}
         />
 
@@ -82,7 +83,7 @@ export const UploadZone = forwardRef<UploadZoneHandle, UploadZoneProps>(
             Drop your training video
           </p>
           <p className="mt-2 text-xs text-neutral-500">
-            MP4, MOV, AVI · Max 500MB
+            MP4, MOV, M4V · Max 500MB
           </p>
         </div>
         )}

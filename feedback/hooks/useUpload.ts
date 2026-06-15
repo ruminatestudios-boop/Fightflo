@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { UPLOAD_CONFIG } from "@/config/prompts";
 import { parseJsonResponse } from "@/lib/api/parseResponse";
 import { apiPath } from "@/lib/paths";
-import { hapticStep, hapticTick } from "@/lib/haptics";
+import { hapticStep } from "@/lib/haptics";
 import { storeUserId } from "@/lib/storage/client";
+import { validateUploadFile } from "@/lib/upload/validateUploadFile";
 import type { AnalysisAllowance, SkillLevel, SportId } from "@/types";
 import type { PaywallMode } from "@/components/shared/PaywallSheet";
 
@@ -61,6 +61,14 @@ function uploadToCloudinary(
 ): Promise<CloudinaryUploadResult> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
+    const timeoutMs = Math.min(
+      30 * 60 * 1000,
+      Math.max(5 * 60 * 1000, Math.round(file.size / 40_000))
+    );
+    const timeoutId = window.setTimeout(() => {
+      xhr.abort();
+      reject(new Error("Upload timed out — check your connection and try again"));
+    }, timeoutMs);
 
     xhr.upload.addEventListener("progress", (event) => {
       if (event.lengthComputable) {
@@ -69,31 +77,48 @@ function uploadToCloudinary(
     });
 
     xhr.addEventListener("load", () => {
+      window.clearTimeout(timeoutId);
       try {
         const data = JSON.parse(xhr.responseText) as CloudinaryUploadResult;
         if (xhr.status >= 400 || data.error) {
-          reject(new Error(data.error?.message ?? "Cloudinary upload failed"));
+          reject(
+            new Error(
+              data.error?.message ??
+                `Cloudinary upload failed (${xhr.status})`
+            )
+          );
+          return;
+        }
+        if (!data.secure_url || !data.public_id) {
+          reject(new Error("Cloudinary upload returned incomplete data"));
           return;
         }
         resolve(data);
       } catch {
-        reject(new Error("Cloudinary upload failed"));
+        reject(new Error("Cloudinary upload failed — invalid response"));
       }
     });
 
     xhr.addEventListener("error", () => {
-      reject(new Error("Network error during upload"));
+      window.clearTimeout(timeoutId);
+      reject(new Error("Network error during upload — try Wi‑Fi or a shorter clip"));
+    });
+
+    xhr.addEventListener("abort", () => {
+      window.clearTimeout(timeoutId);
+      reject(new Error("Upload cancelled"));
     });
 
     xhr.open("POST", params.uploadUrl);
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", file, file.name || "training-video.mp4");
     formData.append("api_key", params.apiKey);
     formData.append("timestamp", String(params.timestamp));
     formData.append("signature", params.signature);
     formData.append("folder", params.folder);
     formData.append("public_id", params.publicId);
+    formData.append("resource_type", "video");
 
     xhr.send(formData);
   });
@@ -123,14 +148,7 @@ export function useUpload() {
   );
 
   const validateFile = useCallback((file: File): string | null => {
-    if (file.size > UPLOAD_CONFIG.maxSizeBytes) {
-      return "Video must be under 500MB";
-    }
-    const ext = `.${file.name.split(".").pop()?.toLowerCase()}`;
-    if (!UPLOAD_CONFIG.acceptedExtensions.includes(ext)) {
-      return "Accepted formats: MP4, MOV, AVI";
-    }
-    return null;
+    return validateUploadFile(file);
   }, []);
 
   const upload = useCallback(
@@ -244,7 +262,7 @@ export function useUpload() {
         }
 
         const formData = new FormData();
-        formData.append("video", file);
+        formData.append("video", file, file.name || "training-video.mp4");
         formData.append("sport", sport);
         formData.append("level", level);
         if (storedUserId) formData.append("userId", storedUserId);

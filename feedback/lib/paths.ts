@@ -1,15 +1,30 @@
 /** Matches `basePath` in next.config — used for fetch() and public asset URLs. */
 export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
+function runtimeBasePath(): string {
+  if (BASE_PATH) return BASE_PATH;
+  if (typeof window === "undefined") return "";
+  const { pathname } = window.location;
+  if (pathname === "/feedback" || pathname.startsWith("/feedback/")) {
+    return "/feedback";
+  }
+  return "";
+}
+
 export function withBasePath(path: string): string {
+  const base = runtimeBasePath() || BASE_PATH;
   if (!path.startsWith("/")) return path;
-  if (!BASE_PATH) return path;
-  if (path === BASE_PATH || path.startsWith(`${BASE_PATH}/`)) return path;
-  return `${BASE_PATH}${path}`;
+  if (!base) return path;
+  if (path === base || path.startsWith(`${base}/`)) return path;
+  return `${base}${path}`;
 }
 
 export function apiPath(path: string): string {
-  return withBasePath(path.startsWith("/") ? path : `/${path}`);
+  const relative = withBasePath(path.startsWith("/") ? path : `/${path}`);
+  if (typeof window !== "undefined") {
+    return new URL(relative, window.location.origin).href;
+  }
+  return relative;
 }
 
 export function reportPath(sessionId: string, mode?: "guard"): string {
