@@ -1,4 +1,4 @@
-const CACHE = "fightflo-feedback-v1";
+const CACHE = "fightflo-feedback-v2";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
@@ -26,6 +26,11 @@ self.addEventListener("fetch", (event) => {
     url.pathname === "/feedback/";
 
   if (isNavigate) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  if (url.pathname.includes("/_next/static/")) {
     event.respondWith(fetch(event.request));
     return;
   }

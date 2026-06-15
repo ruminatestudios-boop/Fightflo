@@ -308,7 +308,11 @@ export function NetflixHome() {
             <div className="glass-progress-wrap">
               <ProgressBar progress={progress} message={uploadStatus.message} />
             </div>
-            <p className="glass-meta">Usually 2–5 minutes</p>
+            <p className="glass-meta">
+              {uploadStatus.elapsedSec >= 60
+                ? `${Math.floor(uploadStatus.elapsedSec / 60)}m ${uploadStatus.elapsedSec % 60}s — keep this screen open`
+                : "Usually 2–5 minutes on Wi‑Fi"}
+            </p>
           </div>
         ) : mainTab === "library" ? (
           <div className="glass-home-inner glass-home-inner--library">

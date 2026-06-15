@@ -54,6 +54,24 @@ interface CloudinaryUploadResult {
   error?: { message: string };
 }
 
+function startSimulatedProgress(
+  onTick: (value: number) => void,
+  start: number,
+  cap: number,
+  step = 1,
+  intervalMs = 2000
+): () => void {
+  let current = start;
+  onTick(current);
+  const id = window.setInterval(() => {
+    if (current < cap) {
+      current += step;
+      onTick(current);
+    }
+  }, intervalMs);
+  return () => window.clearInterval(id);
+}
+
 function uploadToCloudinary(
   file: File,
   params: NonNullable<CloudinarySignResponse["cloudinary"]>,
@@ -62,7 +80,7 @@ function uploadToCloudinary(
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     let lastReported = 0;
-    let heartbeat: ReturnType<typeof setInterval> | null = null;
+    let heartbeat: number | null = null;
 
     const report = (percent: number) => {
       const clamped = Math.max(lastReported, Math.min(100, percent));
@@ -72,9 +90,18 @@ function uploadToCloudinary(
       }
     };
 
+    const startHeartbeat = () => {
+      if (heartbeat) return;
+      heartbeat = window.setInterval(() => {
+        if (lastReported < 88) {
+          report(lastReported + 1);
+        }
+      }, 2000);
+    };
+
     const stopHeartbeat = () => {
       if (heartbeat) {
-        clearInterval(heartbeat);
+        window.clearInterval(heartbeat);
         heartbeat = null;
       }
     };
@@ -95,17 +122,13 @@ function uploadToCloudinary(
         return;
       }
       if (event.loaded > 0) {
-        report(Math.min(85, lastReported + 2));
+        report(Math.min(88, lastReported + 2));
       }
     });
 
-    xhr.addEventListener("loadstart", () => {
-      report(1);
-      heartbeat = setInterval(() => {
-        if (lastReported < 85) {
-          report(lastReported + 1);
-        }
-      }, 2500);
+    xhr.upload.addEventListener("loadstart", () => {
+      report(Math.max(1, lastReported));
+      startHeartbeat();
     });
 
     xhr.addEventListener("load", () => {
@@ -139,6 +162,12 @@ function uploadToCloudinary(
       reject(new Error("Network error during upload — try Wi‑Fi or a shorter clip"));
     });
 
+    xhr.addEventListener("timeout", () => {
+      stopHeartbeat();
+      window.clearTimeout(timeoutId);
+      reject(new Error("Upload timed out — check your connection and try again"));
+    });
+
     xhr.addEventListener("abort", () => {
       stopHeartbeat();
       window.clearTimeout(timeoutId);
@@ -146,15 +175,19 @@ function uploadToCloudinary(
     });
 
     xhr.open("POST", params.uploadUrl);
+    xhr.timeout = timeoutMs;
 
     const formData = new FormData();
-    formData.append("file", file, file.name || "training-video.mp4");
+    // Omit filename — iOS Safari handles bare File blobs more reliably.
+    formData.append("file", file);
     formData.append("api_key", params.apiKey);
     formData.append("timestamp", String(params.timestamp));
     formData.append("signature", params.signature);
     formData.append("folder", params.folder);
     formData.append("public_id", params.publicId);
 
+    report(1);
+    startHeartbeat();
     xhr.send(formData);
   });
 }
@@ -201,13 +234,27 @@ export function useUpload() {
 
       setState({
         phase: "uploading",
-        progress: 5,
+        progress: 8,
         message: "Preparing upload...",
         sessionId: null,
         userId: null,
         error: null,
         paywallMode: null,
       });
+
+      const stopSignProgress = startSimulatedProgress(
+        (value) => {
+          setState((s) =>
+            s.phase === "uploading" && s.progress < 15
+              ? { ...s, progress: value, message: "Preparing upload..." }
+              : s
+          );
+        },
+        8,
+        15,
+        1,
+        1500
+      );
 
       try {
         const storedUserId =
@@ -226,6 +273,8 @@ export function useUpload() {
           }),
         });
 
+        stopSignProgress();
+
         const sign = await parseJsonResponse<CloudinarySignResponse>(signResponse);
 
         if (!signResponse.ok) {
@@ -236,7 +285,7 @@ export function useUpload() {
         if (sign.mode === "cloudinary" && sign.cloudinary && sign.sessionId) {
           setState((s) => ({
             ...s,
-            progress: 12,
+            progress: 16,
             message: "Uploading your video...",
           }));
 
@@ -246,9 +295,9 @@ export function useUpload() {
             (percent) => {
               setState((s) => ({
                 ...s,
-                progress: 12 + Math.round(percent * 0.63),
+                progress: 16 + Math.round(percent * 0.59),
                 message:
-                  percent >= 85
+                  percent >= 88
                     ? "Finishing upload..."
                     : "Uploading your video...",
               }));
@@ -344,6 +393,7 @@ export function useUpload() {
 
         return data.sessionId;
       } catch (error) {
+        stopSignProgress();
         const message = error instanceof Error ? error.message : "Upload failed";
         failUpload(message);
         return null;
