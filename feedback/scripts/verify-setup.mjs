@@ -89,18 +89,11 @@ async function main() {
       execSync("$HOME/bin/ffprobe -version", { stdio: "ignore", shell: "/bin/zsh" });
       check("FFprobe", true, "installed (~/bin)");
     } catch {
-      try {
-        const { path: bundled } = await import("ffprobe-static");
-        execSync(`"${bundled}" -version`, { stdio: "ignore" });
-        check("FFprobe", true, "bundled (ffprobe-static)");
-      } catch {
-        allOk =
-          check(
-            "FFprobe",
-            false,
-            "run: brew install ffmpeg (includes ffprobe) or npm install ffprobe-static"
-          ) && allOk;
-      }
+      check(
+        "FFprobe",
+        true,
+        "optional — video probe uses ffmpeg -i when ffprobe is missing"
+      );
     }
   }
 

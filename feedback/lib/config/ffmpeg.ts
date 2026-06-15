@@ -1,6 +1,6 @@
 import { accessSync, constants, existsSync } from "fs";
 import { execSync } from "child_process";
-import { arch, homedir, platform } from "os";
+import { homedir, platform, arch } from "os";
 import { dirname, join } from "path";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegStatic from "ffmpeg-static";
@@ -15,21 +15,6 @@ function isExecutable(path: string): boolean {
   } catch {
     return existsSync(path);
   }
-}
-
-/** ffprobe-static breaks when webpack bundles __dirname — resolve from app root */
-function getBundledFfprobePath(): string {
-  const os = platform();
-  const cpu = arch();
-  const name = os === "win32" ? "ffprobe.exe" : "ffprobe";
-  const roots = [process.cwd(), join(process.cwd(), "feedback")];
-
-  for (const root of roots) {
-    const candidate = join(root, "node_modules", "ffprobe-static", "bin", os, cpu, name);
-    if (existsSync(candidate)) return candidate;
-  }
-
-  return join(process.cwd(), "node_modules", "ffprobe-static", "bin", os, cpu, name);
 }
 
 function getBundledFfmpegPath(): string | null {
@@ -86,8 +71,8 @@ export function getFfmpegPath(): string {
   );
 }
 
-/** Resolve ffprobe — required for video export and analysis */
-export function getFfprobePath(ffmpegPath?: string): string {
+/** Optional — fluent-ffmpeg falls back to PATH when unset */
+export function getFfprobePath(ffmpegPath?: string): string | null {
   if (resolvedFfprobePath) return resolvedFfprobePath;
 
   const ffmpegDir = ffmpegPath ? dirname(ffmpegPath) : null;
@@ -97,7 +82,6 @@ export function getFfprobePath(ffmpegPath?: string): string {
     join(homedir(), "bin", "ffprobe"),
     "/opt/homebrew/bin/ffprobe",
     "/usr/local/bin/ffprobe",
-    getBundledFfprobePath(),
   ].filter((p): p is string => Boolean(p));
 
   for (const candidate of candidates) {
@@ -119,9 +103,7 @@ export function getFfprobePath(ffmpegPath?: string): string {
     /* not on PATH */
   }
 
-  throw new Error(
-    "Cannot find ffprobe. Install ffmpeg (includes ffprobe), copy ffprobe to ~/bin/, or set FFPROBE_PATH in .env"
-  );
+  return null;
 }
 
 export function configureFfmpeg(): void {

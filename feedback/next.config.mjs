@@ -42,25 +42,31 @@ const nextConfig = {
       "@napi-rs/canvas",
       "@mediapipe/tasks-vision",
       "fluent-ffmpeg",
-      "ffprobe-static",
       "ffmpeg-static",
     ],
     outputFileTracingIncludes: {
-      "/api/upload": [
+      "/api/upload/route": [
         "./lib/analysis/mediaPipeWasmLoader.cjs",
         "./node_modules/@mediapipe/tasks-vision/wasm/**",
         "./node_modules/ffmpeg-static/**",
-        "./node_modules/ffprobe-static/bin/**",
       ],
-      "/api/analyse": [
+      "/api/analyse/route": [
         "./lib/analysis/mediaPipeWasmLoader.cjs",
         "./node_modules/@mediapipe/tasks-vision/wasm/**",
         "./node_modules/ffmpeg-static/**",
-        "./node_modules/ffprobe-static/bin/**",
       ],
-      "/api/video/download": [
+      "/api/video/download/route": ["./node_modules/ffmpeg-static/**"],
+    },
+    outputFileTracingExcludes: {
+      "/api/video/download/status/route": [
         "./node_modules/ffmpeg-static/**",
-        "./node_modules/ffprobe-static/bin/**",
+        "./node_modules/@mediapipe/**",
+        "./node_modules/@napi-rs/canvas/**",
+      ],
+      "/api/upload/sign/route": [
+        "./node_modules/ffmpeg-static/**",
+        "./node_modules/@mediapipe/**",
+        "./node_modules/@napi-rs/canvas/**",
       ],
     },
   },

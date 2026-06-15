@@ -3,6 +3,8 @@ import { getReportBySessionId, getSessionById, getUserById } from "@/lib/db/quer
 import { hasProAccess } from "@/lib/config/env";
 import { resolveExportVideoUrl } from "@/lib/video/exportVideoUrl";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
     const sessionId = request.nextUrl.searchParams.get("sessionId");
