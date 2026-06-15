@@ -8,12 +8,9 @@ Upload any training video. Get technical coaching in minutes.
 
 - Boxing ✅
 - Muay Thai ✅
-- Golf ✅
-- Tennis ✅
-- MMA (coming soon)
-- Cricket (coming soon)
-- Football (coming soon)
-- Weightlifting (coming soon)
+- More sports (golf, tennis, MMA, etc.) are planned — not available in the live product yet.
+
+Best results: bag work, pad rounds, and shadowboxing with your full body visible in frame.
 
 ## Tech stack
 
@@ -89,11 +86,25 @@ vercel
 
 Set all environment variables in Vercel dashboard.
 
+FFmpeg is bundled via `ffmpeg-static` for serverless deploys — no custom layer required.
+
+### Database migrations (existing projects)
+
+If your Supabase project predates recent features, run in the SQL editor:
+
+```sql
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS parent_session_id UUID REFERENCES sessions(id) ON DELETE SET NULL;
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS landmark_summary JSONB;
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS follow_up_comparison JSONB;
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS export_video_url TEXT;
+```
+
 ## Privacy
 
-- Video deleted from Cloudinary after analysis
-- Only landmark data + clips stored
-- No signup required for first analysis
+- Privacy policy: `/privacy` (also linked in app footer)
+- Terms: `/terms`
+- Video may be deleted from Cloudinary after analysis (`DELETE_SOURCE_VIDEO_AFTER_ANALYSIS`)
+- Landmark data and highlight clips may be retained for replay
 
 ## License
 

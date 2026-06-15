@@ -16,6 +16,8 @@ export interface SkeletonDrawOptions {
   layout?: VideoContentRect;
   pulsePhase?: number;
   guardCalibration?: GuardCalibration | null;
+  /** Export burn uses a lower visibility cutoff than live playback */
+  minVisibility?: number;
 }
 
 /** Upper body + legs for combat sports */
@@ -83,7 +85,7 @@ export function drawSkeleton(
   landmarks: FrameLandmarks,
   options: SkeletonDrawOptions
 ) {
-  const { layout, highlightedJoint } = options;
+  const { layout, highlightedJoint, minVisibility = 0.25 } = options;
   if (!layout) return;
 
   ctx.save();
@@ -94,7 +96,9 @@ export function drawSkeleton(
     const from = getLandmarkPoint(landmarks, fromJoint);
     const to = getLandmarkPoint(landmarks, toJoint);
     if (!from || !to) continue;
-    if ((from.visibility ?? 1) < 0.25 || (to.visibility ?? 1) < 0.25) continue;
+    if ((from.visibility ?? 1) < minVisibility || (to.visibility ?? 1) < minVisibility) {
+      continue;
+    }
 
     const p1 = toCanvasPoint(from, layout);
     const p2 = toCanvasPoint(to, layout);
@@ -125,7 +129,7 @@ export function drawSkeleton(
 
   for (const joint of joints) {
     const point = getLandmarkPoint(landmarks, joint);
-    if (!point || (point.visibility ?? 1) < 0.25) continue;
+    if (!point || (point.visibility ?? 1) < minVisibility) continue;
 
     const { x, y } = toCanvasPoint(point, layout);
     let fill = "rgba(255, 255, 255, 0.95)";
@@ -186,6 +190,59 @@ export function drawMotionTrails(
   ctx.restore();
 }
 
+/** Guard-only overlay — hands and guard line, no full skeleton */
+export function drawGuardHandsOverlay(
+  ctx: CanvasRenderingContext2D,
+  landmarks: FrameLandmarks,
+  options: SkeletonDrawOptions
+) {
+  const { layout, pulsePhase = 0 } = options;
+  if (!layout) return;
+
+  for (const side of ["left", "right"] as const) {
+    const wristKey: "left_wrist" | "right_wrist" = `${side}_wrist`;
+    const elbowKey: "left_elbow" | "right_elbow" = `${side}_elbow`;
+    const wrist = getLandmarkPoint(landmarks, wristKey);
+    const elbow = getLandmarkPoint(landmarks, elbowKey);
+    if (!wrist || !elbow) continue;
+    if ((wrist.visibility ?? 1) < 0.25 || (elbow.visibility ?? 1) < 0.25) continue;
+
+    const state = wristGuardState(landmarks, wristKey, options.guardCalibration);
+    const bad = state === "bad";
+    const pulse = bad ? 0.85 + Math.sin(pulsePhase * 4) * 0.15 : 1;
+    const color = bad
+      ? `rgba(250, 65, 65, ${pulse})`
+      : "rgba(34, 197, 94, 0.88)";
+
+    const wp = toCanvasPoint(wrist, layout);
+    const ep = toCanvasPoint(elbow, layout);
+
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.strokeStyle = color;
+    ctx.lineWidth = bad ? 4 : 2.5;
+    ctx.beginPath();
+    ctx.moveTo(ep.x, ep.y);
+    ctx.lineTo(wp.x, wp.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(wp.x, wp.y, bad ? 11 : 8, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    if (bad) {
+      ctx.beginPath();
+      ctx.arc(wp.x, wp.y, 16 + Math.sin(pulsePhase * 3) * 2, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(250, 65, 65, ${0.45 * pulse})`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+}
+
 export function drawBiomechanics(
   ctx: CanvasRenderingContext2D,
   landmarks: FrameLandmarks,
@@ -243,20 +300,11 @@ export function drawBiomechanics(
 }
 
 export function drawGuardWarning(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  guardDropped: boolean,
-  pulsePhase = 0,
+  _ctx: CanvasRenderingContext2D,
+  _width: number,
+  _guardDropped: boolean,
+  _pulsePhase = 0,
   _prominent = false
 ) {
-  if (!guardDropped) return;
-
-  const alpha = 0.85 + Math.sin(pulsePhase * 4) * 0.15;
-
-  ctx.save();
-  ctx.fillStyle = `rgba(250, 65, 65, ${alpha})`;
-  ctx.font = "700 13px system-ui, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("GUARD DOWN", width / 2, 28);
-  ctx.restore();
+  // Guard drop is indicated by the red guard line — no on-video label.
 }

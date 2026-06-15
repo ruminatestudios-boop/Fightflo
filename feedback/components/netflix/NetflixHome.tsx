@@ -4,14 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { HomeFeatureGrid, type HomeFeatureId } from "@/components/home/HomeFeatureGrid";
 import { HomeSettingsChips } from "@/components/home/HomeSettingsChips";
-import { CoachShareFlow } from "@/components/home/flows/CoachShareFlow";
-import { CompareFlow } from "@/components/home/flows/CompareFlow";
 import { GuardDropFlow } from "@/components/home/flows/GuardDropFlow";
 import { ProgressFlow } from "@/components/home/flows/ProgressFlow";
 import { ReuploadFlow } from "@/components/home/flows/ReuploadFlow";
 import { WeeklyFocusFlow } from "@/components/home/flows/WeeklyFocusFlow";
 import { DevModeBanner } from "@/components/shared/DevModeBanner";
+import { LegalFooter } from "@/components/shared/LegalFooter";
 import { PaywallSheet } from "@/components/shared/PaywallSheet";
+import { PricingModal } from "@/components/shared/PricingModal";
 import { HomeStickyNav } from "@/components/netflix/HomeStickyNav";
 import { NetflixShell } from "@/components/netflix/NetflixShell";
 import { SessionLibrary } from "@/components/netflix/SessionLibrary";
@@ -49,9 +49,7 @@ type HomeView =
   | "guard"
   | "reupload"
   | "progress"
-  | "compare"
-  | "weekly"
-  | "coach-share";
+  | "weekly";
 
 type MainTab = "home" | "library";
 
@@ -74,12 +72,14 @@ export function NetflixHome() {
   const [demoLoading, setDemoLoading] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
   const [isPro, setIsPro] = useState(isClientProUnlocked());
   const [userName, setUserName] = useState<string | null>(null);
   const [nameDraft, setNameDraft] = useState("");
   const [libraryPaywallMode, setLibraryPaywallMode] = useState<"pro" | "topup" | null>(
     null
   );
+  const [followUpParentId, setFollowUpParentId] = useState<string | null>(null);
   const { phase, progress, message, error, paywallMode, upload, reset } =
     useUpload();
   const isBusy = phase === "uploading" || phase === "processing" || demoLoading;
@@ -98,14 +98,20 @@ export function NetflixHome() {
 
   const handleFile = useCallback(
     async (file: File) => {
-      const sessionId = await upload(file, sport, level);
+      const sessionId = await upload(
+        file,
+        sport,
+        level,
+        followUpParentId ?? undefined
+      );
+      setFollowUpParentId(null);
       if (sessionId) {
         void refetchInsights();
         void refetchLibrary();
         router.push(reportPath(sessionId));
       }
     },
-    [upload, sport, level, router, refetchInsights, refetchLibrary]
+    [upload, sport, level, followUpParentId, router, refetchInsights, refetchLibrary]
   );
 
   const handleDemo = useCallback(async () => {
@@ -144,23 +150,32 @@ export function NetflixHome() {
   }, [sport, level, router, refetchInsights]);
 
   const openUpload = useCallback(() => {
+    setFollowUpParentId(null);
     setMainTab("home");
     setView("home");
     setActiveCard("upload");
     uploadRef.current?.open();
   }, []);
 
-  const goToLibrary = () => {
+  const openFollowUpUpload = useCallback((parentSessionId: string) => {
+    setFollowUpParentId(parentSessionId);
+    setMainTab("home");
+    setView("home");
+    setActiveCard("reupload");
+    uploadRef.current?.open();
+  }, []);
+
+  const goToLibrary = useCallback(() => {
     setView("home");
     setMainTab("library");
     void refetchLibrary();
-  };
+  }, [refetchLibrary]);
 
-  const goToHome = () => {
+  const goToHome = useCallback(() => {
     setView("home");
     setMainTab("home");
     void refetchInsights();
-  };
+  }, [refetchInsights]);
 
   const openReport = useCallback(
     (sessionId: string) => {
@@ -256,7 +271,7 @@ export function NetflixHome() {
         return (
           <ReuploadFlow
             insight={insights?.reupload ?? null}
-            onUpload={openUpload}
+            onUploadFollowUp={openFollowUpUpload}
             onViewReport={openReport}
           />
         );
@@ -264,26 +279,12 @@ export function NetflixHome() {
         return (
           <ProgressFlow insight={insights?.progress ?? null} />
         );
-      case "compare":
-        return (
-          <CompareFlow
-            insight={insights?.compare ?? null}
-            onOpenSession={openReport}
-          />
-        );
       case "weekly":
         return (
           <WeeklyFocusFlow
             insight={insights?.weeklyFocus ?? null}
             onUpload={openUpload}
             onViewReport={openReport}
-          />
-        );
-      case "coach-share":
-        return (
-          <CoachShareFlow
-            sessions={sessions}
-            defaultSessionId={insights?.coachShare?.sessionId}
           />
         );
       default:
@@ -351,6 +352,13 @@ export function NetflixHome() {
               />
             </header>
 
+            {followUpParentId && insights?.reupload ? (
+              <p className="glass-followup-banner" role="status">
+                Follow-up clip — comparing to {insights.reupload.title} (
+                {insights.reupload.weaknessTitle})
+              </p>
+            ) : null}
+
             <HomeFeatureGrid
               insights={insightsLoading ? null : insights}
               activeId={activeCard}
@@ -382,9 +390,18 @@ export function NetflixHome() {
             </button>
 
             <p className="glass-meta glass-meta--footer">
-              1 free analysis · Pro {PRICING.pro.displayMonthly} · Top-up{" "}
-              {PRICING.topUp.display}
+              {PRICING.free.lifetimeScans}{" "}
+              <span className="pricing-free-tag">FREE</span> analysis · Pro{" "}
+              {PRICING.pro.displayMonthly} · Top-up {PRICING.topUp.display}{" "}
+              <button
+                type="button"
+                className="pricing-inline-link"
+                onClick={() => setShowPricingModal(true)}
+              >
+                See plans
+              </button>
             </p>
+            <LegalFooter />
           </div>
         ) : view === "name" ? (
           <div className="glass-home-inner">
@@ -517,6 +534,20 @@ export function NetflixHome() {
 
         <DevModeBanner />
       </div>
+
+      <PricingModal
+        open={showPricingModal}
+        isPro={isPro}
+        onClose={() => setShowPricingModal(false)}
+        onSelectPro={() => {
+          setLibraryPaywallMode("pro");
+          setShowPaywall(true);
+        }}
+        onSelectTopUp={() => {
+          setLibraryPaywallMode("topup");
+          setShowPaywall(true);
+        }}
+      />
 
       <PaywallSheet
         open={showPaywall && Boolean(activePaywallMode)}

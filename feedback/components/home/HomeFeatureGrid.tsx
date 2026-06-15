@@ -5,12 +5,10 @@ import type { HomeInsights } from "@/lib/insights/types";
 
 export type HomeFeatureId =
   | "upload"
-  | "guard"
-  | "reupload"
-  | "progress"
-  | "compare"
   | "weekly"
-  | "coach-share";
+  | "reupload"
+  | "guard"
+  | "progress";
 
 interface FeatureBlock {
   id: HomeFeatureId;
@@ -59,6 +57,17 @@ export function HomeFeatureGrid({
       ),
     },
     {
+      id: "weekly",
+      label: "This week's focus",
+      hint: complete > 0 ? insights?.weeklyFocus?.drillName ?? "Your drill" : "Needs 1 analysed clip",
+      disabled: complete === 0,
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+        </svg>
+      ),
+    },
+    {
       id: "reupload",
       label: "Verify your fix",
       hint:
@@ -76,44 +85,11 @@ export function HomeFeatureGrid({
     {
       id: "progress",
       label: "Your progress",
-      hint: complete > 0 ? "Faults over time" : "Needs 1 analysed clip",
+      hint: complete > 0 ? "Session metrics" : "Needs 1 analysed clip",
       disabled: complete === 0,
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-        </svg>
-      ),
-    },
-    {
-      id: "compare",
-      label: "Compare clips",
-      hint: complete >= 2 ? "Latest vs previous" : "Needs 2 analysed clips",
-      disabled: complete < 2,
-      icon: (
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12M8 12h12M8 17h12M4 7h.01M4 12h.01M4 17h.01" />
-        </svg>
-      ),
-    },
-    {
-      id: "weekly",
-      label: "This week's focus",
-      hint: complete > 0 ? insights?.weeklyFocus?.drillName ?? "Your drill" : "Needs 1 analysed clip",
-      disabled: complete === 0,
-      icon: (
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-        </svg>
-      ),
-    },
-    {
-      id: "coach-share",
-      label: "Share with coach",
-      hint: complete > 0 ? "Send report link" : "Needs 1 analysed clip",
-      disabled: complete === 0,
-      icon: (
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.935-2.186 2.25 2.25 0 00-3.935 2.186z" />
         </svg>
       ),
     },
@@ -140,8 +116,8 @@ export function HomeFeatureGrid({
             </svg>
           </span>
           <span className="home-feature-hint home-feature-hint--hero">
-            Film sparring or drills, tap to upload, then get faults, timestamps, and
-            drills to work on
+            Film bag work, pads, or shadowboxing — tap to upload, then get faults,
+            timestamps, and drills to work on
           </span>
         </button>
       </div>

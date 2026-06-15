@@ -57,7 +57,7 @@ export function HeroMedia({
         : "bg-gradient-to-t from-[#111111] via-[#111111]/40 to-transparent";
 
   return (
-    <div className={`hero-media-root absolute inset-0 overflow-hidden bg-black ${className}`}>
+    <div className={`hero-media-root overflow-hidden bg-black ${className}`}>
       <div className="absolute inset-0 bg-gradient-to-b from-[#1a0808] via-[#111111] to-[#050505]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_20%,rgba(250,65,65,0.18),transparent_55%)]" />
 
@@ -66,7 +66,7 @@ export function HeroMedia({
         <img
           src={withBasePath(posterSrc)}
           alt=""
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
+          className="hero-media-video"
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}
@@ -76,9 +76,17 @@ export function HeroMedia({
       {videoSrc ? (
         <video
           ref={videoRef}
-          className={`pointer-events-none absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ${
+          className={`hero-media-video transition-opacity duration-700 ${
             videoReady || !posterSrc ? "opacity-100" : "opacity-40"
           }`}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "center",
+          }}
           autoPlay
           muted
           loop

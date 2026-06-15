@@ -26,42 +26,56 @@ export function buildOverlayGuideContent(
   const guardCalibrated = options?.guardCalibrated ?? false;
   const isGuard = options?.isGuardMode ?? false;
 
-  const legend: OverlayGuideLegendItem[] = [
-    {
-      swatch: "skeleton",
-      label: "White skeleton",
-      detail:
-        "Shoulders, arms, hips" +
-        (legs ? ", and legs" : "") +
-        " tracked from your uploaded video — synced to playback.",
-    },
-    {
-      swatch: "guard-ok",
-      label: "Green wrists",
-      detail: guardCalibrated
-        ? "Hands above your calibrated guard line (learned from your neutral stance)."
-        : "Hands above the estimated cheek/guard line.",
-    },
-    {
-      swatch: "guard-bad",
-      label: "Red wrists & dashed line",
-      detail: isGuard
-        ? "Guard drop flagged — wrist(s) dropped below your guard line for several frames."
-        : "Guard dropped or coaching moment at this timestamp.",
-    },
-    {
-      swatch: "angle",
-      label: "HIP / elbow angles",
-      detail: legs
-        ? "Hip rotation for punches and kicks; elbow angle on extension. Green = in range, yellow = borderline, red = fault zone."
-        : "Hip-shoulder rotation and elbow extension on punches. Green = in range, red = likely fault.",
-    },
-    {
-      swatch: "trail",
-      label: "Wrist trails",
-      detail: "Short motion paths — helps you see hand speed and return after strikes.",
-    },
-  ];
+  const legend: OverlayGuideLegendItem[] = isGuard
+    ? [
+        {
+          swatch: "guard-ok",
+          label: "Green hands",
+          detail: guardCalibrated
+            ? "Hands above your calibrated guard line."
+            : "Hands above the estimated guard line.",
+        },
+        {
+          swatch: "guard-bad",
+          label: "Red hands & dashed line",
+          detail:
+            "Guard drop — wrist(s) fell below your guard line. No full skeleton in this mode.",
+        },
+      ]
+    : [
+        {
+          swatch: "skeleton",
+          label: "White skeleton",
+          detail:
+            "Shoulders, arms, hips" +
+            (legs ? ", and legs" : "") +
+            " tracked from your uploaded video — synced to playback.",
+        },
+        {
+          swatch: "guard-ok",
+          label: "Green wrists",
+          detail: guardCalibrated
+            ? "Hands above your calibrated guard line (learned from your neutral stance)."
+            : "Hands above the estimated cheek/guard line.",
+        },
+        {
+          swatch: "guard-bad",
+          label: "Red wrists & dashed line",
+          detail: "Guard dropped or coaching moment at this timestamp.",
+        },
+        {
+          swatch: "angle",
+          label: "HIP / elbow angles",
+          detail: legs
+            ? "Hip rotation for punches and kicks; elbow angle on extension. Green = in range, yellow = borderline, red = fault zone."
+            : "Hip-shoulder rotation and elbow extension on punches. Green = in range, red = likely fault.",
+        },
+        {
+          swatch: "trail",
+          label: "Wrist trails",
+          detail: "Short motion paths — helps you see hand speed and return after strikes.",
+        },
+      ];
 
   const howItWorks = [
     "We extract ~12 frames per second from your clip and run pose tracking on each frame.",

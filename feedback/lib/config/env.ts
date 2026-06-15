@@ -41,6 +41,7 @@ export function isAnalysisLimitBypassed(): boolean {
 export function isProFeaturesBypassed(): boolean {
   if (process.env.PRO_FEATURES_BYPASS === "true") return true;
   if (process.env.PRO_FEATURES_BYPASS === "false") return false;
+  if (isAnalysisLimitBypassed()) return true;
   if (process.env.NODE_ENV === "development") return true;
   return isLocalDevMode();
 }

@@ -3,10 +3,13 @@
 import type { ReactNode } from "react";
 import { BackButton } from "@/components/shared/BackButton";
 import { LogoHeader } from "@/components/shared/LogoHeader";
+import { useNavigateBack } from "@/hooks/useNavigateBack";
 
 interface AppShellProps {
   children: ReactNode;
   showLogo?: boolean;
+  /** Show back control — uses browser history unless overridden */
+  showBack?: boolean;
   backHref?: string;
   onBack?: () => void;
   className?: string;
@@ -16,12 +19,15 @@ interface AppShellProps {
 export function AppShell({
   children,
   showLogo = false,
+  showBack = false,
   backHref,
   onBack,
   className = "",
   dock,
 }: AppShellProps) {
-  const showBack = Boolean(backHref || onBack);
+  const navigateBack = useNavigateBack();
+  const hasBack = showBack || Boolean(backHref || onBack);
+  const backClick = onBack ?? navigateBack;
 
   return (
     <div
@@ -29,20 +35,24 @@ export function AppShell({
     >
       {showLogo && (
         <header className="relative mb-6 flex min-h-10 items-center justify-center">
-          {showBack ? (
+          {hasBack ? (
             backHref ? (
               <BackButton href={backHref} className="absolute left-0" />
             ) : (
-              <BackButton onClick={onBack} className="absolute left-0" />
+              <BackButton onClick={backClick} className="absolute left-0" />
             )
           ) : null}
           <LogoHeader size="sm" />
         </header>
       )}
 
-      {!showLogo && showBack ? (
+      {!showLogo && hasBack ? (
         <div className="mb-4 flex justify-start">
-          {backHref ? <BackButton href={backHref} /> : <BackButton onClick={onBack} />}
+          {backHref ? (
+            <BackButton href={backHref} />
+          ) : (
+            <BackButton onClick={backClick} />
+          )}
         </div>
       ) : null}
 

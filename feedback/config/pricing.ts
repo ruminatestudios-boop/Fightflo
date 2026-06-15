@@ -22,7 +22,7 @@ export const PRICING = {
   topUp: {
     scans: TOPUP_SCAN_PACK,
     priceGbp: TOPUP_PACK_PRICE_GBP,
-    display: formatGbp(TOPUP_PACK_PRICE_GBP, ` for ${TOPUP_SCAN_PACK}`),
+    display: formatGbp(TOPUP_PACK_PRICE_GBP, ` for ${TOPUP_SCAN_PACK} scans`),
     displayShort: formatGbp(TOPUP_PACK_PRICE_GBP),
   },
   free: {

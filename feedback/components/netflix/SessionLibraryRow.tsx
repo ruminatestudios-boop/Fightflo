@@ -5,6 +5,10 @@ import { useState } from "react";
 import { getStoredUserId } from "@/lib/storage/client";
 import { apiPath } from "@/lib/paths";
 import {
+  DownloadSessionVideoError,
+  downloadSessionVideo,
+} from "@/lib/video/downloadSessionVideo";
+import {
   isPresetThumbnail,
   presetEmoji,
   type SessionLibraryEntry,
@@ -76,35 +80,17 @@ export function SessionLibraryRow({
     event.preventDefault();
     event.stopPropagation();
 
-    if (!isPro) {
-      onUpgrade();
-      return;
-    }
-
     const userId = session.user_id ?? getStoredUserId();
     if (!userId) return;
 
     setDownloading(true);
     try {
-      const res = await fetch(
-        apiPath(`/api/video/download?sessionId=${session.id}&userId=${userId}`)
-      );
-      if (res.status === 402) {
+      await downloadSessionVideo(session.id, userId);
+    } catch (err) {
+      if (err instanceof DownloadSessionVideoError && err.code === "PRO_REQUIRED") {
         onUpgrade();
         return;
       }
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error((data as { error?: string }).error ?? "Download failed");
-      }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `feedback-${session.id.slice(0, 8)}.mp4`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
       alert(err instanceof Error ? err.message : "Download failed");
     } finally {
       setDownloading(false);

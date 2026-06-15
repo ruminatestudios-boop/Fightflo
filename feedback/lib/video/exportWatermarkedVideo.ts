@@ -8,6 +8,7 @@ import type { GuardCalibration } from "@/lib/analysis/poseMetrics";
 import { materializeVideoToPath } from "@/lib/video/materializeVideo";
 import { renderOverlayFrameSequence } from "@/lib/video/burnPoseOverlay";
 import { probeVideo } from "@/lib/video/videoProbe";
+import { hasExportableLandmarks } from "@/components/video/landmarkPlayback";
 
 const WATERMARK_FILTER =
   "drawtext=text='FIGHTFLO.':fontcolor=white@0.82:fontsize=32:x=(w-tw)/2:y=h-th-28:shadowcolor=black@0.55:shadowx=2:shadowy=2";
@@ -34,14 +35,13 @@ export async function exportWatermarkedVideo(
   configureFfmpeg();
 
   const probe = await probeVideo(sourcePath);
-  const hasLandmarks =
-    options?.landmarkTimeline && options.landmarkTimeline.length >= 3;
+  const hasLandmarks = hasExportableLandmarks(options?.landmarkTimeline ?? []);
 
-  if (hasLandmarks) {
+  if (hasLandmarks && options?.landmarkTimeline) {
     const { pattern, fps } = await renderOverlayFrameSequence(
       workDir,
       probe,
-      options!.landmarkTimeline!,
+      options.landmarkTimeline,
       {
         guardCalibration: options?.guardCalibration,
         confirmedEvents: options?.confirmedEvents,
@@ -49,8 +49,8 @@ export async function exportWatermarkedVideo(
     );
 
     const filterComplex = [
-      "[1:v]format=rgba[ovl]",
-      "[0:v][ovl]overlay=0:0:format=auto[v]",
+      `[1:v]fps=${fps},format=rgba[ovl]`,
+      "[0:v][ovl]overlay=0:0:format=auto:shortest=1[v]",
       `[v]${WATERMARK_FILTER}[out]`,
     ].join(";");
 
@@ -70,8 +70,14 @@ export async function exportWatermarkedVideo(
           "fast",
           "-crf",
           "23",
+          "-pix_fmt",
+          "yuv420p",
+          "-profile:v",
+          "main",
           "-c:a",
-          "copy",
+          "aac",
+          "-b:a",
+          "128k",
           "-movflags",
           "+faststart",
           "-shortest",
@@ -85,7 +91,24 @@ export async function exportWatermarkedVideo(
     await new Promise<void>((resolve, reject) => {
       ffmpeg(sourcePath)
         .videoFilters([WATERMARK_FILTER])
-        .outputOptions(["-c:a", "copy", "-movflags", "+faststart"])
+        .outputOptions([
+          "-c:v",
+          "libx264",
+          "-preset",
+          "fast",
+          "-crf",
+          "23",
+          "-pix_fmt",
+          "yuv420p",
+          "-profile:v",
+          "main",
+          "-c:a",
+          "aac",
+          "-b:a",
+          "128k",
+          "-movflags",
+          "+faststart",
+        ])
         .output(outputPath)
         .on("end", () => resolve())
         .on("error", (err) => reject(err))

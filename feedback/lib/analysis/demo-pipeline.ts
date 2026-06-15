@@ -1,7 +1,10 @@
 import { findPatterns } from "@/lib/analysis/patternFinder";
 import { generateFeedback } from "@/lib/analysis/feedbackWriter";
+import { buildSessionHistoryEntry } from "@/lib/analysis/sessionHistory";
 import { detectPose } from "@/lib/analysis/poseDetection";
+import { buildFollowUpComparison } from "@/lib/insights/followUpComparison";
 import {
+  getReportBySessionId,
   getSessionById,
   saveReport,
   updateSessionStatus,
@@ -40,7 +43,41 @@ export async function runDemoAnalysisPipeline(
 
     const timeline: LandmarkTimeline = await detectPose([], sport);
     const patternData = await findPatterns(timeline, sport);
-    const feedback = await generateFeedback(patternData, sport, level);
+
+    const parentSessionId = session.parent_session_id ?? null;
+    let sessionHistory: Record<string, unknown>[] = [];
+    let parentSession = null;
+    let parentReport = null;
+
+    if (parentSessionId) {
+      parentSession = await getSessionById(parentSessionId);
+      parentReport = parentSession
+        ? await getReportBySessionId(parentSessionId)
+        : null;
+      if (parentSession && parentReport) {
+        sessionHistory = [
+          buildSessionHistoryEntry(parentSession, parentReport, {
+            isFollowUpParent: true,
+          }),
+        ];
+      }
+    }
+
+    const feedback = await generateFeedback(patternData, sport, level, {
+      sessionHistory,
+      isFollowUp: sessionHistory.length > 0,
+    });
+
+    let followUpComparison = null;
+    if (parentSession && parentReport) {
+      followUpComparison = buildFollowUpComparison(parentSession, parentReport, {
+        main_weakness: feedback.main_weakness,
+        positives: feedback.positives,
+        confirmed_events: [],
+        pose_quality: null,
+      });
+      followUpComparison.summary = feedback.pattern_insight;
+    }
 
     const clips: ReportClip[] = [
       {
@@ -64,6 +101,7 @@ export async function runDemoAnalysisPipeline(
       feedback,
       landmarkData: timeline,
       clips,
+      followUpComparison,
     });
 
     if (session.user_id) {

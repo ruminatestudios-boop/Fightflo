@@ -1,8 +1,10 @@
 import { randomUUID } from "crypto";
 import { startOfCurrentMonthUtc } from "@/config/limits";
+import { exportCacheVersion } from "@/lib/video/exportManifest";
 import type {
   ClipRecord,
   CoachingFeedback,
+  FollowUpComparison,
   LandmarkTimeline,
   Report,
   ReportClip,
@@ -80,6 +82,7 @@ export async function createSession(input: {
   videoUrl: string;
   videoDuration?: number;
   cloudinaryPublicId?: string;
+  parentSessionId?: string | null;
 }): Promise<DevSession> {
   let sessionNumber = 1;
   if (input.userId) {
@@ -101,6 +104,7 @@ export async function createSession(input: {
     progress_step: "uploading",
     progress_message: "Uploading your video...",
     cloudinary_public_id: input.cloudinaryPublicId ?? null,
+    parent_session_id: input.parentSessionId ?? null,
   };
   sessions.set(session.id, session);
   return session;
@@ -192,6 +196,8 @@ export async function saveReport(input: {
   poseQuality?: Report["pose_quality"];
   confirmedEvents?: Report["confirmed_events"];
   landmarkSummary?: Report["landmark_summary"];
+  followUpComparison?: FollowUpComparison | null;
+  markComplete?: boolean;
 }): Promise<Report> {
   const report: Report = {
     id: randomUUID(),
@@ -209,6 +215,7 @@ export async function saveReport(input: {
     pose_quality: input.poseQuality ?? null,
     confirmed_events: input.confirmedEvents ?? [],
     landmark_summary: input.landmarkSummary ?? null,
+    follow_up_comparison: input.followUpComparison ?? null,
   };
   reports.set(report.id, report);
   reportsBySession.set(input.sessionId, report.id);
@@ -233,12 +240,31 @@ export async function saveReport(input: {
     );
   }
 
-  await updateSessionStatus(input.sessionId, "complete", {
-    step: "complete",
-    message: "Your report is ready.",
-  });
+  if (input.markComplete !== false) {
+    await updateSessionStatus(input.sessionId, "complete", {
+      step: "complete",
+      message: "Your report is ready.",
+    });
+  }
 
   return report;
+}
+
+export async function updateReportExportUrl(
+  sessionId: string,
+  exportVideoUrl: string
+): Promise<void> {
+  const reportId = reportsBySession.get(sessionId);
+  if (!reportId) return;
+  const report = reports.get(reportId);
+  if (!report) return;
+  report.export_video_url = exportVideoUrl;
+  report.landmark_summary = {
+    ...(report.landmark_summary ?? {}),
+    export_video_url: exportVideoUrl,
+    export_cache_version: exportCacheVersion(),
+    export_has_skeleton: true,
+  };
 }
 
 export async function getUserSessions(userId: string): Promise<Session[]> {

@@ -63,6 +63,7 @@ export async function runPromptChain(input: {
   sport: SportId;
   level: SkillLevel;
   sessionHistory?: Record<string, unknown>[];
+  isFollowUp?: boolean;
   techniquesSeen?: string[];
   poseQuality?: PoseQualityReport;
   landmarkSummary?: Record<string, unknown>;
@@ -101,9 +102,11 @@ export async function runPromptChain(input: {
     landmark_summary: input.landmarkSummary ?? {},
     session_history: input.sessionHistory ?? [],
     progress_note:
-      (input.sessionHistory?.length ?? 0) > 0
-        ? "Compare to prior sessions in session_history."
-        : "First tracked session — focus on this footage only.",
+      input.isFollowUp && (input.sessionHistory?.length ?? 0) > 0
+        ? "This is a FOLLOW-UP clip after the athlete drilled the fix from the parent session in session_history. In pattern_insight, explicitly state what improved vs what got worse compared to that prior clip. Reference the parent main_weakness and drill."
+        : (input.sessionHistory?.length ?? 0) > 0
+          ? "Compare to prior sessions in session_history."
+          : "First tracked session — focus on this footage only.",
   };
 
   const landmarkData = input.patternData.session_landmarks.slice(0, 80);

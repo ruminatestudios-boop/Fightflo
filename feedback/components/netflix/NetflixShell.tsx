@@ -3,9 +3,12 @@
 import type { ReactNode } from "react";
 import { BackButton } from "@/components/shared/BackButton";
 import { LogoHeader } from "@/components/shared/LogoHeader";
+import { useNavigateBack } from "@/hooks/useNavigateBack";
 
 interface NetflixShellProps {
   children: ReactNode;
+  /** Show back control — uses browser history unless overridden */
+  showBack?: boolean;
   backHref?: string;
   onBack?: () => void;
   onLogoClick?: () => void;
@@ -16,24 +19,27 @@ interface NetflixShellProps {
 
 export function NetflixShell({
   children,
+  showBack = false,
   backHref,
   onBack,
   onLogoClick,
   topBar,
   immersive = false,
 }: NetflixShellProps) {
-  const showBack = Boolean(backHref || onBack);
+  const navigateBack = useNavigateBack();
+  const hasBack = showBack || Boolean(backHref || onBack);
+  const backClick = onBack ?? navigateBack;
 
   return (
     <div
       className={`netflix-viewport relative bg-black text-white ${immersive ? "netflix-viewport--immersive" : ""}`}
     >
       <div className="netflix-topbar">
-        {showBack ? (
+        {hasBack ? (
           backHref ? (
             <BackButton href={backHref} />
           ) : (
-            <BackButton onClick={onBack} />
+            <BackButton onClick={backClick} />
           )
         ) : (
           <div className="w-10" />

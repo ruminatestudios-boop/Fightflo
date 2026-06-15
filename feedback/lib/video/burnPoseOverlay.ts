@@ -18,6 +18,8 @@ import {
 } from "@/lib/video/poseOverlayDraw";
 import type { VideoProbe } from "@/lib/video/videoProbe";
 
+const MAX_EXPORT_FRAMES = 720;
+
 function guardAlertAtTime(
   guardDropped: boolean,
   time: number,
@@ -33,6 +35,15 @@ function guardAlertAtTime(
   );
 }
 
+function exportFpsForDuration(sourceFps: number, duration: number): number {
+  let fps = Math.min(sourceFps, 12);
+  const frameCount = duration * fps;
+  if (frameCount > MAX_EXPORT_FRAMES) {
+    fps = Math.max(8, MAX_EXPORT_FRAMES / Math.max(duration, 1));
+  }
+  return Math.round(fps * 100) / 100;
+}
+
 /** Render transparent PNG overlay frames matching the on-screen skeleton */
 export async function renderOverlayFrameSequence(
   workDir: string,
@@ -46,7 +57,8 @@ export async function renderOverlayFrameSequence(
   const overlayDir = join(workDir, "overlays");
   await mkdir(overlayDir, { recursive: true });
 
-  const { width, height, fps, duration } = probe;
+  const { width, height, duration } = probe;
+  const fps = exportFpsForDuration(probe.fps, duration);
   const frameCount = Math.max(1, Math.ceil(duration * fps));
   const layout = computeVideoContentRect(width, height, width, height);
   const trails = { left: [] as WristTrailPoint[], right: [] as WristTrailPoint[] };
@@ -92,7 +104,7 @@ export async function renderOverlayFrameSequence(
         t,
         confirmedEvents
       );
-      const pulsePhase = (i / fps) * 2;
+      const pulsePhase = t * 2;
 
       drawMotionTrails(ctx, trails);
       drawGuardLine(ctx, frameLandmarks, {

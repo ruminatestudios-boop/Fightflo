@@ -1,0 +1,992 @@
+{
+  "timeline": [
+    {
+      "frame": 0,
+      "timestamp": "0:00",
+      "landmarks": {}
+    },
+    {
+      "frame": 1,
+      "timestamp": "0:00",
+      "landmarks": {}
+    },
+    {
+      "frame": 2,
+      "timestamp": "0:00",
+      "landmarks": {}
+    },
+    {
+      "frame": 3,
+      "timestamp": "0:00",
+      "landmarks": {}
+    },
+    {
+      "frame": 4,
+      "timestamp": "0:00",
+      "landmarks": {}
+    },
+    {
+      "frame": 5,
+      "timestamp": "0:00",
+      "landmarks": {}
+    },
+    {
+      "frame": 6,
+      "timestamp": "0:00",
+      "landmarks": {}
+    },
+    {
+      "frame": 7,
+      "timestamp": "0:00",
+      "landmarks": {}
+    },
+    {
+      "frame": 8,
+      "timestamp": "0:00",
+      "landmarks": {}
+    },
+    {
+      "frame": 9,
+      "timestamp": "0:00",
+      "landmarks": {}
+    },
+    {
+      "frame": 10,
+      "timestamp": "0:00",
+      "landmarks": {}
+    },
+    {
+      "frame": 11,
+      "timestamp": "0:00",
+      "landmarks": {}
+    },
+    {
+      "frame": 12,
+      "timestamp": "0:01",
+      "landmarks": {}
+    },
+    {
+      "frame": 13,
+      "timestamp": "0:01",
+      "landmarks": {}
+    },
+    {
+      "frame": 14,
+      "timestamp": "0:01",
+      "landmarks": {}
+    },
+    {
+      "frame": 15,
+      "timestamp": "0:01",
+      "landmarks": {}
+    },
+    {
+      "frame": 16,
+      "timestamp": "0:01",
+      "landmarks": {}
+    },
+    {
+      "frame": 17,
+      "timestamp": "0:01",
+      "landmarks": {}
+    },
+    {
+      "frame": 18,
+      "timestamp": "0:01",
+      "landmarks": {}
+    },
+    {
+      "frame": 19,
+      "timestamp": "0:01",
+      "landmarks": {}
+    },
+    {
+      "frame": 20,
+      "timestamp": "0:01",
+      "landmarks": {}
+    },
+    {
+      "frame": 21,
+      "timestamp": "0:01",
+      "landmarks": {}
+    },
+    {
+      "frame": 22,
+      "timestamp": "0:01",
+      "landmarks": {}
+    },
+    {
+      "frame": 23,
+      "timestamp": "0:01",
+      "landmarks": {}
+    },
+    {
+      "frame": 24,
+      "timestamp": "0:02",
+      "landmarks": {}
+    },
+    {
+      "frame": 25,
+      "timestamp": "0:02",
+      "landmarks": {}
+    },
+    {
+      "frame": 26,
+      "timestamp": "0:02",
+      "landmarks": {}
+    },
+    {
+      "frame": 27,
+      "timestamp": "0:02",
+      "landmarks": {}
+    },
+    {
+      "frame": 28,
+      "timestamp": "0:02",
+      "landmarks": {}
+    },
+    {
+      "frame": 29,
+      "timestamp": "0:02",
+      "landmarks": {}
+    },
+    {
+      "frame": 30,
+      "timestamp": "0:02",
+      "landmarks": {}
+    },
+    {
+      "frame": 31,
+      "timestamp": "0:02",
+      "landmarks": {}
+    },
+    {
+      "frame": 32,
+      "timestamp": "0:02",
+      "landmarks": {}
+    },
+    {
+      "frame": 33,
+      "timestamp": "0:02",
+      "landmarks": {}
+    },
+    {
+      "frame": 34,
+      "timestamp": "0:02",
+      "landmarks": {}
+    },
+    {
+      "frame": 35,
+      "timestamp": "0:02",
+      "landmarks": {}
+    },
+    {
+      "frame": 36,
+      "timestamp": "0:03",
+      "landmarks": {}
+    },
+    {
+      "frame": 37,
+      "timestamp": "0:03",
+      "landmarks": {}
+    },
+    {
+      "frame": 38,
+      "timestamp": "0:03",
+      "landmarks": {}
+    },
+    {
+      "frame": 39,
+      "timestamp": "0:03",
+      "landmarks": {}
+    },
+    {
+      "frame": 40,
+      "timestamp": "0:03",
+      "landmarks": {}
+    },
+    {
+      "frame": 41,
+      "timestamp": "0:03",
+      "landmarks": {}
+    },
+    {
+      "frame": 42,
+      "timestamp": "0:03",
+      "landmarks": {}
+    },
+    {
+      "frame": 43,
+      "timestamp": "0:03",
+      "landmarks": {}
+    },
+    {
+      "frame": 44,
+      "timestamp": "0:03",
+      "landmarks": {}
+    },
+    {
+      "frame": 45,
+      "timestamp": "0:03",
+      "landmarks": {}
+    },
+    {
+      "frame": 46,
+      "timestamp": "0:03",
+      "landmarks": {}
+    },
+    {
+      "frame": 47,
+      "timestamp": "0:03",
+      "landmarks": {}
+    },
+    {
+      "frame": 48,
+      "timestamp": "0:04",
+      "landmarks": {}
+    },
+    {
+      "frame": 49,
+      "timestamp": "0:04",
+      "landmarks": {}
+    },
+    {
+      "frame": 50,
+      "timestamp": "0:04",
+      "landmarks": {}
+    },
+    {
+      "frame": 51,
+      "timestamp": "0:04",
+      "landmarks": {}
+    },
+    {
+      "frame": 52,
+      "timestamp": "0:04",
+      "landmarks": {}
+    },
+    {
+      "frame": 53,
+      "timestamp": "0:04",
+      "landmarks": {}
+    },
+    {
+      "frame": 54,
+      "timestamp": "0:04",
+      "landmarks": {}
+    },
+    {
+      "frame": 55,
+      "timestamp": "0:04",
+      "landmarks": {}
+    },
+    {
+      "frame": 56,
+      "timestamp": "0:04",
+      "landmarks": {}
+    },
+    {
+      "frame": 57,
+      "timestamp": "0:04",
+      "landmarks": {}
+    },
+    {
+      "frame": 58,
+      "timestamp": "0:04",
+      "landmarks": {}
+    },
+    {
+      "frame": 59,
+      "timestamp": "0:04",
+      "landmarks": {}
+    },
+    {
+      "frame": 60,
+      "timestamp": "0:05",
+      "landmarks": {}
+    },
+    {
+      "frame": 61,
+      "timestamp": "0:05",
+      "landmarks": {}
+    },
+    {
+      "frame": 62,
+      "timestamp": "0:05",
+      "landmarks": {}
+    },
+    {
+      "frame": 63,
+      "timestamp": "0:05",
+      "landmarks": {}
+    },
+    {
+      "frame": 64,
+      "timestamp": "0:05",
+      "landmarks": {}
+    },
+    {
+      "frame": 65,
+      "timestamp": "0:05",
+      "landmarks": {}
+    },
+    {
+      "frame": 66,
+      "timestamp": "0:05",
+      "landmarks": {}
+    },
+    {
+      "frame": 67,
+      "timestamp": "0:05",
+      "landmarks": {}
+    },
+    {
+      "frame": 68,
+      "timestamp": "0:05",
+      "landmarks": {}
+    },
+    {
+      "frame": 69,
+      "timestamp": "0:05",
+      "landmarks": {}
+    },
+    {
+      "frame": 70,
+      "timestamp": "0:05",
+      "landmarks": {}
+    },
+    {
+      "frame": 71,
+      "timestamp": "0:05",
+      "landmarks": {}
+    },
+    {
+      "frame": 72,
+      "timestamp": "0:06",
+      "landmarks": {}
+    },
+    {
+      "frame": 73,
+      "timestamp": "0:06",
+      "landmarks": {}
+    },
+    {
+      "frame": 74,
+      "timestamp": "0:06",
+      "landmarks": {}
+    },
+    {
+      "frame": 75,
+      "timestamp": "0:06",
+      "landmarks": {}
+    },
+    {
+      "frame": 76,
+      "timestamp": "0:06",
+      "landmarks": {}
+    },
+    {
+      "frame": 77,
+      "timestamp": "0:06",
+      "landmarks": {}
+    },
+    {
+      "frame": 78,
+      "timestamp": "0:06",
+      "landmarks": {}
+    },
+    {
+      "frame": 79,
+      "timestamp": "0:06",
+      "landmarks": {}
+    },
+    {
+      "frame": 80,
+      "timestamp": "0:06",
+      "landmarks": {}
+    },
+    {
+      "frame": 81,
+      "timestamp": "0:06",
+      "landmarks": {}
+    },
+    {
+      "frame": 82,
+      "timestamp": "0:06",
+      "landmarks": {}
+    },
+    {
+      "frame": 83,
+      "timestamp": "0:06",
+      "landmarks": {}
+    },
+    {
+      "frame": 84,
+      "timestamp": "0:07",
+      "landmarks": {}
+    },
+    {
+      "frame": 85,
+      "timestamp": "0:07",
+      "landmarks": {}
+    },
+    {
+      "frame": 86,
+      "timestamp": "0:07",
+      "landmarks": {}
+    },
+    {
+      "frame": 87,
+      "timestamp": "0:07",
+      "landmarks": {}
+    },
+    {
+      "frame": 88,
+      "timestamp": "0:07",
+      "landmarks": {}
+    },
+    {
+      "frame": 89,
+      "timestamp": "0:07",
+      "landmarks": {}
+    },
+    {
+      "frame": 90,
+      "timestamp": "0:07",
+      "landmarks": {}
+    },
+    {
+      "frame": 91,
+      "timestamp": "0:07",
+      "landmarks": {}
+    },
+    {
+      "frame": 92,
+      "timestamp": "0:07",
+      "landmarks": {}
+    },
+    {
+      "frame": 93,
+      "timestamp": "0:07",
+      "landmarks": {}
+    },
+    {
+      "frame": 94,
+      "timestamp": "0:07",
+      "landmarks": {}
+    },
+    {
+      "frame": 95,
+      "timestamp": "0:07",
+      "landmarks": {}
+    },
+    {
+      "frame": 96,
+      "timestamp": "0:08",
+      "landmarks": {}
+    },
+    {
+      "frame": 97,
+      "timestamp": "0:08",
+      "landmarks": {}
+    },
+    {
+      "frame": 98,
+      "timestamp": "0:08",
+      "landmarks": {}
+    },
+    {
+      "frame": 99,
+      "timestamp": "0:08",
+      "landmarks": {}
+    },
+    {
+      "frame": 100,
+      "timestamp": "0:08",
+      "landmarks": {}
+    },
+    {
+      "frame": 101,
+      "timestamp": "0:08",
+      "landmarks": {}
+    },
+    {
+      "frame": 102,
+      "timestamp": "0:08",
+      "landmarks": {}
+    },
+    {
+      "frame": 103,
+      "timestamp": "0:08",
+      "landmarks": {}
+    },
+    {
+      "frame": 104,
+      "timestamp": "0:08",
+      "landmarks": {}
+    },
+    {
+      "frame": 105,
+      "timestamp": "0:08",
+      "landmarks": {}
+    },
+    {
+      "frame": 106,
+      "timestamp": "0:08",
+      "landmarks": {}
+    },
+    {
+      "frame": 107,
+      "timestamp": "0:08",
+      "landmarks": {}
+    },
+    {
+      "frame": 108,
+      "timestamp": "0:09",
+      "landmarks": {}
+    },
+    {
+      "frame": 109,
+      "timestamp": "0:09",
+      "landmarks": {}
+    },
+    {
+      "frame": 110,
+      "timestamp": "0:09",
+      "landmarks": {}
+    },
+    {
+      "frame": 111,
+      "timestamp": "0:09",
+      "landmarks": {}
+    },
+    {
+      "frame": 112,
+      "timestamp": "0:09",
+      "landmarks": {}
+    },
+    {
+      "frame": 113,
+      "timestamp": "0:09",
+      "landmarks": {}
+    },
+    {
+      "frame": 114,
+      "timestamp": "0:09",
+      "landmarks": {}
+    },
+    {
+      "frame": 115,
+      "timestamp": "0:09",
+      "landmarks": {}
+    },
+    {
+      "frame": 116,
+      "timestamp": "0:09",
+      "landmarks": {}
+    },
+    {
+      "frame": 117,
+      "timestamp": "0:09",
+      "landmarks": {}
+    },
+    {
+      "frame": 118,
+      "timestamp": "0:09",
+      "landmarks": {}
+    },
+    {
+      "frame": 119,
+      "timestamp": "0:09",
+      "landmarks": {}
+    },
+    {
+      "frame": 120,
+      "timestamp": "0:10",
+      "landmarks": {}
+    },
+    {
+      "frame": 121,
+      "timestamp": "0:10",
+      "landmarks": {}
+    },
+    {
+      "frame": 122,
+      "timestamp": "0:10",
+      "landmarks": {}
+    },
+    {
+      "frame": 123,
+      "timestamp": "0:10",
+      "landmarks": {}
+    },
+    {
+      "frame": 124,
+      "timestamp": "0:10",
+      "landmarks": {}
+    },
+    {
+      "frame": 125,
+      "timestamp": "0:10",
+      "landmarks": {}
+    },
+    {
+      "frame": 126,
+      "timestamp": "0:10",
+      "landmarks": {}
+    },
+    {
+      "frame": 127,
+      "timestamp": "0:10",
+      "landmarks": {}
+    },
+    {
+      "frame": 128,
+      "timestamp": "0:10",
+      "landmarks": {}
+    },
+    {
+      "frame": 129,
+      "timestamp": "0:10",
+      "landmarks": {}
+    },
+    {
+      "frame": 130,
+      "timestamp": "0:10",
+      "landmarks": {}
+    },
+    {
+      "frame": 131,
+      "timestamp": "0:10",
+      "landmarks": {}
+    },
+    {
+      "frame": 132,
+      "timestamp": "0:11",
+      "landmarks": {}
+    },
+    {
+      "frame": 133,
+      "timestamp": "0:11",
+      "landmarks": {}
+    },
+    {
+      "frame": 134,
+      "timestamp": "0:11",
+      "landmarks": {}
+    },
+    {
+      "frame": 135,
+      "timestamp": "0:11",
+      "landmarks": {}
+    },
+    {
+      "frame": 136,
+      "timestamp": "0:11",
+      "landmarks": {}
+    },
+    {
+      "frame": 137,
+      "timestamp": "0:11",
+      "landmarks": {}
+    },
+    {
+      "frame": 138,
+      "timestamp": "0:11",
+      "landmarks": {}
+    },
+    {
+      "frame": 139,
+      "timestamp": "0:11",
+      "landmarks": {}
+    },
+    {
+      "frame": 140,
+      "timestamp": "0:11",
+      "landmarks": {}
+    },
+    {
+      "frame": 141,
+      "timestamp": "0:11",
+      "landmarks": {}
+    },
+    {
+      "frame": 142,
+      "timestamp": "0:11",
+      "landmarks": {}
+    },
+    {
+      "frame": 143,
+      "timestamp": "0:11",
+      "landmarks": {}
+    },
+    {
+      "frame": 144,
+      "timestamp": "0:12",
+      "landmarks": {}
+    },
+    {
+      "frame": 145,
+      "timestamp": "0:12",
+      "landmarks": {}
+    },
+    {
+      "frame": 146,
+      "timestamp": "0:12",
+      "landmarks": {}
+    },
+    {
+      "frame": 147,
+      "timestamp": "0:12",
+      "landmarks": {}
+    },
+    {
+      "frame": 148,
+      "timestamp": "0:12",
+      "landmarks": {}
+    },
+    {
+      "frame": 149,
+      "timestamp": "0:12",
+      "landmarks": {}
+    },
+    {
+      "frame": 150,
+      "timestamp": "0:12",
+      "landmarks": {}
+    },
+    {
+      "frame": 151,
+      "timestamp": "0:12",
+      "landmarks": {}
+    },
+    {
+      "frame": 152,
+      "timestamp": "0:12",
+      "landmarks": {}
+    },
+    {
+      "frame": 153,
+      "timestamp": "0:12",
+      "landmarks": {}
+    },
+    {
+      "frame": 154,
+      "timestamp": "0:12",
+      "landmarks": {}
+    },
+    {
+      "frame": 155,
+      "timestamp": "0:12",
+      "landmarks": {}
+    },
+    {
+      "frame": 156,
+      "timestamp": "0:13",
+      "landmarks": {}
+    },
+    {
+      "frame": 157,
+      "timestamp": "0:13",
+      "landmarks": {}
+    },
+    {
+      "frame": 158,
+      "timestamp": "0:13",
+      "landmarks": {}
+    },
+    {
+      "frame": 159,
+      "timestamp": "0:13",
+      "landmarks": {}
+    },
+    {
+      "frame": 160,
+      "timestamp": "0:13",
+      "landmarks": {}
+    },
+    {
+      "frame": 161,
+      "timestamp": "0:13",
+      "landmarks": {}
+    },
+    {
+      "frame": 162,
+      "timestamp": "0:13",
+      "landmarks": {}
+    },
+    {
+      "frame": 163,
+      "timestamp": "0:13",
+      "landmarks": {}
+    },
+    {
+      "frame": 164,
+      "timestamp": "0:13",
+      "landmarks": {}
+    },
+    {
+      "frame": 165,
+      "timestamp": "0:13",
+      "landmarks": {}
+    },
+    {
+      "frame": 166,
+      "timestamp": "0:13",
+      "landmarks": {}
+    },
+    {
+      "frame": 167,
+      "timestamp": "0:13",
+      "landmarks": {}
+    },
+    {
+      "frame": 168,
+      "timestamp": "0:14",
+      "landmarks": {}
+    },
+    {
+      "frame": 169,
+      "timestamp": "0:14",
+      "landmarks": {}
+    },
+    {
+      "frame": 170,
+      "timestamp": "0:14",
+      "landmarks": {}
+    },
+    {
+      "frame": 171,
+      "timestamp": "0:14",
+      "landmarks": {}
+    },
+    {
+      "frame": 172,
+      "timestamp": "0:14",
+      "landmarks": {}
+    },
+    {
+      "frame": 173,
+      "timestamp": "0:14",
+      "landmarks": {}
+    },
+    {
+      "frame": 174,
+      "timestamp": "0:14",
+      "landmarks": {}
+    },
+    {
+      "frame": 175,
+      "timestamp": "0:14",
+      "landmarks": {}
+    },
+    {
+      "frame": 176,
+      "timestamp": "0:14",
+      "landmarks": {}
+    },
+    {
+      "frame": 177,
+      "timestamp": "0:14",
+      "landmarks": {}
+    },
+    {
+      "frame": 178,
+      "timestamp": "0:14",
+      "landmarks": {}
+    },
+    {
+      "frame": 179,
+      "timestamp": "0:14",
+      "landmarks": {}
+    },
+    {
+      "frame": 180,
+      "timestamp": "0:15",
+      "landmarks": {}
+    },
+    {
+      "frame": 181,
+      "timestamp": "0:15",
+      "landmarks": {}
+    },
+    {
+      "frame": 182,
+      "timestamp": "0:15",
+      "landmarks": {}
+    },
+    {
+      "frame": 183,
+      "timestamp": "0:15",
+      "landmarks": {}
+    },
+    {
+      "frame": 184,
+      "timestamp": "0:15",
+      "landmarks": {}
+    },
+    {
+      "frame": 185,
+      "timestamp": "0:15",
+      "landmarks": {}
+    },
+    {
+      "frame": 186,
+      "timestamp": "0:15",
+      "landmarks": {}
+    },
+    {
+      "frame": 187,
+      "timestamp": "0:15",
+      "landmarks": {}
+    },
+    {
+      "frame": 188,
+      "timestamp": "0:15",
+      "landmarks": {}
+    },
+    {
+      "frame": 189,
+      "timestamp": "0:15",
+      "landmarks": {}
+    },
+    {
+      "frame": 190,
+      "timestamp": "0:15",
+      "landmarks": {}
+    },
+    {
+      "frame": 191,
+      "timestamp": "0:15",
+      "landmarks": {}
+    },
+    {
+      "frame": 192,
+      "timestamp": "0:16",
+      "landmarks": {}
+    },
+    {
+      "frame": 193,
+      "timestamp": "0:16",
+      "landmarks": {}
+    },
+    {
+      "frame": 194,
+      "timestamp": "0:16",
+      "landmarks": {}
+    }
+  ],
+  "pose_quality": {
+    "score": 0,
+    "frames_total": 195,
+    "frames_with_pose": 0,
+    "avg_visibility": 0,
+    "usable": false,
+    "message": "Limited pose tracking — use front/side angle, single athlete, full body in frame."
+  },
+  "landmark_summary": {
+    "source_session_id": "f97ad611-4a58-4a81-9703-877755b14d8a",
+    "baked_at": "2026-06-15T12:42:36.774Z"
+  },
+  "confirmed_events": []
+}

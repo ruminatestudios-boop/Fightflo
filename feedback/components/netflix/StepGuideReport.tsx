@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AnalysisSheet } from "@/components/netflix/AnalysisSheet";
+import { ReportShareFooter } from "@/components/netflix/ReportShareFooter";
 import { NetflixShell } from "@/components/netflix/NetflixShell";
 import {
   buildAnnotationsFromReport,
@@ -12,8 +14,16 @@ import { OverlayCanvas } from "@/components/video/OverlayCanvas";
 import { ImmersiveVideoStage } from "@/components/video/ImmersiveVideoStage";
 import { TimelineMarkers } from "@/components/video/TimelineMarkers";
 import { parseTimestamp, resolvePlaybackUrl, formatTime } from "@/components/video/utils";
-import { getInterpolatedLandmarksAtTime } from "@/components/video/landmarkPlayback";
-import { apiPath } from "@/lib/paths";
+import {
+  hasUsableStoredLandmarks,
+  getInterpolatedLandmarksAtTime,
+} from "@/components/video/landmarkPlayback";
+import { isDemoSession } from "@/lib/demo/isDemoSession";
+import { apiPath, reportPath } from "@/lib/paths";
+import {
+  DownloadSessionVideoError,
+  downloadSessionVideo,
+} from "@/lib/video/downloadSessionVideo";
 import { analyzeGuardFromReport, liveGuardDropLabel } from "@/lib/guard/guardAnalysis";
 import { parseGuardCalibration } from "@/lib/analysis/guardCalibration";
 import { OverlayGuide } from "@/components/video/OverlayGuide";
@@ -22,12 +32,14 @@ import type { TimelineMoment } from "@/components/video/types";
 import { getSportConfig } from "@/config/sports";
 import type {
   DrillRecommendation,
+  FollowUpComparison,
   MainWeakness,
   PositiveFinding,
   Report,
   Session,
   SportId,
 } from "@/types";
+import { FollowUpComparisonPanel } from "@/components/report/FollowUpComparisonPanel";
 
 interface StepGuideReportProps {
   report: Report;
@@ -48,7 +60,8 @@ interface ReportStep {
   accent: StepAccent;
   timestamp?: string;
   seekTime?: number;
-  detailType?: "intro" | "positive" | "weakness" | "drill" | "finish";
+  detailType?: "intro" | "comparison" | "positive" | "weakness" | "drill" | "finish";
+  comparison?: FollowUpComparison;
   positive?: PositiveFinding;
   weakness?: MainWeakness;
   drill?: DrillRecommendation;
@@ -97,11 +110,18 @@ export function StepGuideReport({
   onUpgrade,
   mode = "full",
 }: StepGuideReportProps) {
+  const router = useRouter();
   const isGuardMode = mode === "guard";
   const sport = report.sport as SportId;
   const sportConfig = getSportConfig(sport);
   const landmarkTimeline = report.raw_landmark_data ?? [];
   const videoUrl = resolvePlaybackUrl(session);
+  const hasPoseOverlays = useMemo(
+    () => hasUsableStoredLandmarks(landmarkTimeline),
+    [landmarkTimeline]
+  );
+  const demoSession = isDemoSession(session);
+  const useLivePose = demoSession && !hasPoseOverlays;
   const videoRef = useRef<HTMLVideoElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
@@ -128,11 +148,6 @@ export function StepGuideReport({
   const guardCalibrated = guardCalibration !== null;
 
   const handleDownload = useCallback(async () => {
-    if (!isPro) {
-      onUpgrade?.();
-      return;
-    }
-
     const userId =
       session.user_id ??
       (typeof window !== "undefined"
@@ -143,32 +158,17 @@ export function StepGuideReport({
 
     setDownloading(true);
     try {
-      const res = await fetch(
-        apiPath(`/api/video/download?sessionId=${session.id}&userId=${userId}`)
-      );
-      if (res.status === 402) {
+      await downloadSessionVideo(session.id, userId);
+    } catch (err) {
+      if (err instanceof DownloadSessionVideoError && err.code === "PRO_REQUIRED") {
         onUpgrade?.();
         return;
       }
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(
-          (data as { error?: string }).error ?? "Download failed"
-        );
-      }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `feedback-${session.id.slice(0, 8)}.mp4`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
       alert(err instanceof Error ? err.message : "Download failed");
     } finally {
       setDownloading(false);
     }
-  }, [isPro, onUpgrade, session.id, session.user_id]);
+  }, [onUpgrade, session.id, session.user_id]);
 
   const positives = useMemo(
     () => toPositiveTimestamps(report.positives),
@@ -302,18 +302,35 @@ export function StepGuideReport({
       return list;
     }
 
-    const list: ReportStep[] = [
-      {
-        id: "intro",
-        eyebrow: `${sportConfig.name} · Session ${session.session_number}`,
-        title: "Your coach read",
-        body: report.coach_summary,
-        accent: "neutral",
-        timestamp: "0:00",
-        seekTime: 0,
-        detailType: "intro",
-      },
-    ];
+    const list: ReportStep[] = [];
+
+    if (report.follow_up_comparison) {
+      list.push({
+        id: "follow-up",
+        eyebrow: "Fix verification",
+        title: "Before vs after",
+        body: report.follow_up_comparison.headline,
+        accent:
+          report.follow_up_comparison.verdict === "fixed"
+            ? "green"
+            : report.follow_up_comparison.verdict === "not_fixed"
+              ? "red"
+              : "orange",
+        detailType: "comparison",
+        comparison: report.follow_up_comparison,
+      });
+    }
+
+    list.push({
+      id: "intro",
+      eyebrow: `${sportConfig.name} · Session ${session.session_number}`,
+      title: report.follow_up_comparison ? "This clip" : "Your coach read",
+      body: report.coach_summary,
+      accent: "neutral",
+      timestamp: "0:00",
+      seekTime: 0,
+      detailType: "intro",
+    });
 
     report.positives.forEach((positive, i) => {
       const canSeek = hasSeekTimestamp(positive.timestamp);
@@ -497,6 +514,15 @@ export function StepGuideReport({
   }, []);
 
   const renderSheetContent = () => {
+    if (step.detailType === "comparison" && step.comparison) {
+      return (
+        <FollowUpComparisonPanel
+          comparison={step.comparison}
+          onOpenParent={(parentId) => router.push(reportPath(parentId))}
+        />
+      );
+    }
+
     if (step.detailType === "intro") {
       return (
         <div className="space-y-4 text-sm leading-relaxed text-white/70">
@@ -517,11 +543,7 @@ export function StepGuideReport({
         <div className="space-y-4 text-sm leading-relaxed text-white/70">
           <p>{report.coach_summary}</p>
           <p>{report.pattern_insight}</p>
-          {onShare && (
-            <button type="button" onClick={onShare} className="netflix-cta-primary w-full">
-              Share analysis
-            </button>
-          )}
+          <ReportShareFooter sessionId={session.id} onShare={onShare} />
         </div>
       );
     }
@@ -590,7 +612,7 @@ export function StepGuideReport({
   };
 
   return (
-    <NetflixShell backHref="/" immersive>
+    <NetflixShell showBack immersive>
       <div
         className={`stepguide-root stepguide-root--fullscreen ${notesVisible ? "" : "stepguide-root--cinema"} ${isGuardMode ? "stepguide-root--guard" : ""}`}
       >
@@ -599,6 +621,7 @@ export function StepGuideReport({
           videoRef={videoRef}
           playing={playing}
           videoError={videoError}
+          crossOrigin={hasPoseOverlays || useLivePose ? "anonymous" : undefined}
           onTimeUpdate={setCurrentTime}
           onDuration={setDuration}
           onPlayState={setPlaying}
@@ -611,7 +634,7 @@ export function StepGuideReport({
             landmarks={landmarkTimeline}
             annotations={annotations}
             confirmedEvents={report.confirmed_events ?? []}
-            useLivePose={false}
+            useLivePose={useLivePose}
             guardCalibration={guardCalibration}
             suppressAnnotationLabel={!notesVisible || isGuardMode}
             guardFocusMode={isGuardMode}
@@ -773,9 +796,6 @@ export function StepGuideReport({
                 <>
                   {isGuardMode && cinemaNote.kind === "weakness" ? (
                     <>
-                      <p className="stepguide-cinema-pill stepguide-cinema-pill--red stepguide-guard-alert">
-                        GUARD DOWN
-                      </p>
                       {"title" in cinemaNote && cinemaNote.title && (
                         <p className="stepguide-cinema-pill stepguide-cinema-pill--detail">
                           {cinemaNote.title}

@@ -57,6 +57,30 @@ export async function uploadClip(
   return result.secure_url;
 }
 
+export async function uploadExportVideo(
+  fileBuffer: Buffer,
+  sessionId: string
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: "video",
+        folder: `feedback/exports/${sessionId}`,
+        public_id: `export_${sessionId}`,
+        overwrite: true,
+      },
+      (error, result) => {
+        if (error || !result) {
+          reject(error ?? new Error("Cloudinary export upload failed"));
+          return;
+        }
+        resolve(result.secure_url);
+      }
+    );
+    stream.end(fileBuffer);
+  });
+}
+
 export async function deleteVideo(publicId: string): Promise<void> {
   await cloudinary.uploader.destroy(publicId, { resource_type: "video" });
 }

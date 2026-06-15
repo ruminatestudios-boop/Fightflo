@@ -127,7 +127,7 @@ export function ReportPageClient({
 
   if (loading) {
     return (
-      <AppShell showLogo backHref="/">
+      <AppShell showLogo showBack>
         <div className="flex flex-1 flex-col justify-center px-2 pb-20">
           <p className="text-center text-sm text-white/40">{polled.eyebrow}</p>
           <p className="mt-2 text-center text-2xl font-medium text-white">
@@ -146,7 +146,7 @@ export function ReportPageClient({
 
   if (polled.error && !report) {
     return (
-      <AppShell showLogo backHref="/">
+      <AppShell showLogo showBack>
         <p className="mt-20 text-center text-sm text-[#fa4141]">{polled.error}</p>
       </AppShell>
     );
@@ -154,7 +154,7 @@ export function ReportPageClient({
 
   if (!report || !session) {
     return (
-      <AppShell showLogo backHref="/">
+      <AppShell showLogo showBack>
         <p className="mt-20 text-center text-sm text-white/45">Report not found</p>
       </AppShell>
     );

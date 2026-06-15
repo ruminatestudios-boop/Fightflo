@@ -5,13 +5,13 @@ import { FlowAction, FlowEmpty, FlowPanel, FlowShell } from "../FlowShell";
 
 interface ReuploadFlowProps {
   insight: ReuploadInsight | null;
-  onUpload: () => void;
+  onUploadFollowUp: (parentSessionId: string) => void;
   onViewReport: (sessionId: string) => void;
 }
 
 export function ReuploadFlow({
   insight,
-  onUpload,
+  onUploadFollowUp,
   onViewReport,
 }: ReuploadFlowProps) {
   return (
@@ -37,7 +37,9 @@ export function ReuploadFlow({
             Film the same drill or round again — we&apos;ll compare it to your last
             breakdown.
           </p>
-          <FlowAction onClick={onUpload}>Upload follow-up clip</FlowAction>
+          <FlowAction onClick={() => onUploadFollowUp(insight.sessionId)}>
+            Upload follow-up clip
+          </FlowAction>
           <FlowAction
             variant="secondary"
             onClick={() => onViewReport(insight.sessionId)}

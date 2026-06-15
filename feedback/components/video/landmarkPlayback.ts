@@ -65,6 +65,39 @@ export function hasUsableStoredLandmarks(timeline: LandmarkTimeline): boolean {
   return false;
 }
 
+/** Looser check for export — partial tracking still burns visible skeleton */
+export function hasExportableLandmarks(timeline: LandmarkTimeline): boolean {
+  return countDrawableLandmarkFrames(timeline) >= 2;
+}
+
+/** Frames with enough joints to draw a visible skeleton */
+export function countDrawableLandmarkFrames(timeline: LandmarkTimeline): number {
+  let withPose = 0;
+  for (const frame of timeline) {
+    if (landmarksAreDrawable(frame.landmarks)) withPose++;
+  }
+  return withPose;
+}
+
+export function landmarksAreDrawable(
+  landmarks: FrameLandmarks | null | undefined
+): boolean {
+  if (!landmarks) return false;
+  const ls = landmarks.left_shoulder;
+  const rs = landmarks.right_shoulder;
+  const lw = landmarks.left_wrist;
+  const rw = landmarks.right_wrist;
+  const hasShoulder =
+    Boolean(ls && (ls.visibility ?? 1) >= 0.1) ||
+    Boolean(rs && (rs.visibility ?? 1) >= 0.1);
+  const hasLimb =
+    Boolean(lw && (lw.visibility ?? 1) >= 0.1) ||
+    Boolean(rw && (rw.visibility ?? 1) >= 0.1) ||
+    Boolean(landmarks.left_elbow && (landmarks.left_elbow.visibility ?? 1) >= 0.1) ||
+    Boolean(landmarks.right_elbow && (landmarks.right_elbow.visibility ?? 1) >= 0.1);
+  return hasShoulder && hasLimb;
+}
+
 /** Shift landmark timestamps for clip playback (clip starts at offset in full video) */
 export function shiftLandmarkTimeline(
   timeline: LandmarkTimeline,

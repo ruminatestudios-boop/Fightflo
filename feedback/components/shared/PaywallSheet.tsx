@@ -44,6 +44,21 @@ export function PaywallSheet({
             </>
           )}
         </p>
+        <ul className="paywall-features">
+          {isTopUp ? (
+            <>
+              <li>+{PRICING.topUp.scans} analyses added instantly</li>
+              <li>Use anytime this month</li>
+              <li>Stacks with your Pro allowance</li>
+            </>
+          ) : (
+            <>
+              <li>{PRICING.pro.scansPerMonth} analyses every month</li>
+              <li>Download videos with skeleton overlay</li>
+              <li>Clip playback, progress & history</li>
+            </>
+          )}
+        </ul>
         <p className="mt-4 text-2xl font-medium">
           {isTopUp ? (
             <>

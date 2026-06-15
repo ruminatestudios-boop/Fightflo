@@ -62,6 +62,32 @@ export interface Session {
   summary?: string | null;
   thumbnail_url?: string | null;
   cloudinary_public_id?: string | null;
+  /** Prior session this clip is verifying a fix for */
+  parent_session_id?: string | null;
+}
+
+export type ComparisonStatus = "improved" | "worse" | "unchanged";
+
+export interface ComparisonItem {
+  label: string;
+  status: ComparisonStatus;
+  detail: string;
+  priorValue?: string | number;
+  currentValue?: string | number;
+}
+
+export type FollowUpVerdict = "fixed" | "partial" | "not_fixed" | "mixed";
+
+export interface FollowUpComparison {
+  parentSessionId: string;
+  parentTitle: string;
+  parentWeaknessTitle: string;
+  headline: string;
+  improved: ComparisonItem[];
+  regressed: ComparisonItem[];
+  unchanged: ComparisonItem[];
+  verdict: FollowUpVerdict;
+  summary: string;
 }
 
 export interface PositiveFinding {
@@ -129,6 +155,8 @@ export interface Report {
   pose_quality?: PoseQualityReport | null;
   confirmed_events?: ConfirmedPoseEvent[];
   landmark_summary?: Record<string, unknown> | null;
+  export_video_url?: string | null;
+  follow_up_comparison?: FollowUpComparison | null;
 }
 
 export interface WeaknessRecord {
@@ -237,6 +265,8 @@ export interface ProgressDataPoint {
   session: number;
   count: number;
   date: string;
+  /** All confirmed events in that clip (for context in tooltips) */
+  totalFaults?: number;
 }
 
 export interface SportAccent {

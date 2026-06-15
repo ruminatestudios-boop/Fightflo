@@ -1,10 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useNavigateBack } from "@/hooks/useNavigateBack";
 
 interface BackButtonProps {
   href?: string;
   onClick?: () => void;
+  /** Use router.back() with fallback to `/` when no href/onClick provided */
+  useHistory?: boolean;
+  fallbackHref?: string;
   className?: string;
   "aria-label"?: string;
 }
@@ -27,9 +31,12 @@ function BackChevron() {
 export function BackButton({
   href,
   onClick,
+  useHistory = false,
+  fallbackHref = "/",
   className = "",
   "aria-label": ariaLabel = "Back",
 }: BackButtonProps) {
+  const navigateBack = useNavigateBack(fallbackHref);
   const classes = `ff-back-btn ${className}`.trim();
 
   if (href) {
@@ -40,8 +47,12 @@ export function BackButton({
     );
   }
 
+  const handleClick = onClick ?? (useHistory ? navigateBack : undefined);
+
+  if (!handleClick) return null;
+
   return (
-    <button type="button" onClick={onClick} className={classes} aria-label={ariaLabel}>
+    <button type="button" onClick={handleClick} className={classes} aria-label={ariaLabel}>
       <BackChevron />
     </button>
   );

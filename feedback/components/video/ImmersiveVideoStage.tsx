@@ -13,6 +13,8 @@ interface ImmersiveVideoStageProps {
   videoRef: RefObject<HTMLVideoElement>;
   playing: boolean;
   videoError: boolean;
+  /** Set when canvas overlays read pixels from the video (requires CORS). */
+  crossOrigin?: "" | "anonymous";
   onTimeUpdate: (time: number) => void;
   onDuration: (duration: number) => void;
   onPlayState: (playing: boolean) => void;
@@ -26,6 +28,7 @@ export function ImmersiveVideoStage({
   videoRef,
   playing,
   videoError,
+  crossOrigin,
   onTimeUpdate,
   onDuration,
   onPlayState,
@@ -66,7 +69,7 @@ export function ImmersiveVideoStage({
         className="immersive-video-main"
         playsInline
         loop
-        crossOrigin="anonymous"
+        crossOrigin={crossOrigin}
         onTimeUpdate={(e) => {
           const t = e.currentTarget.currentTime;
           onTimeUpdate(t);

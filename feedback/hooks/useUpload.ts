@@ -134,7 +134,12 @@ export function useUpload() {
   }, []);
 
   const upload = useCallback(
-    async (file: File, sport: SportId, level: SkillLevel) => {
+    async (
+      file: File,
+      sport: SportId,
+      level: SkillLevel,
+      parentSessionId?: string | null
+    ) => {
       const validationError = validateFile(file);
       if (validationError) {
         setState((s) => ({ ...s, phase: "error", error: validationError }));
@@ -164,6 +169,7 @@ export function useUpload() {
             sport,
             level,
             userId: storedUserId,
+            parentSessionId: parentSessionId ?? null,
           }),
         });
 
@@ -205,6 +211,7 @@ export function useUpload() {
               videoUrl: cloudinaryResult.secure_url,
               cloudinaryPublicId: cloudinaryResult.public_id,
               videoDuration: cloudinaryResult.duration ?? 60,
+              parentSessionId: parentSessionId ?? null,
             }),
           });
 
@@ -241,6 +248,7 @@ export function useUpload() {
         formData.append("sport", sport);
         formData.append("level", level);
         if (storedUserId) formData.append("userId", storedUserId);
+        if (parentSessionId) formData.append("parentSessionId", parentSessionId);
 
         const response = await fetch(apiPath("/api/upload"), {
           method: "POST",

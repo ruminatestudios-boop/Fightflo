@@ -274,7 +274,7 @@ export function ReportExperience({
   ]);
 
   return (
-    <NetflixShell backHref="/">
+    <NetflixShell showBack>
       <NetflixCarousel slides={slides} />
 
       <AnalysisSheet

@@ -10,6 +10,7 @@ import type { ConfirmedPoseEvent, FrameLandmarks } from "@/types";
 import type { Annotation, LandmarkFrame } from "./types";
 import {
   drawBiomechanics,
+  drawGuardHandsOverlay,
   drawGuardLine,
   drawGuardWarning,
   drawMotionTrails,
@@ -137,23 +138,25 @@ export function drawOverlayFrame(
       : interpolated;
 
   if (frameLandmarks) {
-    const lw = frameLandmarks.left_wrist;
-    const rw = frameLandmarks.right_wrist;
-    if (lw) {
-      const p = {
-        x: layout.offsetX + lw.x * layout.drawWidth,
-        y: layout.offsetY + lw.y * layout.drawHeight,
-        age: 0,
-      };
-      wristTrails.left = [p, ...wristTrails.left.map((t) => ({ ...t, age: t.age + 1 }))].slice(0, 14);
-    }
-    if (rw) {
-      const p = {
-        x: layout.offsetX + rw.x * layout.drawWidth,
-        y: layout.offsetY + rw.y * layout.drawHeight,
-        age: 0,
-      };
-      wristTrails.right = [p, ...wristTrails.right.map((t) => ({ ...t, age: t.age + 1 }))].slice(0, 14);
+    if (!guardFocusMode) {
+      const lw = frameLandmarks.left_wrist;
+      const rw = frameLandmarks.right_wrist;
+      if (lw) {
+        const p = {
+          x: layout.offsetX + lw.x * layout.drawWidth,
+          y: layout.offsetY + lw.y * layout.drawHeight,
+          age: 0,
+        };
+        wristTrails.left = [p, ...wristTrails.left.map((t) => ({ ...t, age: t.age + 1 }))].slice(0, 14);
+      }
+      if (rw) {
+        const p = {
+          x: layout.offsetX + rw.x * layout.drawWidth,
+          y: layout.offsetY + rw.y * layout.drawHeight,
+          age: 0,
+        };
+        wristTrails.right = [p, ...wristTrails.right.map((t) => ({ ...t, age: t.age + 1 }))].slice(0, 14);
+      }
     }
   }
 
@@ -168,6 +171,27 @@ export function drawOverlayFrame(
     guardFocusMode
   );
   const annotation = getAnnotationAt(annotations, lookupTime);
+
+  if (guardFocusMode) {
+    drawGuardLine(ctx, frameLandmarks, {
+      width,
+      height,
+      layout,
+      guardDropped,
+      flashGuardLine: guardDropped,
+      pulsePhase,
+      guardCalibration,
+    });
+    drawGuardHandsOverlay(ctx, frameLandmarks, {
+      width,
+      height,
+      layout,
+      guardDropped,
+      pulsePhase,
+      guardCalibration,
+    });
+    return;
+  }
 
   drawMotionTrails(ctx, wristTrails);
 

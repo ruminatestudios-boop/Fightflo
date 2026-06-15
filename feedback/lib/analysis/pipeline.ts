@@ -10,9 +10,14 @@ import {
 } from "@/lib/analysis/poseDetection";
 import { findPatterns } from "@/lib/analysis/patternFinder";
 import { generateFeedback } from "@/lib/analysis/feedbackWriter";
+import { buildSessionHistoryEntry } from "@/lib/analysis/sessionHistory";
 import { applyPoseConfirmation } from "@/lib/analysis/poseConfirmation";
 import { deleteVideo, uploadClip } from "@/lib/storage/cloudinary";
+import { parseGuardCalibration } from "@/lib/analysis/guardCalibration";
+import { cacheExportVideo } from "@/lib/video/cacheExportVideo";
+import { buildFollowUpComparison } from "@/lib/insights/followUpComparison";
 import {
+  getReportBySessionId,
   getSessionById,
   saveReport,
   updateSessionSport,
@@ -110,6 +115,29 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
       message: `Sending ${confirmedEvents.length} tracked moments and ${frameSamples.length} stills to Gemini…`,
     });
 
+    const parentSessionId = session.parent_session_id ?? null;
+    let sessionHistory: Record<string, unknown>[] = [];
+    let parentSession = null;
+    let parentReport = null;
+
+    if (parentSessionId) {
+      parentSession = await getSessionById(parentSessionId);
+      parentReport = parentSession
+        ? await getReportBySessionId(parentSessionId)
+        : null;
+      if (parentSession && parentReport) {
+        sessionHistory = [
+          buildSessionHistoryEntry(parentSession, parentReport, {
+            isFollowUpParent: true,
+          }),
+        ];
+        await updateSessionStatus(sessionId, "processing", {
+          step: "writing_report",
+          message: `Comparing to your last clip — "${parentReport.main_weakness.title}"…`,
+        });
+      }
+    }
+
     const feedback = await generateFeedback(
       patternData,
       sport,
@@ -121,8 +149,21 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
         confirmedEvents,
         observedStrengths,
         frameSamples,
+        sessionHistory,
+        isFollowUp: sessionHistory.length > 0,
       }
     );
+
+    let followUpComparison = null;
+    if (parentSession && parentReport) {
+      followUpComparison = buildFollowUpComparison(parentSession, parentReport, {
+        main_weakness: feedback.main_weakness,
+        positives: feedback.positives,
+        confirmed_events: confirmedEvents,
+        pose_quality: quality,
+      });
+      followUpComparison.summary = feedback.pattern_insight;
+    }
 
     await updateSessionStatus(sessionId, "processing", {
       step: "writing_report",
@@ -153,6 +194,8 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
       poseQuality: quality,
       confirmedEvents,
       landmarkSummary: landmark_summary,
+      followUpComparison,
+      markComplete: false,
     });
 
     if (session.user_id && patternData.primary_weakness) {
@@ -164,6 +207,24 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
       );
     }
 
+    await updateSessionStatus(sessionId, "processing", {
+      step: "preparing_download",
+      message: "Burning skeleton overlay into your downloadable video…",
+    });
+
+    try {
+      await cacheExportVideo(sessionId, {
+        framePaths,
+        timeline,
+        guardCalibration: landmark_summary
+          ? parseGuardCalibration(landmark_summary)
+          : null,
+        confirmedEvents,
+      });
+    } catch (exportError) {
+      console.error("[pipeline] export cache failed:", exportError);
+    }
+
     const publicId = (session as { cloudinary_public_id?: string })
       .cloudinary_public_id;
     if (publicId && process.env.DELETE_SOURCE_VIDEO_AFTER_ANALYSIS === "true") {
@@ -171,6 +232,11 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
     }
 
     await cleanupSessionFiles(sessionId);
+
+    await updateSessionStatus(sessionId, "complete", {
+      step: "complete",
+      message: "Your report is ready.",
+    });
   } catch (error) {
     await updateSessionStatus(sessionId, "failed", {
       step: "failed",

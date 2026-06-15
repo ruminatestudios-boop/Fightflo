@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { AppShell } from "@/components/shared/AppShell";
+import { FollowUpComparisonPanel } from "@/components/report/FollowUpComparisonPanel";
 import {
   AnnotatedPlayer,
   buildAnnotationsFromReport,
@@ -55,7 +56,7 @@ export function SimpleReportView({
   );
 
   return (
-    <AppShell showLogo backHref="/">
+    <AppShell showLogo showBack>
       <div className="flex flex-col gap-8 pb-10">
         <div>
           <p className="text-center text-xs text-white/40">
@@ -65,6 +66,12 @@ export function SimpleReportView({
             {report.coach_summary}
           </p>
         </div>
+
+        {report.follow_up_comparison ? (
+          <section className="rounded-[1.25rem] border border-white/10 bg-[#141414] p-5">
+            <FollowUpComparisonPanel comparison={report.follow_up_comparison} />
+          </section>
+        ) : null}
 
         <AnnotatedPlayer
           videoUrl={videoUrl}

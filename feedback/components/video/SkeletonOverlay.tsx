@@ -13,6 +13,7 @@ import {
 
 export {
   drawGuardLine,
+  drawGuardHandsOverlay,
   drawSkeleton,
   drawMotionTrails,
   drawBiomechanics,

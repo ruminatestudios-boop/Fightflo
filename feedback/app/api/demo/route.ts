@@ -1,19 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  DEMO_CLOUDINARY_PUBLIC_ID,
+  DEMO_DISPLAY_NAME,
+  DEMO_SUMMARY,
+  DEMO_THUMBNAIL_URL,
+  DEMO_VIDEO_DURATION,
   DEMO_VIDEO_URL,
   getDemoClips,
   getDemoConfirmedEvents,
   getDemoFeedback,
+  getDemoLandmarkSummary,
+  getDemoLandmarkTimeline,
   getDemoPoseQuality,
 } from "@/lib/demo/sampleData";
 import { formatDbError } from "@/lib/db/formatError";
-import { saveReport } from "@/lib/db/queries";
+import { saveReport, updateSessionMetadata } from "@/lib/db/queries";
 import { createSession, ensureUser } from "@/lib/storage/sessions";
 import type { SkillLevel, SportId } from "@/types";
 
 export const runtime = "nodejs";
 
-/** Create a completed session + report with dummy coaching data for UI testing */
+/** Create a completed session + report from a real baked analysis (Session 21njj). */
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as {
@@ -34,8 +41,8 @@ export async function POST(request: NextRequest) {
       sport,
       level,
       videoUrl: DEMO_VIDEO_URL,
-      videoDuration: 185,
-      cloudinaryPublicId: "demo/sample",
+      videoDuration: DEMO_VIDEO_DURATION,
+      cloudinaryPublicId: DEMO_CLOUDINARY_PUBLIC_ID,
     });
 
     await saveReport({
@@ -43,14 +50,17 @@ export async function POST(request: NextRequest) {
       userId,
       sport,
       feedback,
-      landmarkData: [],
+      landmarkData: getDemoLandmarkTimeline(),
       clips: getDemoClips(feedback),
       poseQuality: getDemoPoseQuality(),
       confirmedEvents: getDemoConfirmedEvents(),
-      landmarkSummary: {
-        avg_elbow_angle_cross: 142,
-        guard_drop_events: 6,
-      },
+      landmarkSummary: getDemoLandmarkSummary(),
+    });
+
+    await updateSessionMetadata(sessionId, {
+      display_name: DEMO_DISPLAY_NAME,
+      summary: DEMO_SUMMARY,
+      thumbnail_url: DEMO_THUMBNAIL_URL,
     });
 
     return NextResponse.json({ sessionId, userId });

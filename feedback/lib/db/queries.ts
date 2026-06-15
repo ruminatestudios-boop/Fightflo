@@ -6,6 +6,7 @@ import {
   toSessionLibraryEntry,
   type SessionLibraryEntry,
 } from "@/lib/sessions/library";
+import { exportCacheVersion } from "@/lib/video/exportManifest";
 import { cleanupSessionAssets } from "@/lib/storage/session-cleanup";
 import {
   deleteSessionMetadata,
@@ -17,6 +18,7 @@ import type {
   ClipRecord,
   CoachingFeedback,
   ConfirmedPoseEvent,
+  FollowUpComparison,
   LandmarkTimeline,
   PoseQualityReport,
   Report,
@@ -172,6 +174,7 @@ export async function createSession(input: {
   videoUrl: string;
   videoDuration?: number;
   cloudinaryPublicId?: string;
+  parentSessionId?: string | null;
 }): Promise<Session> {
   if (!isSupabaseConfigured()) return devStore.createSession(input);
 
@@ -198,6 +201,7 @@ export async function createSession(input: {
       status: "uploading",
       session_number: sessionNumber,
       cloudinary_public_id: input.cloudinaryPublicId ?? null,
+      parent_session_id: input.parentSessionId ?? null,
     })
     .select()
     .single();
@@ -269,6 +273,59 @@ export async function getReportBySessionId(
   return data as Report | null;
 }
 
+export async function updateReportExportUrl(
+  sessionId: string,
+  exportVideoUrl: string
+): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    return devStore.updateReportExportUrl(sessionId, exportVideoUrl);
+  }
+
+  const report = await getReportBySessionId(sessionId);
+  if (!report) return;
+
+  const supabase = getSupabase();
+  const exportMeta = {
+    export_video_url: exportVideoUrl,
+    export_cache_version: exportCacheVersion(),
+    export_has_skeleton: true,
+  };
+
+  const { error: directError } = await supabase
+    .from("reports")
+    .update({ export_video_url: exportVideoUrl })
+    .eq("session_id", sessionId);
+
+  if (!directError) {
+    const landmark_summary = {
+      ...(report.landmark_summary ?? {}),
+      ...exportMeta,
+    };
+    await supabase
+      .from("reports")
+      .update({ landmark_summary })
+      .eq("session_id", sessionId);
+    return;
+  }
+
+  const landmark_summary = {
+    ...(report.landmark_summary ?? {}),
+    ...exportMeta,
+  };
+
+  const { error: summaryError } = await supabase
+    .from("reports")
+    .update({ landmark_summary })
+    .eq("session_id", sessionId);
+
+  if (summaryError) {
+    console.warn(
+      "[updateReportExportUrl] Supabase update skipped:",
+      summaryError.message
+    );
+  }
+}
+
 export async function getReportById(reportId: string): Promise<Report | null> {
   if (!isSupabaseConfigured()) return devStore.getReportById(reportId);
 
@@ -293,6 +350,8 @@ export async function saveReport(input: {
   poseQuality?: PoseQualityReport | null;
   confirmedEvents?: ConfirmedPoseEvent[];
   landmarkSummary?: Record<string, unknown> | null;
+  followUpComparison?: FollowUpComparison | null;
+  markComplete?: boolean;
 }): Promise<Report> {
   if (!isSupabaseConfigured()) return devStore.saveReport(input);
 
@@ -316,6 +375,7 @@ export async function saveReport(input: {
     pose_quality: input.poseQuality ?? null,
     confirmed_events: input.confirmedEvents ?? [],
     landmark_summary: input.landmarkSummary ?? null,
+    follow_up_comparison: input.followUpComparison ?? null,
   };
 
   let { data, error } = await supabase
@@ -353,10 +413,12 @@ export async function saveReport(input: {
     }
   }
 
-  await updateSessionStatus(input.sessionId, "complete", {
-    step: "complete",
-    message: "Your report is ready.",
-  });
+  if (input.markComplete !== false) {
+    await updateSessionStatus(input.sessionId, "complete", {
+      step: "complete",
+      message: "Your report is ready.",
+    });
+  }
 
   const session = await getSessionById(input.sessionId);
   if (session && !session.summary?.trim() && input.feedback.coach_summary?.trim()) {

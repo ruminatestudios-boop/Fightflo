@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { HeroMedia } from "@/components/shared/HeroMedia";
 import { INTRO_COPY } from "@/lib/copy";
 import { INTRO_VIDEO, INTRO_VIDEO_FALLBACK } from "@/lib/media";
+import { withBasePath } from "@/lib/paths";
 
 interface FeedbackIntroScreenProps {
   onGetStarted: () => void;
@@ -10,12 +12,28 @@ interface FeedbackIntroScreenProps {
 
 /** Full-screen intro — blocks until user taps Get started */
 export function FeedbackIntroScreen({ onGetStarted }: FeedbackIntroScreenProps) {
+  const ctaRef = useRef<HTMLAnchorElement>(null);
+
+  // Native listener survives partial hydration / stale HMR bundles.
+  useEffect(() => {
+    const cta = ctaRef.current;
+    if (!cta) return;
+
+    const onActivate = (event: Event) => {
+      event.preventDefault();
+      onGetStarted();
+    };
+
+    cta.addEventListener("click", onActivate);
+
+    return () => {
+      cta.removeEventListener("click", onActivate);
+    };
+  }, [onGetStarted]);
+
   return (
-    <div
-      className="feedback-intro-root fixed inset-0 z-50 h-[100dvh] w-full overflow-hidden bg-black"
-      style={{ minHeight: "100dvh" }}
-    >
-      <div className="feedback-intro-media pointer-events-none absolute inset-0 z-0">
+    <div className="feedback-intro-root">
+      <div className="feedback-intro-media" aria-hidden>
         <HeroMedia
           videoSrc={INTRO_VIDEO}
           fallbackVideoSrc={INTRO_VIDEO_FALLBACK}
@@ -24,15 +42,10 @@ export function FeedbackIntroScreen({ onGetStarted }: FeedbackIntroScreenProps) 
         />
       </div>
 
-      <div className="feedback-intro-content pointer-events-none relative z-10 flex h-full min-h-[100dvh] w-full flex-col">
-        <div className="flex-1" />
-
-        <div className="feedback-intro-footer pointer-events-auto relative px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-6">
-          <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black via-black/80 to-transparent"
-            aria-hidden
-          />
-          <div className="relative text-center">
+      <div className="feedback-intro-content">
+        <div className="feedback-intro-footer">
+          <div className="feedback-intro-footer-gradient" aria-hidden />
+          <div className="feedback-intro-footer-copy">
             <h1 className="font-display text-balance text-[1.75rem] leading-[1.05] tracking-wide text-white sm:text-[2rem]">
               {INTRO_COPY.headline}
             </h1>
@@ -40,17 +53,17 @@ export function FeedbackIntroScreen({ onGetStarted }: FeedbackIntroScreenProps) 
               {INTRO_COPY.subtitle}
             </p>
           </div>
-
-          <div className="relative mt-8">
-            <button
-              type="button"
-              onClick={onGetStarted}
-              className="ff-primary-btn"
-            >
-              {INTRO_COPY.getStartedLabel}
-            </button>
-          </div>
         </div>
+      </div>
+
+      <div className="feedback-intro-actions">
+        <a
+          ref={ctaRef}
+          href={withBasePath("/?started=1")}
+          className="ff-primary-btn feedback-intro-get-started"
+        >
+          {INTRO_COPY.getStartedLabel}
+        </a>
       </div>
     </div>
   );

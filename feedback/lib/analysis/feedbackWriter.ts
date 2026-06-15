@@ -18,6 +18,7 @@ export async function generateFeedback(
   level: SkillLevel,
   options?: {
     sessionHistory?: Record<string, unknown>[];
+    isFollowUp?: boolean;
     techniquesSeen?: string[];
     poseQuality?: PoseQualityReport;
     landmarkSummary?: Record<string, unknown>;
@@ -34,6 +35,7 @@ export async function generateFeedback(
       sport,
       level,
       sessionHistory: options?.sessionHistory,
+      isFollowUp: options?.isFollowUp,
       techniquesSeen: options?.techniquesSeen,
       poseQuality: options?.poseQuality,
       landmarkSummary: options?.landmarkSummary,

@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS sessions (
   cloudinary_public_id TEXT,
   display_name TEXT,
   summary TEXT,
-  thumbnail_url TEXT
+  thumbnail_url TEXT,
+  parent_session_id UUID REFERENCES sessions(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS reports (
@@ -50,7 +51,9 @@ CREATE TABLE IF NOT EXISTS reports (
   clips JSONB NOT NULL DEFAULT '[]',
   pose_quality JSONB,
   confirmed_events JSONB NOT NULL DEFAULT '[]',
-  landmark_summary JSONB
+  landmark_summary JSONB,
+  follow_up_comparison JSONB,
+  export_video_url TEXT
 );
 
 CREATE TABLE IF NOT EXISTS weaknesses (
@@ -90,3 +93,6 @@ CREATE INDEX IF NOT EXISTS idx_clips_report_id ON clips(report_id);
 -- ALTER TABLE reports ADD COLUMN IF NOT EXISTS pose_quality JSONB;
 -- ALTER TABLE reports ADD COLUMN IF NOT EXISTS confirmed_events JSONB NOT NULL DEFAULT '[]';
 -- ALTER TABLE reports ADD COLUMN IF NOT EXISTS landmark_summary JSONB;
+-- ALTER TABLE sessions ADD COLUMN IF NOT EXISTS parent_session_id UUID REFERENCES sessions(id) ON DELETE SET NULL;
+-- ALTER TABLE reports ADD COLUMN IF NOT EXISTS follow_up_comparison JSONB;
+-- ALTER TABLE reports ADD COLUMN IF NOT EXISTS export_video_url TEXT;

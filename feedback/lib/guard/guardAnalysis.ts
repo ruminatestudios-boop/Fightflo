@@ -218,7 +218,7 @@ export function analyzeGuardFromReport(report: Report): GuardDropAnalysis {
   const dropCount = moments.length;
   const summary =
     dropCount === 0
-      ? "No guard drops detected in this clip — keep the same discipline in sparring."
+      ? "No guard drops detected in this clip — keep the same discipline in live rounds."
       : dropCount === 1
         ? "1 guard drop flagged — tap below to replay that moment in red."
         : `${dropCount} guard drops flagged across the clip (${dropPercent}% of frames with pose).`;

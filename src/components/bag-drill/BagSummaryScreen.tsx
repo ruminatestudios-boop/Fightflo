@@ -235,6 +235,25 @@ export function BagSummaryScreen({
 
         <PushReminderBanner />
 
+        <div className="nike-card mt-6 rounded-xl p-4">
+          <p className="label text-[#fa4141]">Video coaching</p>
+          <p className="mt-2 font-display text-base text-white">
+            Upload a clip for full technical breakdown
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-[#737373]">
+            Bag rounds are great for reps — upload pad or shadow footage to Fightflo
+            Feedback for timestamped guard, footwork, and habit coaching.
+          </p>
+          <Button
+            variant="secondary"
+            size="md"
+            className="mt-4 w-full"
+            onClick={() => window.open("https://fightflo.app/feedback", "_blank")}
+          >
+            Open video coaching
+          </Button>
+        </div>
+
         <div className="mt-6 space-y-3">
           <Button variant="outline" size="md" onClick={onTrainAgain}>
             Custom setup

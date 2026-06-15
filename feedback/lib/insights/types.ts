@@ -10,27 +10,43 @@ export interface WeeklyFocusInsight {
   patternInsight: string;
 }
 
-export interface ProgressInsight {
-  weaknessLabel: string;
+export type ProgressMetricId =
+  | "positives"
+  | "total_faults"
+  | "guard_drops"
+  | "fault_variety"
+  | "pose_quality";
+
+export interface ProgressHighlight {
+  title: string;
+  detail: string;
+}
+
+export interface ProgressMetric {
+  id: ProgressMetricId;
+  label: string;
+  explanation: string;
   trend: WeaknessTrend;
+  lowerIsBetter: boolean;
+  group: "strength" | "focus";
+  unit: string;
   percentageChange: number;
   points: ProgressDataPoint[];
   summary: string;
+  improvementDetail: string;
+  firstValue: number;
+  lastValue: number;
 }
 
-export interface CompareSessionSnapshot {
-  id: string;
-  title: string;
-  date: string;
-  weaknessTitle: string;
-  coachSummary: string;
-  issueCount: number;
-}
-
-export interface CompareInsight {
-  sessionA: CompareSessionSnapshot;
-  sessionB: CompareSessionSnapshot;
-  insight: string;
+export interface ProgressInsight {
+  sessionCount: number;
+  headline: string;
+  headlineDetail: string;
+  latestMainFault: string;
+  latestStrengthTitle: string | null;
+  latestPositives: ProgressHighlight[];
+  defaultMetricId: ProgressMetricId;
+  metrics: ProgressMetric[];
 }
 
 export interface CoachShareInsight {
@@ -64,6 +80,5 @@ export interface HomeInsights {
   guard: GuardInsight | null;
   weeklyFocus: WeeklyFocusInsight | null;
   progress: ProgressInsight | null;
-  compare: CompareInsight | null;
   coachShare: CoachShareInsight | null;
 }

@@ -62,7 +62,45 @@ async function main() {
       execSync("$HOME/bin/ffmpeg -version", { stdio: "ignore", shell: "/bin/zsh" });
       check("FFmpeg", true, "installed (~/bin)");
     } catch {
-      allOk = check("FFmpeg", false, "run: brew install ffmpeg or add ~/bin/ffmpeg") && allOk;
+      try {
+        const ffmpegStatic = (await import("ffmpeg-static")).default;
+        if (ffmpegStatic) {
+          execSync(`"${ffmpegStatic}" -version`, { stdio: "ignore" });
+          check("FFmpeg", true, "bundled (ffmpeg-static)");
+        } else {
+          throw new Error("no path");
+        }
+      } catch {
+        allOk =
+          check(
+            "FFmpeg",
+            false,
+            "run: brew install ffmpeg, add ~/bin/ffmpeg, or npm install ffmpeg-static"
+          ) && allOk;
+      }
+    }
+  }
+
+  try {
+    execSync("ffprobe -version", { stdio: "ignore" });
+    check("FFprobe", true, "installed");
+  } catch {
+    try {
+      execSync("$HOME/bin/ffprobe -version", { stdio: "ignore", shell: "/bin/zsh" });
+      check("FFprobe", true, "installed (~/bin)");
+    } catch {
+      try {
+        const { path: bundled } = await import("ffprobe-static");
+        execSync(`"${bundled}" -version`, { stdio: "ignore" });
+        check("FFprobe", true, "bundled (ffprobe-static)");
+      } catch {
+        allOk =
+          check(
+            "FFprobe",
+            false,
+            "run: brew install ffmpeg (includes ffprobe) or npm install ffprobe-static"
+          ) && allOk;
+      }
     }
   }
 

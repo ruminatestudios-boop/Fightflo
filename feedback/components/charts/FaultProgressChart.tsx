@@ -22,7 +22,11 @@ const TREND_BAR: Record<WeaknessTrend, string> = {
 interface FaultProgressChartProps {
   points: ProgressDataPoint[];
   trend?: WeaknessTrend;
+  metricLabel?: string;
+  unit?: string;
+  lowerIsBetter?: boolean;
   height?: number;
+  maxSessions?: number;
   className?: string;
 }
 
@@ -30,10 +34,14 @@ function ChartTooltip({
   active,
   payload,
   label,
+  metricLabel,
+  unit,
 }: {
   active?: boolean;
   payload?: { value: number; payload: ProgressDataPoint }[];
   label?: string | number;
+  metricLabel?: string;
+  unit?: string;
 }) {
   if (!active || !payload?.length) return null;
 
@@ -45,8 +53,11 @@ function ChartTooltip({
       <p className="home-chart-tooltip-label">Session {label}</p>
       {point.date ? <p className="home-chart-tooltip-date">{point.date}</p> : null}
       <p className="home-chart-tooltip-value">
-        {count} fault{count === 1 ? "" : "s"} flagged
+        {count} {unit ?? "points"}
       </p>
+      {metricLabel ? (
+        <p className="home-chart-tooltip-meta">{metricLabel}</p>
+      ) : null}
     </div>
   );
 }
@@ -54,22 +65,32 @@ function ChartTooltip({
 export function FaultProgressChart({
   points,
   trend = "stable",
+  metricLabel,
+  unit = "points",
+  lowerIsBetter = true,
   height = 240,
+  maxSessions,
   className = "",
 }: FaultProgressChartProps) {
+  const chartPoints = useMemo(() => {
+    if (!maxSessions || points.length <= maxSessions) return points;
+    return points.slice(-maxSessions);
+  }, [maxSessions, points]);
+
   const yMax = useMemo(() => {
-    const peak = Math.max(...points.map((p) => p.count), 1);
+    const peak = Math.max(...chartPoints.map((p) => p.count), 1);
     return Math.max(3, peak + 1);
-  }, [points]);
+  }, [chartPoints]);
 
   const barColor = TREND_BAR[trend];
-  const lastSession = points[points.length - 1]?.session;
+  const lastSession = chartPoints[chartPoints.length - 1]?.session;
+  const trimmed = maxSessions && points.length > maxSessions;
 
   return (
     <div className={`home-flow-chart ${className}`.trim()} style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
-          data={points}
+          data={chartPoints}
           margin={{ top: 12, right: 12, left: 4, bottom: 8 }}
           barCategoryGap="28%"
         >
@@ -94,7 +115,7 @@ export function FaultProgressChart({
             tickLine={false}
             width={28}
             label={{
-              value: "Faults",
+              value: unit,
               angle: -90,
               position: "insideLeft",
               offset: 8,
@@ -104,7 +125,7 @@ export function FaultProgressChart({
           />
           <Tooltip
             cursor={false}
-            content={<ChartTooltip />}
+            content={<ChartTooltip metricLabel={metricLabel} unit={unit} />}
           />
           <Bar
             dataKey="count"
@@ -112,7 +133,7 @@ export function FaultProgressChart({
             maxBarSize={40}
             activeBar={{ fill: barColor, opacity: 0.95 }}
           >
-            {points.map((point) => (
+            {chartPoints.map((point) => (
               <Cell
                 key={point.session}
                 fill={barColor}
@@ -122,7 +143,10 @@ export function FaultProgressChart({
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-      <p className="home-chart-caption">Sessions · lower is better</p>
+      <p className="home-chart-caption">
+        {lowerIsBetter ? "Lower is better" : "Higher is better"}
+        {trimmed ? ` · last ${maxSessions} of ${points.length} sessions` : " · per session"}
+      </p>
     </div>
   );
 }

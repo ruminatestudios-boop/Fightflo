@@ -8,6 +8,7 @@ import {
   ensureUser,
   recordAnalysisUsed,
 } from "@/lib/storage/sessions";
+import { validateParentSession } from "@/lib/upload/validateParentSession";
 import type { SkillLevel, SportId } from "@/types";
 
 export const runtime = "nodejs";
@@ -31,6 +32,7 @@ async function handleCloudinaryComplete(request: NextRequest) {
     videoUrl: string;
     cloudinaryPublicId: string;
     videoDuration: number;
+    parentSessionId?: string | null;
   };
 
   const {
@@ -41,10 +43,18 @@ async function handleCloudinaryComplete(request: NextRequest) {
     videoUrl,
     cloudinaryPublicId,
     videoDuration,
+    parentSessionId,
   } = body;
 
   if (!sessionId || !userId || !videoUrl || !cloudinaryPublicId) {
     return NextResponse.json({ error: "Missing upload metadata" }, { status: 400 });
+  }
+
+  if (parentSessionId) {
+    const parentCheck = await validateParentSession(parentSessionId, userId);
+    if (!parentCheck.ok) {
+      return NextResponse.json({ error: parentCheck.error }, { status: 400 });
+    }
   }
 
   const allowance = await getAnalysisAllowance(userId);
@@ -63,6 +73,7 @@ async function handleCloudinaryComplete(request: NextRequest) {
     videoDuration: Math.round(videoDuration || 60),
     cloudinaryPublicId,
     id: sessionId,
+    parentSessionId: parentSessionId ?? null,
   });
 
   await recordAnalysisUsed(userId);
@@ -83,12 +94,20 @@ async function handleDirectUpload(request: NextRequest) {
   const sport = (formData.get("sport") as SportId) ?? "boxing";
   const level = (formData.get("level") as SkillLevel) ?? "intermediate";
   const userIdParam = formData.get("userId") as string | null;
+  const parentSessionId = formData.get("parentSessionId") as string | null;
 
   if (!file) {
     return NextResponse.json({ error: "No video file provided" }, { status: 400 });
   }
 
   const userId = await ensureUser(sport, level, userIdParam);
+
+  if (parentSessionId) {
+    const parentCheck = await validateParentSession(parentSessionId, userId);
+    if (!parentCheck.ok) {
+      return NextResponse.json({ error: parentCheck.error }, { status: 400 });
+    }
+  }
 
   const allowance = await getAnalysisAllowance(userId);
   if (!allowance.canAnalyse) {
@@ -109,6 +128,7 @@ async function handleDirectUpload(request: NextRequest) {
     videoUrl: upload.url,
     videoDuration: Math.round(upload.duration),
     cloudinaryPublicId: upload.publicId,
+    parentSessionId: parentSessionId ?? null,
   });
 
   await recordAnalysisUsed(userId);
