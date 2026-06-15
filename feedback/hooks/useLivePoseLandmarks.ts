@@ -92,7 +92,7 @@ function hasCoreJoints(landmarks: FrameLandmarks): boolean {
 }
 
 /**
- * Runs MediaPipe on the video element each frame so the skeleton tracks
+ * Runs pose tracking on the video element each frame so the skeleton tracks
  * exactly what's on screen during playback.
  */
 export function useLivePoseLandmarks(

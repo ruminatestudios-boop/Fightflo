@@ -49,6 +49,22 @@ export function getInterpolatedLandmarksAtTime(
   return last.landmarks;
 }
 
+/** True when the server saved enough pose samples for stored playback */
+export function hasUsableStoredLandmarks(timeline: LandmarkTimeline): boolean {
+  if (timeline.length < 3) return false;
+
+  let withShoulders = 0;
+  for (const frame of timeline) {
+    const ls = frame.landmarks.left_shoulder;
+    const rs = frame.landmarks.right_shoulder;
+    if ((ls?.visibility ?? 0) > 0.3 && (rs?.visibility ?? 0) > 0.3) {
+      withShoulders++;
+      if (withShoulders >= 3) return true;
+    }
+  }
+  return false;
+}
+
 /** Shift landmark timestamps for clip playback (clip starts at offset in full video) */
 export function shiftLandmarkTimeline(
   timeline: LandmarkTimeline,

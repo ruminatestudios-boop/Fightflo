@@ -14,5 +14,12 @@
       "source": "/feedback/:path*",
       "destination": "https://feedback.fightflo.app/feedback/:path*"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/feedback/feedback/:path*",
+      "destination": "/feedback/:path*",
+      "statusCode": 308
+    }
   ]
 }

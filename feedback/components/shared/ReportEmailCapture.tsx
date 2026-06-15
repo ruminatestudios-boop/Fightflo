@@ -49,7 +49,7 @@ export function ReportEmailCapture({
           value={email}
           onChange={(e) => onEmailChange(e.target.value)}
           disabled={status === "submitting"}
-          className="h-12 w-full rounded-xl border border-white/10 bg-black px-4 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none"
+          className="h-12 w-full rounded-card border border-white/10 bg-black px-4 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none"
           aria-label="Email address"
         />
 
@@ -57,7 +57,7 @@ export function ReportEmailCapture({
           type="button"
           onClick={onSubmit}
           disabled={status === "submitting"}
-          className="flex h-12 w-full items-center justify-center rounded-full bg-white text-sm font-medium text-black disabled:opacity-50"
+          className="flex h-12 w-full items-center justify-center rounded-card bg-white text-sm font-medium text-black disabled:opacity-50"
         >
           {status === "submitting" ? "Sending…" : "Send my report link"}
         </button>

@@ -1,7 +1,7 @@
 import { FRAMES_PER_SECOND, frameToTimestamp } from "@/lib/analysis/extractFrames";
 import { smoothLandmarkTimeline } from "@/lib/analysis/landmarkSmoothing";
+import { buildTimelineContext } from "@/lib/analysis/timelineAnalysis";
 import {
-  computeFrameMetrics,
   isWeaknessConfirmedInFrame,
   jointForWeakness,
   humanLabelForWeakness,
@@ -167,12 +167,16 @@ function buildLandmarkSummary(
   timeline: LandmarkTimeline,
   sport: SportId
 ): Record<string, unknown> {
-  const guardDropFrames = timeline.filter((f) =>
-    computeFrameMetrics(f.landmarks).guard_dropped
+  const context = buildTimelineContext(timeline);
+  const { calibration, frames } = context;
+
+  const reliableFrames = frames.filter((f) => f.metrics.metrics_reliable);
+  const guardDropFrames = reliableFrames.filter(
+    (f) => f.metrics.guard_dropped
   ).length;
 
-  const elbowAngles = timeline
-    .map((f) => computeFrameMetrics(f.landmarks).right_elbow_angle)
+  const elbowAngles = reliableFrames
+    .map((f) => f.metrics.right_elbow_angle)
     .filter((a): a is number => a !== null);
 
   const avgElbow =
@@ -182,13 +186,30 @@ function buildLandmarkSummary(
         )
       : null;
 
+  const avgGuardConfidence =
+    reliableFrames.length > 0
+      ? Math.round(
+          (reliableFrames.reduce((s, f) => s + f.metrics.guard_confidence, 0) /
+            reliableFrames.length) *
+            100
+        ) / 100
+      : null;
+
   return {
     sport,
     frames_analysed: timeline.length,
-    guard_drop_frame_ratio: timeline.length
-      ? Math.round((guardDropFrames / timeline.length) * 100)
+    reliable_frame_ratio: timeline.length
+      ? Math.round((reliableFrames.length / timeline.length) * 100)
+      : 0,
+    guard_drop_frame_ratio: reliableFrames.length
+      ? Math.round((guardDropFrames / reliableFrames.length) * 100)
       : 0,
     avg_right_elbow_angle: avgElbow,
+    avg_guard_confidence: avgGuardConfidence,
+    guard_calibrated: calibration !== null,
+    guard_line_y: calibration?.guardLineY ?? null,
+    guard_threshold: calibration?.guardThreshold ?? null,
+    kick_events_detected: context.kickEvents.length,
     sample_timestamps: timeline.slice(0, 5).map((f) => f.timestamp),
   };
 }
@@ -197,28 +218,32 @@ export function buildConfirmedEvents(
   timeline: LandmarkTimeline,
   patternData: PatternAnalysisResult
 ): ConfirmedPoseEvent[] {
+  const { frames } = buildTimelineContext(timeline);
   const events: ConfirmedPoseEvent[] = [];
   const seen = new Set<string>();
 
   for (const event of patternData.events) {
-    const frame = timeline[event.start_frame];
-    if (!frame) continue;
+    const analysis = frames[event.start_frame];
+    if (!analysis) continue;
 
-    const metrics = computeFrameMetrics(frame.landmarks);
-    if (!isWeaknessConfirmedInFrame(event.weakness_type, metrics)) continue;
+    if (
+      !isWeaknessConfirmedInFrame(
+        event.weakness_type,
+        analysis.metrics,
+        analysis.kick
+      )
+    ) {
+      continue;
+    }
 
     const key = `${event.weakness_type}-${event.start_timestamp}`;
     if (seen.has(key)) continue;
     seen.add(key);
 
-    const parts = event.start_timestamp.split(":").map(Number);
-    const timeSeconds =
-      parts.length === 2 ? parts[0] * 60 + parts[1] : parts[0] ?? 0;
-
     events.push({
       weakness_type: event.weakness_type,
       timestamp: event.start_timestamp,
-      timeSeconds,
+      timeSeconds: analysis.timeSeconds,
       jointHighlight: jointForWeakness(event.weakness_type),
       label: humanLabelForWeakness(event.weakness_type),
       confidence: event.confidence,

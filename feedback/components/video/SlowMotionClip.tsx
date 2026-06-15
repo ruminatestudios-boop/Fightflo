@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { parseGuardCalibration } from "@/lib/analysis/guardCalibration";
 import type { LandmarkFrame, OverlayMeasurement } from "./types";
 import { OverlayCanvas } from "./OverlayCanvas";
 import { formatTime, parseTimestamp } from "./utils";
@@ -18,6 +19,7 @@ interface SlowMotionClipProps {
   /** Where this clip starts in the full session video (seconds) */
   landmarkTimeOffset?: number;
   confirmedEvents?: import("@/types").ConfirmedPoseEvent[];
+  landmarkSummary?: Record<string, unknown> | null;
 }
 
 export function SlowMotionClip({
@@ -30,6 +32,7 @@ export function SlowMotionClip({
   playbackRate = 0.25,
   landmarkTimeOffset = 0,
   confirmedEvents = [],
+  landmarkSummary = null,
 }: SlowMotionClipProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
@@ -41,6 +44,8 @@ export function SlowMotionClip({
     if (!video) return;
     video.playbackRate = playbackRate;
   }, [playbackRate, clipUrl]);
+
+  const guardCalibration = parseGuardCalibration(landmarkSummary);
 
   const annotations = [
     {
@@ -87,6 +92,8 @@ export function SlowMotionClip({
                 annotations={annotations}
                 landmarkTimeOffset={landmarkTimeOffset}
                 confirmedEvents={confirmedEvents}
+                useLivePose={false}
+                guardCalibration={guardCalibration}
               />
             )}
           </>
@@ -143,7 +150,7 @@ export function SlowMotionClip({
               else video.play();
             }}
             disabled={!clipUrl}
-            className="rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white disabled:opacity-40"
+            className="rounded-card bg-white/10 px-3 py-1.5 text-xs text-white disabled:opacity-40"
           >
             {playing ? "Pause" : "Play"}
           </button>

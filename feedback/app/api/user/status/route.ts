@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { hasProAccess } from "@/lib/config/env";
 import { getAnalysisAllowance } from "@/lib/storage/sessions";
 import { getUserById } from "@/lib/db/queries";
 
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
   const user = await getUserById(userId);
   if (!user) {
     return NextResponse.json({
-      isPro: false,
+      isPro: hasProAccess(null),
       hasEmail: false,
       email: null,
       canAnalyse: true,

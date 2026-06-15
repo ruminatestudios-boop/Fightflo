@@ -56,7 +56,7 @@ export const UploadZone = forwardRef<UploadZoneHandle, UploadZoneProps>(
             }
           }}
           onClick={() => !disabled && inputRef.current?.click()}
-          className={`cursor-pointer rounded-2xl border-2 bg-white p-6 text-black shadow-md transition-all active:scale-[0.98] ${
+          className={`cursor-pointer rounded-card border-2 bg-white p-6 text-black shadow-md transition-all active:scale-[0.98] ${
             dragging ? "border-black shadow-lg" : "border-transparent hover:shadow-lg"
           } ${disabled ? "pointer-events-none opacity-40" : ""}`}
         >

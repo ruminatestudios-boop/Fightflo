@@ -65,6 +65,7 @@ export function ImmersiveVideoStage({
         src={videoUrl}
         className="immersive-video-main"
         playsInline
+        loop
         crossOrigin="anonymous"
         onTimeUpdate={(e) => {
           const t = e.currentTarget.currentTime;

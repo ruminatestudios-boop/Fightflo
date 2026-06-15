@@ -1,9 +1,11 @@
+import { analyzeGuardFromReport } from "@/lib/guard/guardAnalysis";
 import { getReportBySessionId, getUserSessionLibrary } from "@/lib/db/queries";
 import type { Report, WeaknessTrend } from "@/types";
 import type {
   CoachShareInsight,
   CompareInsight,
   CompareSessionSnapshot,
+  GuardInsight,
   HomeInsights,
   ProgressInsight,
   ReuploadInsight,
@@ -153,8 +155,11 @@ export async function buildHomeInsights(userId: string): Promise<HomeInsights> {
   let weeklyFocus: WeeklyFocusInsight | null = null;
   let reupload: ReuploadInsight | null = null;
   let coachShare: CoachShareInsight | null = null;
+  let guard: GuardInsight | null = null;
 
   if (latestComplete && latestReport) {
+    const guardAnalysis = analyzeGuardFromReport(latestReport);
+
     weeklyFocus = {
       sessionId: latestComplete.id,
       weaknessTitle: latestReport.main_weakness.title,
@@ -180,12 +185,23 @@ export async function buildHomeInsights(userId: string): Promise<HomeInsights> {
         latestComplete.resolved_summary ||
         latestReport.main_weakness.title,
     };
+
+    guard = {
+      sessionId: latestComplete.id,
+      title: latestComplete.resolved_title,
+      dropCount: guardAnalysis.dropCount,
+      dropPercent: guardAnalysis.dropPercent,
+      summary: guardAnalysis.summary,
+      mechanicalFix: guardAnalysis.mechanicalFix,
+      drillName: guardAnalysis.drillName,
+    };
   }
 
   return {
     completeCount: complete.length,
     latestComplete,
     reupload,
+    guard,
     weeklyFocus,
     progress: buildProgressPoints(sessions, reports),
     compare: buildCompareInsight(sessions, reports),

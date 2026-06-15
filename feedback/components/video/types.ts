@@ -1,4 +1,5 @@
 import type { FrameLandmarks, TimelineFrame } from "@/types";
+import type { GuardCalibration } from "@/lib/analysis/poseMetrics";
 
 /** Single frame of pose landmarks synced to video time */
 export type LandmarkFrame = TimelineFrame;
@@ -45,4 +46,5 @@ export interface SkeletonDrawOptions {
   flashGuardLine?: boolean;
   layout?: import("./videoLayout").VideoContentRect;
   pulsePhase?: number;
+  guardCalibration?: GuardCalibration | null;
 }

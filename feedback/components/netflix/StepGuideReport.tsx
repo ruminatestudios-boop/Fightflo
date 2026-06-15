@@ -12,7 +12,12 @@ import { OverlayCanvas } from "@/components/video/OverlayCanvas";
 import { ImmersiveVideoStage } from "@/components/video/ImmersiveVideoStage";
 import { TimelineMarkers } from "@/components/video/TimelineMarkers";
 import { parseTimestamp, resolvePlaybackUrl, formatTime } from "@/components/video/utils";
+import { getInterpolatedLandmarksAtTime } from "@/components/video/landmarkPlayback";
 import { apiPath } from "@/lib/paths";
+import { analyzeGuardFromReport, liveGuardDropLabel } from "@/lib/guard/guardAnalysis";
+import { parseGuardCalibration } from "@/lib/analysis/guardCalibration";
+import { OverlayGuide } from "@/components/video/OverlayGuide";
+import { computeFrameMetrics } from "@/lib/analysis/poseMetrics";
 import type { TimelineMoment } from "@/components/video/types";
 import { getSportConfig } from "@/config/sports";
 import type {
@@ -30,6 +35,7 @@ interface StepGuideReportProps {
   isPro?: boolean;
   onShare?: () => void;
   onUpgrade?: () => void;
+  mode?: "full" | "guard";
 }
 
 type StepAccent = "green" | "red" | "orange" | "neutral";
@@ -89,7 +95,9 @@ export function StepGuideReport({
   isPro = false,
   onShare,
   onUpgrade,
+  mode = "full",
 }: StepGuideReportProps) {
+  const isGuardMode = mode === "guard";
   const sport = report.sport as SportId;
   const sportConfig = getSportConfig(sport);
   const landmarkTimeline = report.raw_landmark_data ?? [];
@@ -106,7 +114,18 @@ export function StepGuideReport({
   const [videoError, setVideoError] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [notesVisible, setNotesVisible] = useState(true);
+  const [notesVisible, setNotesVisible] = useState(!isGuardMode);
+
+  const guardAnalysis = useMemo(
+    () => (isGuardMode ? analyzeGuardFromReport(report) : null),
+    [isGuardMode, report]
+  );
+
+  const guardCalibration = useMemo(
+    () => parseGuardCalibration(report.landmark_summary),
+    [report.landmark_summary]
+  );
+  const guardCalibrated = guardCalibration !== null;
 
   const handleDownload = useCallback(async () => {
     if (!isPro) {
@@ -167,17 +186,28 @@ export function StepGuideReport({
   );
   const annotations = useMemo(
     () =>
-      buildAnnotationsFromReport({
-        positives,
-        weaknesses,
-        confirmedEvents: report.confirmed_events,
-        primaryWeaknessType: report.confirmed_events?.[0]?.weakness_type,
-      }),
-    [positives, weaknesses, report.confirmed_events]
+      isGuardMode
+        ? []
+        : buildAnnotationsFromReport({
+            positives,
+            weaknesses,
+            confirmedEvents: report.confirmed_events,
+            primaryWeaknessType: report.confirmed_events?.[0]?.weakness_type,
+          }),
+    [isGuardMode, positives, weaknesses, report.confirmed_events]
   );
 
-  const moments: TimelineMoment[] = useMemo(
-    () => [
+  const moments: TimelineMoment[] = useMemo(() => {
+    if (isGuardMode && guardAnalysis) {
+      return guardAnalysis.moments.map((m) => ({
+        id: m.id,
+        timestamp: m.timestamp,
+        timeSeconds: m.timeSeconds,
+        title: m.title,
+        kind: "weakness" as const,
+      }));
+    }
+    return [
       ...positives.map((p, i) => ({
         id: `pos-${i}`,
         timestamp: p.timestamp,
@@ -192,11 +222,86 @@ export function StepGuideReport({
         title: w.title,
         kind: "weakness" as const,
       })),
-    ],
-    [positives, weaknesses]
-  );
+    ];
+  }, [isGuardMode, guardAnalysis, positives, weaknesses]);
 
   const steps = useMemo((): ReportStep[] => {
+    if (isGuardMode && guardAnalysis) {
+      const list: ReportStep[] = [
+        {
+          id: "guard-intro",
+          eyebrow: "Guard mode",
+          title:
+            guardAnalysis.dropCount === 0
+              ? "Hands stayed up"
+              : `${guardAnalysis.dropCount} guard drop${guardAnalysis.dropCount === 1 ? "" : "s"}`,
+          body: guardAnalysis.summary,
+          accent: guardAnalysis.dropCount === 0 ? "green" : "red",
+          timestamp: "0:00",
+          seekTime: 0,
+          detailType: "intro",
+        },
+      ];
+
+      guardAnalysis.moments.forEach((moment) => {
+        list.push({
+          id: moment.id,
+          eyebrow: moment.timestamp,
+          title: moment.title,
+          body: moment.detail,
+          accent: "red",
+          timestamp: moment.timestamp,
+          seekTime: moment.timeSeconds,
+          detailType: "weakness",
+          weakness: {
+            title: moment.title,
+            what_is_happening: moment.detail,
+            mechanical_fix: moment.fix,
+            fight_consequence: guardAnalysis.fightConsequence,
+            root_cause: report.main_weakness?.root_cause ?? "",
+            elite_reference: report.main_weakness?.elite_reference ?? "",
+            frequency: "",
+            timestamp: moment.timestamp,
+          },
+        });
+      });
+
+      if (guardAnalysis.dropCount > 0) {
+        list.push({
+          id: "guard-fix",
+          eyebrow: "How to improve",
+          title: "Reset your guard",
+          body: guardAnalysis.mechanicalFix,
+          accent: "orange",
+          detailType: "weakness",
+          weakness: {
+            title: "Guard reset",
+            what_is_happening: guardAnalysis.fightConsequence,
+            mechanical_fix: guardAnalysis.mechanicalFix,
+            fight_consequence: guardAnalysis.fightConsequence,
+            root_cause: report.main_weakness?.root_cause ?? "",
+            elite_reference: report.main_weakness?.elite_reference ?? "",
+            frequency: "",
+            timestamp: "",
+          },
+        });
+
+        list.push({
+          id: "guard-drill",
+          eyebrow: "Drill",
+          title: guardAnalysis.drillName,
+          body:
+            report.drill?.description ??
+            "Shadowbox return-to-cheek after every punch.",
+          accent: "orange",
+          detailType: "drill",
+          drill: report.drill,
+        });
+      }
+
+      return list;
+    }
+
     const list: ReportStep[] = [
       {
         id: "intro",
@@ -261,10 +366,70 @@ export function StepGuideReport({
     });
 
     return list;
-  }, [report, session.session_number, sportConfig.name]);
+  }, [isGuardMode, guardAnalysis, report, session.session_number, sportConfig.name]);
 
   const step = steps[stepIndex];
   const isLastStep = stepIndex >= steps.length - 1;
+
+  const cinemaNote = useMemo(() => {
+    const windowSeconds = 2.5;
+
+    if (isGuardMode && guardAnalysis) {
+      const frame = getInterpolatedLandmarksAtTime(landmarkTimeline, currentTime);
+      if (frame) {
+        const live = liveGuardDropLabel(
+          computeFrameMetrics(frame, guardCalibration)
+        );
+        if (live) {
+          return {
+            kind: "weakness" as const,
+            title: live.title,
+            detail: live.detail,
+            fix: live.fix,
+          };
+        }
+      }
+
+      let best: {
+        kind: "weakness";
+        title: string;
+        detail: string;
+        fix: string;
+        dist: number;
+      } | null = null;
+
+      for (const moment of guardAnalysis.moments) {
+        const dist = Math.abs(currentTime - moment.timeSeconds);
+        if (dist <= windowSeconds && (!best || dist < best.dist)) {
+          best = {
+            kind: "weakness",
+            title: moment.title,
+            detail: moment.detail,
+            fix: moment.fix,
+            dist,
+          };
+        }
+      }
+
+      return best;
+    }
+
+    let best: {
+      kind: "positive" | "weakness";
+      title: string;
+      dist: number;
+    } | null = null;
+
+    for (const moment of moments) {
+      if (moment.kind !== "positive" && moment.kind !== "weakness") continue;
+      const dist = Math.abs(currentTime - moment.timeSeconds);
+      if (dist <= windowSeconds && (!best || dist < best.dist)) {
+        best = { kind: moment.kind, title: moment.title, dist };
+      }
+    }
+
+    return best;
+  }, [isGuardMode, guardAnalysis, landmarkTimeline, moments, currentTime, guardCalibration]);
 
   const seekTo = useCallback((timeSeconds: number) => {
     const video = videoRef.current;
@@ -426,7 +591,9 @@ export function StepGuideReport({
 
   return (
     <NetflixShell backHref="/" immersive>
-      <div className={`stepguide-root stepguide-root--fullscreen ${notesVisible ? "" : "stepguide-root--cinema"}`}>
+      <div
+        className={`stepguide-root stepguide-root--fullscreen ${notesVisible ? "" : "stepguide-root--cinema"} ${isGuardMode ? "stepguide-root--guard" : ""}`}
+      >
         <ImmersiveVideoStage
           videoUrl={videoUrl}
           videoRef={videoRef}
@@ -444,7 +611,10 @@ export function StepGuideReport({
             landmarks={landmarkTimeline}
             annotations={annotations}
             confirmedEvents={report.confirmed_events ?? []}
-            useLivePose
+            useLivePose={false}
+            guardCalibration={guardCalibration}
+            suppressAnnotationLabel={!notesVisible || isGuardMode}
+            guardFocusMode={isGuardMode}
           />
         </ImmersiveVideoStage>
 
@@ -467,6 +637,13 @@ export function StepGuideReport({
                 </svg>
               )}
             </button>
+            <OverlayGuide
+              variant="rail"
+              sport={sport}
+              poseQuality={report.pose_quality}
+              guardCalibrated={guardCalibrated}
+              isGuardMode={isGuardMode}
+            />
             <button
               type="button"
               onClick={togglePlay}
@@ -591,13 +768,49 @@ export function StepGuideReport({
           </div>
 
           {!notesVisible && (
-            <button
-              type="button"
-              className="stepguide-restore-notes"
-              onClick={() => setNotesVisible(true)}
-            >
-              Show coaching notes
-            </button>
+            <div className="stepguide-cinema-stack">
+              {cinemaNote && (
+                <>
+                  {isGuardMode && cinemaNote.kind === "weakness" ? (
+                    <>
+                      <p className="stepguide-cinema-pill stepguide-cinema-pill--red stepguide-guard-alert">
+                        GUARD DOWN
+                      </p>
+                      {"title" in cinemaNote && cinemaNote.title && (
+                        <p className="stepguide-cinema-pill stepguide-cinema-pill--detail">
+                          {cinemaNote.title}
+                        </p>
+                      )}
+                      {"detail" in cinemaNote && cinemaNote.detail && (
+                        <p className="stepguide-cinema-pill stepguide-cinema-pill--detail">
+                          {cinemaNote.detail}
+                        </p>
+                      )}
+                      {"fix" in cinemaNote && cinemaNote.fix && (
+                        <p className="stepguide-cinema-pill stepguide-cinema-pill--fix">
+                          Fix: {cinemaNote.fix}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p
+                      className={`stepguide-cinema-pill stepguide-cinema-pill--${
+                        cinemaNote.kind === "positive" ? "green" : "red"
+                      }`}
+                    >
+                      {cinemaNote.title}
+                    </p>
+                  )}
+                </>
+              )}
+              <button
+                type="button"
+                className="stepguide-cinema-pill stepguide-restore-notes"
+                onClick={() => setNotesVisible(true)}
+              >
+                {isGuardMode ? "Show guard timeline" : "Show coaching notes"}
+              </button>
+            </div>
           )}
         </div>
       </div>

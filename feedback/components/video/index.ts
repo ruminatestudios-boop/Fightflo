@@ -1,6 +1,7 @@
 export { AnnotatedPlayer, buildAnnotationsFromReport, toPositiveTimestamps, toWeaknessTimestamps } from "./AnnotatedPlayer";
 export { MomentCard, MomentCardList } from "./MomentCard";
 export { OverlayCanvas, drawOverlayFrame } from "./OverlayCanvas";
+export { OverlayGuide, OverlayGuideContent } from "./OverlayGuide";
 export { SideBySidePlayer } from "./SideBySidePlayer";
 export {
   POSE_CONNECTIONS,

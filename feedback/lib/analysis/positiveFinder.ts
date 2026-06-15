@@ -1,5 +1,5 @@
-import { parseTimestamp } from "@/lib/analysis/extractFrames";
-import { computeFrameMetrics } from "@/lib/analysis/poseMetrics";
+import { buildTimelineContext } from "@/lib/analysis/timelineAnalysis";
+import { parseTimestamp } from "@/lib/analysis/timestamps";
 import type { LandmarkTimeline } from "@/types";
 
 export interface ObservedStrength {
@@ -35,17 +35,37 @@ export function findObservedStrengths(
 ): ObservedStrength[] {
   if (timeline.length < 5) return [];
 
+  const { frames, kickEvents } = buildTimelineContext(timeline);
   const candidates: ObservedStrength[] = [];
 
-  for (const frame of timeline) {
-    const m = computeFrameMetrics(frame.landmarks);
-    const ts = frame.timestamp;
-    const timeSeconds = parseTimestamp(ts);
+  for (const event of kickEvents) {
+    if (
+      !event.lowChamber &&
+      !event.insufficientPivot &&
+      !event.footStrikeLikely &&
+      event.chamberHeight >= 0.05
+    ) {
+      candidates.push({
+        timestamp: event.peak_timestamp,
+        timeSeconds: parseTimestamp(event.peak_timestamp),
+        title: "Clean kick mechanics",
+        detail: `Hip turn and chamber on ${event.side} kick — pivot ${(event.plantedPivotLateral * 100).toFixed(0)}% lateral shift.`,
+      });
+    }
+  }
+
+  for (const analysis of frames) {
+    const m = analysis.metrics;
+    if (!m.metrics_reliable) continue;
+
+    const ts = analysis.timestamp;
+    const timeSeconds = analysis.timeSeconds;
 
     if (
       !m.guard_dropped &&
       m.right_elbow_angle !== null &&
-      m.right_elbow_angle >= 158
+      m.right_elbow_angle >= 158 &&
+      analysis.postRearExtension
     ) {
       candidates.push({
         timestamp: ts,
@@ -69,7 +89,7 @@ export function findObservedStrengths(
       });
     }
 
-    if (!m.chin_elevated && !m.guard_dropped) {
+    if (!m.chin_elevated && !m.guard_dropped && m.guard_confidence >= 0.55) {
       candidates.push({
         timestamp: ts,
         timeSeconds,

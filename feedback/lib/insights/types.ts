@@ -47,10 +47,21 @@ export interface ReuploadInsight {
   drillName: string;
 }
 
+export interface GuardInsight {
+  sessionId: string;
+  title: string;
+  dropCount: number;
+  dropPercent: number;
+  summary: string;
+  mechanicalFix: string;
+  drillName: string;
+}
+
 export interface HomeInsights {
   completeCount: number;
   latestComplete: SessionLibraryEntry | null;
   reupload: ReuploadInsight | null;
+  guard: GuardInsight | null;
   weeklyFocus: WeeklyFocusInsight | null;
   progress: ProgressInsight | null;
   compare: CompareInsight | null;

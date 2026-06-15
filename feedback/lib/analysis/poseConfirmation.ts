@@ -1,5 +1,5 @@
-import { parseTimestamp } from "@/lib/analysis/extractFrames";
-import { computeFrameMetrics, isWeaknessConfirmedInFrame } from "@/lib/analysis/poseMetrics";
+import { buildTimelineContext } from "@/lib/analysis/timelineAnalysis";
+import { isWeaknessConfirmedInFrame } from "@/lib/analysis/poseMetrics";
 import type { LandmarkTimeline, PatternAnalysisResult, PatternEvent } from "@/types";
 
 /** Keep only pattern events that pose metrics confirm at that frame */
@@ -7,11 +7,16 @@ export function filterConfirmedPatternEvents(
   timeline: LandmarkTimeline,
   events: PatternEvent[]
 ): PatternEvent[] {
+  const { frames } = buildTimelineContext(timeline);
+
   return events.filter((event) => {
-    const frame = timeline[event.start_frame];
-    if (!frame) return false;
-    const metrics = computeFrameMetrics(frame.landmarks);
-    return isWeaknessConfirmedInFrame(event.weakness_type, metrics);
+    const analysis = frames[event.start_frame];
+    if (!analysis) return false;
+    return isWeaknessConfirmedInFrame(
+      event.weakness_type,
+      analysis.metrics,
+      analysis.kick
+    );
   });
 }
 
@@ -59,10 +64,13 @@ export function isGuardConfirmedAtTime(
   timeSeconds: number,
   windowSeconds = 0.4
 ): boolean {
-  for (const frame of timeline) {
-    const t = parseTimestamp(frame.timestamp);
-    if (Math.abs(t - timeSeconds) > windowSeconds) continue;
-    if (computeFrameMetrics(frame.landmarks).guard_dropped) return true;
+  const { frames } = buildTimelineContext(timeline);
+
+  for (const analysis of frames) {
+    if (Math.abs(analysis.timeSeconds - timeSeconds) > windowSeconds) continue;
+    if (analysis.metrics.guard_dropped && analysis.metrics.metrics_reliable) {
+      return true;
+    }
   }
   return false;
 }

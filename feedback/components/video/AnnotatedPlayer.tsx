@@ -8,9 +8,11 @@ import type {
   TimelineMoment,
   WeaknessTimestamp,
 } from "./types";
-import type { ConfirmedPoseEvent } from "@/types";
+import { parseGuardCalibration } from "@/lib/analysis/guardCalibration";
+import type { ConfirmedPoseEvent, PoseQualityReport, SportId } from "@/types";
 import { jointForWeakness } from "@/lib/analysis/poseMetrics";
 import { OverlayCanvas } from "./OverlayCanvas";
+import { OverlayGuide } from "./OverlayGuide";
 import { MomentCardList } from "./MomentCard";
 import { TimelineMarkers } from "./TimelineMarkers";
 import { parseTimestamp } from "./utils";
@@ -23,6 +25,10 @@ interface AnnotatedPlayerProps {
   positives: PositiveTimestamp[];
   className?: string;
   confirmedEvents?: ConfirmedPoseEvent[];
+  /** Persisted guard calibration from server analysis */
+  landmarkSummary?: Record<string, unknown> | null;
+  sport?: SportId;
+  poseQuality?: PoseQualityReport | null;
   /** Full-bleed Netflix-style — minimal chrome */
   immersive?: boolean;
 }
@@ -35,6 +41,9 @@ export function AnnotatedPlayer({
   positives,
   className = "",
   confirmedEvents = [],
+  landmarkSummary = null,
+  sport = "boxing",
+  poseQuality = null,
   immersive = false,
 }: AnnotatedPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -63,6 +72,12 @@ export function AnnotatedPlayer({
     [positives, weaknesses]
   );
 
+  const guardCalibration = useMemo(
+    () => parseGuardCalibration(landmarkSummary),
+    [landmarkSummary]
+  );
+  const guardCalibrated = guardCalibration !== null;
+
   const seekTo = useCallback((timeSeconds: number) => {
     const video = videoRef.current;
     if (!video) return;
@@ -89,6 +104,7 @@ export function AnnotatedPlayer({
           src={videoUrl}
           className={`h-full w-full ${immersive ? "object-cover" : "object-contain"}`}
           playsInline
+          loop
           crossOrigin="anonymous"
           onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
           onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
@@ -110,12 +126,24 @@ export function AnnotatedPlayer({
           landmarks={landmarks}
           annotations={annotations}
           confirmedEvents={confirmedEvents}
+          useLivePose={false}
+          guardCalibration={guardCalibration}
         />
+        {immersive ? (
+          <div className="absolute left-4 top-4 z-[4] pointer-events-auto">
+            <OverlayGuide
+              variant="pill"
+              sport={sport}
+              poseQuality={poseQuality}
+              guardCalibrated={guardCalibrated}
+            />
+          </div>
+        ) : null}
         {immersive && (
           <button
             type="button"
             onClick={togglePlay}
-            className="absolute bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-white/15 backdrop-blur-md"
+            className="absolute bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-card bg-white/15 backdrop-blur-md"
             aria-label={playing ? "Pause" : "Play"}
           >
             {playing ? "❚❚" : "▶"}
@@ -125,11 +153,18 @@ export function AnnotatedPlayer({
 
       {!immersive && (
       <div className="space-y-4 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <OverlayGuide
+            sport={sport}
+            poseQuality={poseQuality}
+            guardCalibrated={guardCalibrated}
+          />
+        </div>
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={togglePlay}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-black transition-opacity hover:opacity-90"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-card bg-white text-black transition-opacity hover:opacity-90"
             aria-label={playing ? "Pause" : "Play"}
           >
             {playing ? (

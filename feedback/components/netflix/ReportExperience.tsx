@@ -12,6 +12,7 @@ import {
   toWeaknessTimestamps,
 } from "@/components/video/AnnotatedPlayer";
 import { PoseQualityBanner } from "@/components/video/PoseQualityBanner";
+import { OverlayGuide } from "@/components/video/OverlayGuide";
 import { resolvePlaybackUrl } from "@/components/video/utils";
 import type { MainWeakness, PositiveFinding, Report, Session, SportId } from "@/types";
 
@@ -119,6 +120,9 @@ export function ReportExperience({
                 weaknesses={weaknesses}
                 positives={positives}
                 confirmedEvents={report.confirmed_events ?? []}
+                landmarkSummary={report.landmark_summary}
+                sport={sport}
+                poseQuality={report.pose_quality}
                 immersive
                 className="h-full"
               />
@@ -126,8 +130,15 @@ export function ReportExperience({
             <div className="netflix-slide-footer shrink-0">
               <p className="netflix-eyebrow text-[#fa4141]">Annotated footage</p>
               <h2 className="netflix-title mt-1">AI overlay on your video</h2>
-              <div className="mt-2">
+              <div className="mt-2 flex flex-col gap-2">
                 <PoseQualityBanner quality={report.pose_quality} />
+                <OverlayGuide
+                  sport={sport}
+                  poseQuality={report.pose_quality}
+                  guardCalibrated={
+                    report.landmark_summary?.guard_calibrated === true
+                  }
+                />
               </div>
             </div>
           </div>

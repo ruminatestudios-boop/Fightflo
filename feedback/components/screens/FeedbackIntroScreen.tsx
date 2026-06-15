@@ -45,8 +45,7 @@ export function FeedbackIntroScreen({ onGetStarted }: FeedbackIntroScreenProps) 
             <button
               type="button"
               onClick={onGetStarted}
-              className="font-display flex h-14 w-full cursor-pointer items-center justify-center rounded-full bg-white text-[13px] tracking-[0.14em] text-black transition-colors hover:bg-[#e8e8e8] active:bg-[#d4d4d4]"
-              style={{ touchAction: "manipulation" }}
+              className="ff-primary-btn"
             >
               {INTRO_COPY.getStartedLabel}
             </button>

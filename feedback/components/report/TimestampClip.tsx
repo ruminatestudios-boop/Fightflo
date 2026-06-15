@@ -29,7 +29,7 @@ export function TimestampClip({
     <button
       type="button"
       onClick={handlePlay}
-      className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-left transition-colors hover:bg-white/[0.06]"
+      className="flex w-full items-center gap-3 rounded-card border border-white/10 bg-white/[0.03] p-3 text-left transition-colors hover:bg-white/[0.06]"
     >
       <span
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg font-mono text-xs"

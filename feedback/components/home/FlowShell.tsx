@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 interface FlowShellProps {
@@ -32,6 +33,7 @@ export function FlowPanel({ children, className = "" }: FlowPanelProps) {
 interface FlowActionProps {
   children: ReactNode;
   onClick?: () => void;
+  href?: string;
   variant?: "primary" | "secondary";
   disabled?: boolean;
 }
@@ -39,13 +41,24 @@ interface FlowActionProps {
 export function FlowAction({
   children,
   onClick,
+  href,
   variant = "primary",
   disabled = false,
 }: FlowActionProps) {
+  const className = `home-flow-action home-flow-action--${variant}`;
+
+  if (href && !disabled) {
+    return (
+      <Link href={href} className={className}>
+        {children}
+      </Link>
+    );
+  }
+
   return (
     <button
       type="button"
-      className={`home-flow-action home-flow-action--${variant}`}
+      className={className}
       onClick={onClick}
       disabled={disabled}
     >

@@ -12,15 +12,18 @@ export function apiPath(path: string): string {
   return withBasePath(path.startsWith("/") ? path : `/${path}`);
 }
 
-export function reportPath(sessionId: string): string {
-  return withBasePath(`/report/${sessionId}`);
+export function reportPath(sessionId: string, mode?: "guard"): string {
+  const query = mode === "guard" ? "?mode=guard" : "";
+  // Next.js router/link apply basePath automatically — do not prepend BASE_PATH here.
+  return `/report/${sessionId}${query}`;
 }
 
-export function absoluteReportUrl(sessionId: string): string {
+export function absoluteReportUrl(sessionId: string, mode?: "guard"): string {
   const base =
     typeof window !== "undefined"
       ? window.location.origin
       : process.env.NEXT_PUBLIC_APP_URL?.replace(/\/feedback\/?$/, "") ??
         "https://fightflo.app";
-  return `${base}${reportPath(sessionId)}`;
+  const query = mode === "guard" ? "?mode=guard" : "";
+  return `${base}${withBasePath(`/report/${sessionId}`)}${query}`;
 }

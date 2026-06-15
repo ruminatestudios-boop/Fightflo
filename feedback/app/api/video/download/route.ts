@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionById, getUserById } from "@/lib/db/queries";
+import { getReportBySessionId, getSessionById, getUserById } from "@/lib/db/queries";
+import { parseGuardCalibration } from "@/lib/analysis/guardCalibration";
+import { hasProAccess } from "@/lib/config/env";
 import { exportWatermarkedVideo } from "@/lib/video/exportWatermarkedVideo";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
-/** Pro-only: download video with FIGHTFLO. watermark burned in */
+/** Pro-only: download video with pose overlay + FIGHTFLO. watermark burned in */
 export async function GET(request: NextRequest) {
   const sessionId = request.nextUrl.searchParams.get("sessionId");
   const userId = request.nextUrl.searchParams.get("userId");
@@ -27,7 +29,7 @@ export async function GET(request: NextRequest) {
   }
 
   const user = await getUserById(userId);
-  if (!user?.is_pro) {
+  if (!hasProAccess(user)) {
     return NextResponse.json(
       { error: "Pro plan required to download watermarked video", code: "PRO_REQUIRED" },
       { status: 402 }
@@ -35,9 +37,17 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const report = await getReportBySessionId(sessionId);
     const { buffer, filename } = await exportWatermarkedVideo(
       session.video_url,
-      sessionId
+      sessionId,
+      report?.raw_landmark_data?.length
+        ? {
+            landmarkTimeline: report.raw_landmark_data,
+            guardCalibration: parseGuardCalibration(report.landmark_summary),
+            confirmedEvents: report.confirmed_events ?? [],
+          }
+        : undefined
     );
 
     return new NextResponse(new Uint8Array(buffer), {

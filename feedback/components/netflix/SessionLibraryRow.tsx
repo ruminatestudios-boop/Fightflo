@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useRef, useState } from "react";
+import { useState } from "react";
 import { getStoredUserId } from "@/lib/storage/client";
 import { apiPath } from "@/lib/paths";
 import {
@@ -17,9 +17,6 @@ const STATUS_LABEL: Record<SessionStatus, string> = {
   uploading: "Uploading",
   failed: "Failed",
 };
-
-const SWIPE_OPEN = -96;
-const SWIPE_THRESHOLD = 56;
 
 function formatSessionDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -70,55 +67,10 @@ export function SessionLibraryRow({
   onUpgrade,
   onDeleted,
 }: SessionLibraryRowProps) {
-  const [offset, setOffset] = useState(0);
-  const [confirming, setConfirming] = useState(false);
-  const [dragging, setDragging] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const dragRef = useRef({ startX: 0, startOffset: 0 });
-  const offsetRef = useRef(0);
-
-  const updateOffset = useCallback((next: number) => {
-    offsetRef.current = next;
-    setOffset(next);
-  }, []);
 
   const statusClass = `session-library-status--${session.status}`;
-
-  const resetSwipe = useCallback(() => {
-    updateOffset(0);
-    setConfirming(false);
-  }, [updateOffset]);
-
-  const snapSwipe = useCallback(
-    (currentOffset: number) => {
-      if (currentOffset <= -SWIPE_THRESHOLD) {
-        updateOffset(SWIPE_OPEN);
-        setConfirming(true);
-        return;
-      }
-      resetSwipe();
-    },
-    [resetSwipe, updateOffset]
-  );
-
-  const handlePointerDown = (clientX: number) => {
-    dragRef.current = { startX: clientX, startOffset: offsetRef.current };
-    setDragging(true);
-  };
-
-  const handlePointerMove = (clientX: number) => {
-    if (!dragging) return;
-    const dx = clientX - dragRef.current.startX;
-    const next = Math.min(0, Math.max(-120, dragRef.current.startOffset + dx));
-    updateOffset(next);
-  };
-
-  const handlePointerEnd = () => {
-    if (!dragging) return;
-    setDragging(false);
-    snapSwipe(offsetRef.current);
-  };
 
   const handleDownload = async (event: React.MouseEvent) => {
     event.preventDefault();
@@ -159,7 +111,15 @@ export function SessionLibraryRow({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const confirmed = window.confirm(
+      `Delete "${session.resolved_title}"? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
     const userId = getStoredUserId();
     if (!userId) return;
 
@@ -175,87 +135,30 @@ export function SessionLibraryRow({
       onDeleted();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Delete failed");
-      resetSwipe();
     } finally {
       setDeleting(false);
     }
   };
 
   return (
-    <li
-      className={`session-library-swipe${offset < -8 || confirming ? " session-library-swipe--open" : ""}`}
-    >
-      <div className="session-library-swipe-back" aria-hidden={!confirming && offset >= -8}>
-        {confirming ? (
-          <>
-            <button
-              type="button"
-              className="session-library-swipe-keep"
-              onClick={resetSwipe}
-              disabled={deleting}
-            >
-              Keep
-            </button>
-            <button
-              type="button"
-              className="session-library-swipe-delete"
-              onClick={() => void handleDelete()}
-              disabled={deleting}
-            >
-              {deleting ? "Deleting…" : "Delete"}
-            </button>
-          </>
-        ) : offset < -20 ? (
-          <span className="session-library-swipe-hint">Delete</span>
-        ) : null}
-      </div>
-
-      <div
-        className={`session-library-swipe-front${dragging ? " session-library-swipe-front--dragging" : ""}`}
-        style={{ transform: `translateX(${offset}px)` }}
-        onTouchStart={(e) => handlePointerDown(e.touches[0].clientX)}
-        onTouchMove={(e) => handlePointerMove(e.touches[0].clientX)}
-        onTouchEnd={handlePointerEnd}
-        onTouchCancel={handlePointerEnd}
-        onMouseDown={(e) => {
-          if ((e.target as HTMLElement).closest("button, a")) return;
-          handlePointerDown(e.clientX);
-        }}
-        onMouseMove={(e) => {
-          if (e.buttons !== 1) return;
-          handlePointerMove(e.clientX);
-        }}
-        onMouseUp={handlePointerEnd}
-        onMouseLeave={() => {
-          if (dragging) handlePointerEnd();
-        }}
-      >
-        <Link href={`/report/${session.id}`} className="session-library-item">
-          <SessionThumbnail session={session} />
-          <span className="session-library-body">
-            <span className="session-library-row">
-              <span className="session-library-name">{session.resolved_title}</span>
-              <span className={`session-library-status ${statusClass}`}>
-                {STATUS_LABEL[session.status]}
-              </span>
-            </span>
-            <span className="session-library-desc">{session.resolved_summary}</span>
-            <span className="session-library-meta">
-              {formatSessionDate(session.created_at)} · {session.level}
+    <li className="session-library-card">
+      <Link href={`/report/${session.id}`} className="session-library-item">
+        <SessionThumbnail session={session} />
+        <span className="session-library-body">
+          <span className="session-library-row">
+            <span className="session-library-name">{session.resolved_title}</span>
+            <span className={`session-library-status ${statusClass}`}>
+              {STATUS_LABEL[session.status]}
             </span>
           </span>
-          <svg
-            className="session-library-chevron"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-            aria-hidden
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </Link>
+          <span className="session-library-desc">{session.resolved_summary}</span>
+          <span className="session-library-meta">
+            {formatSessionDate(session.created_at)} · {session.level}
+          </span>
+        </span>
+      </Link>
 
+      <div className="session-library-actions">
         <button
           type="button"
           className={`session-library-download${isPro ? "" : " session-library-download--locked"}`}
@@ -285,6 +188,26 @@ export function SessionLibraryRow({
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
           </svg>
+        </button>
+
+        <button
+          type="button"
+          className="session-library-delete"
+          aria-label={`Delete ${session.resolved_title}`}
+          disabled={deleting}
+          onClick={(e) => void handleDelete(e)}
+        >
+          {deleting ? (
+            <span className="session-library-download-spinner" aria-hidden />
+          ) : (
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+          )}
         </button>
       </div>
     </li>

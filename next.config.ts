@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
         destination: "/",
         permanent: true,
       },
+      {
+        source: "/feedback/feedback/:path*",
+        destination: "/feedback/:path*",
+        permanent: false,
+      },
     ];
   },
   async rewrites() {

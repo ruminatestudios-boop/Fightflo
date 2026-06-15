@@ -1,8 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useMemo } from "react";
 import { useLivePoseLandmarks } from "@/hooks/useLivePoseLandmarks";
-import { computeFrameMetrics } from "@/lib/analysis/poseMetrics";
+import {
+  computeFrameMetrics,
+  type GuardCalibration,
+} from "@/lib/analysis/poseMetrics";
 import type { ConfirmedPoseEvent, FrameLandmarks } from "@/types";
 import type { Annotation, LandmarkFrame } from "./types";
 import {
@@ -13,7 +16,7 @@ import {
   drawSkeleton,
   type WristTrailPoint,
 } from "./SkeletonOverlay";
-import { getInterpolatedLandmarksAtTime } from "./landmarkPlayback";
+import { getInterpolatedLandmarksAtTime, hasUsableStoredLandmarks } from "./landmarkPlayback";
 import { getAnnotationAt } from "./utils";
 import { getVideoContentRect } from "./videoLayout";
 
@@ -25,16 +28,33 @@ interface OverlayCanvasProps {
   landmarkTimeOffset?: number;
   useLivePose?: boolean;
   confirmedEvents?: ConfirmedPoseEvent[];
+  /** Hide bottom timestamp pill — used when cinema UI shows the same note */
+  suppressAnnotationLabel?: boolean;
+  /** Always flag guard drops from pose — guard-only report mode */
+  guardFocusMode?: boolean;
+  /** Server-calibrated guard line — matches analysis pipeline */
+  guardCalibration?: GuardCalibration | null;
+}
+
+function resolveLivePoseEnabled(
+  useLivePose: boolean | undefined,
+  storedReady: boolean
+): boolean {
+  if (useLivePose === true) return true;
+  // Stored-only when we have server pose; otherwise fall back to live tracking
+  if (useLivePose === false) return !storedReady;
+  return !storedReady;
 }
 
 function shouldShowGuardAlert(
   guardDropped: boolean,
   lookupTime: number,
   confirmedEvents: ConfirmedPoseEvent[],
-  usingLivePose: boolean
+  usingLivePose: boolean,
+  guardFocusMode = false
 ): boolean {
   if (!guardDropped) return false;
-  if (usingLivePose) return true;
+  if (guardFocusMode || usingLivePose) return true;
   if (confirmedEvents.length === 0) return guardDropped;
   return confirmedEvents.some(
     (e) =>
@@ -93,7 +113,11 @@ export function drawOverlayFrame(
   landmarkTimeOffset: number,
   pulsePhase: number,
   confirmedEvents: ConfirmedPoseEvent[],
-  wristTrails: { left: WristTrailPoint[]; right: WristTrailPoint[] }
+  wristTrails: { left: WristTrailPoint[]; right: WristTrailPoint[] },
+  suppressAnnotationLabel = false,
+  guardFocusMode = false,
+  guardCalibration: GuardCalibration | null = null,
+  usingLivePose = false
 ) {
   ctx.clearRect(0, 0, width, height);
 
@@ -107,7 +131,10 @@ export function drawOverlayFrame(
     lookupTime
   );
 
-  const frameLandmarks = liveLandmarks ?? interpolated;
+  const frameLandmarks =
+    liveLandmarks !== null && usingLivePose
+      ? liveLandmarks
+      : interpolated;
 
   if (frameLandmarks) {
     const lw = frameLandmarks.left_wrist;
@@ -132,13 +159,13 @@ export function drawOverlayFrame(
 
   if (!frameLandmarks) return;
 
-  const metrics = computeFrameMetrics(frameLandmarks);
-  const usingLivePose = liveLandmarks !== null;
+  const metrics = computeFrameMetrics(frameLandmarks, guardCalibration);
   const guardDropped = shouldShowGuardAlert(
     metrics.guard_dropped,
     lookupTime,
     confirmedEvents,
-    usingLivePose
+    usingLivePose,
+    guardFocusMode
   );
   const annotation = getAnnotationAt(annotations, lookupTime);
 
@@ -152,6 +179,7 @@ export function drawOverlayFrame(
     flashGuardLine: guardDropped,
     highlightedJoint: annotation?.jointHighlight,
     pulsePhase,
+    guardCalibration,
   });
 
   drawSkeleton(ctx, frameLandmarks, {
@@ -161,13 +189,16 @@ export function drawOverlayFrame(
     guardDropped,
     highlightedJoint: annotation?.jointHighlight,
     pulsePhase,
+    guardCalibration,
   });
 
-  drawBiomechanics(ctx, frameLandmarks, layout, metrics);
+  drawBiomechanics(ctx, frameLandmarks, layout, metrics, guardCalibration);
 
-  drawGuardWarning(ctx, width, guardDropped, pulsePhase);
+  if (!guardFocusMode) {
+    drawGuardWarning(ctx, width, guardDropped, pulsePhase, guardFocusMode);
+  }
 
-  if (annotation) {
+  if (annotation && !suppressAnnotationLabel) {
     drawAnnotation(ctx, annotation, width, height);
   }
 }
@@ -225,8 +256,11 @@ export function OverlayCanvas({
   annotations,
   className = "",
   landmarkTimeOffset = 0,
-  useLivePose = true,
+  useLivePose = false,
   confirmedEvents = [],
+  suppressAnnotationLabel = false,
+  guardFocusMode = false,
+  guardCalibration = null,
 }: OverlayCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
@@ -235,7 +269,13 @@ export function OverlayCanvas({
     left: [],
     right: [],
   });
-  const liveLandmarks = useLivePoseLandmarks(videoRef, useLivePose);
+
+  const storedReady = useMemo(
+    () => hasUsableStoredLandmarks(landmarks),
+    [landmarks]
+  );
+  const liveEnabled = resolveLivePoseEnabled(useLivePose, storedReady);
+  const liveLandmarks = useLivePoseLandmarks(videoRef, liveEnabled);
 
   const syncCanvasSize = useCallback(() => {
     const video = videoRef.current;
@@ -282,7 +322,11 @@ export function OverlayCanvas({
           landmarkTimeOffset,
           pulseRef.current,
           confirmedEvents,
-          trailsRef.current
+          trailsRef.current,
+          suppressAnnotationLabel,
+          guardFocusMode,
+          guardCalibration,
+          liveEnabled
         );
       }
 
@@ -308,6 +352,10 @@ export function OverlayCanvas({
     landmarkTimeOffset,
     liveLandmarks,
     confirmedEvents,
+    suppressAnnotationLabel,
+    guardFocusMode,
+    guardCalibration,
+    liveEnabled,
   ]);
 
   return (

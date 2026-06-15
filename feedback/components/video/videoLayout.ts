@@ -8,13 +8,14 @@ export interface VideoContentRect {
   canvasHeight: number;
 }
 
-export function getVideoContentRect(
-  video: HTMLVideoElement,
+export function computeVideoContentRect(
+  videoWidth: number,
+  videoHeight: number,
   canvasWidth: number,
   canvasHeight: number
 ): VideoContentRect {
-  const vw = video.videoWidth || 16;
-  const vh = video.videoHeight || 9;
+  const vw = videoWidth || 16;
+  const vh = videoHeight || 9;
   const videoAspect = vw / vh;
   const canvasAspect = canvasWidth / canvasHeight;
 
@@ -37,6 +38,19 @@ export function getVideoContentRect(
     canvasWidth,
     canvasHeight,
   };
+}
+
+export function getVideoContentRect(
+  video: HTMLVideoElement,
+  canvasWidth: number,
+  canvasHeight: number
+): VideoContentRect {
+  return computeVideoContentRect(
+    video.videoWidth,
+    video.videoHeight,
+    canvasWidth,
+    canvasHeight
+  );
 }
 
 export function mapLandmarkToCanvas(

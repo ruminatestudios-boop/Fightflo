@@ -10,7 +10,9 @@ import {
 } from "./AnnotatedPlayer";
 import { SlowMotionClip } from "./SlowMotionClip";
 import { PoseQualityBanner } from "./PoseQualityBanner";
+import { OverlayGuide } from "./OverlayGuide";
 import { landmarksNearTime, parseTimestamp, resolvePlaybackUrl } from "./utils";
+import type { SportId } from "@/types";
 
 interface VideoReportSectionProps {
   report: Report;
@@ -66,11 +68,17 @@ export function VideoReportSection({
     () => landmarksNearTime(landmarks, weaknessTime, 2),
     [landmarks, weaknessTime]
   );
+  const sport = report.sport as SportId;
 
   return (
     <section className="space-y-4">
       <p className="section-kicker">Annotated footage</p>
       <PoseQualityBanner quality={report.pose_quality} />
+      <OverlayGuide
+        sport={sport}
+        poseQuality={report.pose_quality}
+        guardCalibrated={report.landmark_summary?.guard_calibrated === true}
+      />
       <AnnotatedPlayer
         videoUrl={videoUrl}
         landmarks={landmarks}
@@ -78,6 +86,9 @@ export function VideoReportSection({
         weaknesses={weaknesses}
         positives={positives}
         confirmedEvents={report.confirmed_events ?? []}
+        landmarkSummary={report.landmark_summary}
+        sport={sport}
+        poseQuality={report.pose_quality}
       />
 
       <SlowMotionClip
@@ -87,6 +98,7 @@ export function VideoReportSection({
         landmarks={weaknessLandmarks}
         landmarkTimeOffset={clipStartOffset}
         confirmedEvents={report.confirmed_events ?? []}
+        landmarkSummary={report.landmark_summary}
         measurements={
           isPro
             ? [

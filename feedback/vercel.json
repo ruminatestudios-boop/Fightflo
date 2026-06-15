@@ -4,6 +4,16 @@
       "source": "/",
       "destination": "/feedback",
       "permanent": false
+    },
+    {
+      "source": "/report/:id",
+      "destination": "/feedback/report/:id",
+      "permanent": false
+    },
+    {
+      "source": "/feedback/feedback/:path*",
+      "destination": "/feedback/:path*",
+      "statusCode": 308
     }
   ],
   "crons": [

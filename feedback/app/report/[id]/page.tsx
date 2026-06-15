@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import { ReportPageClient } from "./ReportPageClient";
 import {
   getReportBySessionId,
   getSessionById,
   getUserById,
 } from "@/lib/db/queries";
+import { hasProAccess } from "@/lib/config/env";
 
 interface ReportPageProps {
   params: { id: string };
@@ -21,7 +23,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
     initialSession = await getSessionById(id);
     if (initialSession?.user_id) {
       const user = await getUserById(initialSession.user_id);
-      isPro = user?.is_pro ?? false;
+      isPro = hasProAccess(user);
     }
     if (initialSession?.status === "complete") {
       initialReport = await getReportBySessionId(id);
@@ -31,11 +33,13 @@ export default async function ReportPage({ params }: ReportPageProps) {
   }
 
   return (
-    <ReportPageClient
-      sessionId={id}
-      initialReport={initialReport}
-      initialSession={initialSession}
-      initialIsPro={isPro}
-    />
+    <Suspense fallback={null}>
+      <ReportPageClient
+        sessionId={id}
+        initialReport={initialReport}
+        initialSession={initialSession}
+        initialIsPro={isPro}
+      />
+    </Suspense>
   );
 }

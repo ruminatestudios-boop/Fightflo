@@ -1,6 +1,7 @@
 import type { FrameLandmarks } from "@/types";
 import type { Annotation, LandmarkFrame } from "./types";
 import { apiPath } from "@/lib/paths";
+import { computeFrameMetrics } from "@/lib/analysis/poseMetrics";
 
 /** Parse M:SS or H:MM:SS timestamp strings to seconds */
 export function parseTimestamp(timestamp: string): number {
@@ -92,18 +93,8 @@ export function getLandmarkPoint(
 }
 
 export function isGuardDropped(landmarks: FrameLandmarks): boolean {
-  const leftShoulder = landmarks.left_shoulder;
-  const rightShoulder = landmarks.right_shoulder;
-  const leftWrist = landmarks.left_wrist;
-  const rightWrist = landmarks.right_wrist;
-
-  if (!leftShoulder || !rightShoulder) return false;
-
-  const guardY = (leftShoulder.y + rightShoulder.y) / 2;
-  const leftDown = leftWrist ? leftWrist.y > guardY + 0.02 : false;
-  const rightDown = rightWrist ? rightWrist.y > guardY + 0.02 : false;
-
-  return leftDown || rightDown;
+  const metrics = computeFrameMetrics(landmarks);
+  return metrics.metrics_reliable && metrics.guard_dropped;
 }
 
 export { JOINT_TO_INDEX };

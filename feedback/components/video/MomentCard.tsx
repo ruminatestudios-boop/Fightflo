@@ -16,7 +16,7 @@ export function MomentCard({ moment, active = false, onSelect }: MomentCardProps
     <button
       type="button"
       onClick={() => onSelect?.(moment.timeSeconds)}
-      className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
+      className={`flex w-full items-center gap-3 rounded-card border p-3 text-left transition-colors ${
         active
           ? "border-white/20 bg-white/[0.08]"
           : "border-white/8 bg-white/[0.03] hover:bg-white/[0.06]"

@@ -66,20 +66,31 @@ export function BagHomeScreen({
           </h1>
           <p className="mt-2 text-sm text-white/50">{BAG_COPY.homeSubline}</p>
           {!isProUser && freeSessionsLeft != null && (
-            <p className="mt-2 text-xs text-white/45">
-              {freeSessionsLeft > 0
-                ? `${freeSessionsLeft} free combo session${freeSessionsLeft === 1 ? "" : "s"} left today`
-                : "Free sessions used today — "}
-              {freeSessionsLeft <= 0 && onUpgrade && (
-                <button
-                  type="button"
-                  onClick={onUpgrade}
-                  className="text-[#fa4141] underline-offset-2 hover:underline"
-                >
-                  Go Pro
-                </button>
+            <div className="mt-3">
+              {freeSessionsLeft > 0 ? (
+                <p className="text-xs text-white/45">
+                  {`${freeSessionsLeft} free combo session${freeSessionsLeft === 1 ? "" : "s"} left today`}
+                </p>
+              ) : (
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                  <p className="text-xs text-white/45">{BAG_COPY.freeSessionsUsed}</p>
+                  {onUpgrade && (
+                    <button
+                      type="button"
+                      onClick={onUpgrade}
+                      className="group inline-flex max-w-full flex-wrap items-center gap-2 text-left"
+                    >
+                      <span className="shrink-0 rounded-full border border-[#fa4141]/35 bg-[#fa4141]/14 px-3 py-1 font-display text-[10px] tracking-[0.14em] text-[#fa4141] shadow-[0_4px_18px_rgba(250,65,65,0.14)] backdrop-blur-md transition-colors group-hover:border-[#fa4141]/55 group-hover:bg-[#fa4141]/22">
+                        {BAG_COPY.goProPill}
+                      </span>
+                      <span className="text-xs leading-snug text-white/50 transition-colors group-hover:text-white/70">
+                        {BAG_COPY.goProUpsell}
+                      </span>
+                    </button>
+                  )}
+                </div>
               )}
-            </p>
+            </div>
           )}
         </motion.div>
 

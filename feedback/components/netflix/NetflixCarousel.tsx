@@ -89,7 +89,7 @@ export function NetflixCarousel({ slides, onSlideChange }: NetflixCarouselProps)
             type="button"
             onClick={() => goTo(Math.max(0, activeIndex - 1))}
             disabled={activeIndex === 0}
-            className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-md disabled:opacity-20"
+            className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-card bg-white/10 backdrop-blur-md disabled:opacity-20"
             aria-label="Previous"
           >
             ‹
@@ -101,7 +101,7 @@ export function NetflixCarousel({ slides, onSlideChange }: NetflixCarouselProps)
             type="button"
             onClick={() => goTo(Math.min(slides.length - 1, activeIndex + 1))}
             disabled={activeIndex === slides.length - 1}
-            className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-md disabled:opacity-20"
+            className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-card bg-white/10 backdrop-blur-md disabled:opacity-20"
             aria-label="Next"
           >
             ›

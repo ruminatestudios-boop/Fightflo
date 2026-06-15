@@ -6,6 +6,7 @@ import { HomeFeatureGrid, type HomeFeatureId } from "@/components/home/HomeFeatu
 import { HomeSettingsChips } from "@/components/home/HomeSettingsChips";
 import { CoachShareFlow } from "@/components/home/flows/CoachShareFlow";
 import { CompareFlow } from "@/components/home/flows/CompareFlow";
+import { GuardDropFlow } from "@/components/home/flows/GuardDropFlow";
 import { ProgressFlow } from "@/components/home/flows/ProgressFlow";
 import { ReuploadFlow } from "@/components/home/flows/ReuploadFlow";
 import { WeeklyFocusFlow } from "@/components/home/flows/WeeklyFocusFlow";
@@ -20,12 +21,17 @@ import { PRICING } from "@/config/pricing";
 import { SELECTABLE_SPORTS, SPORTS } from "@/config/sports";
 import { useHomeInsights } from "@/hooks/useHomeInsights";
 import { useSessionLibrary } from "@/hooks/useSessionLibrary";
+import { isClientProUnlocked } from "@/lib/config/proAccess";
 import { useUpload } from "@/hooks/useUpload";
 import { useUploadStatusTicker } from "@/hooks/useUploadStatusTicker";
 import { parseJsonResponse } from "@/lib/api/parseResponse";
-import { displayNameFromEmail } from "@/lib/user/displayName";
+import { displayNameFromEmail, formatDisplayName } from "@/lib/user/displayName";
 import { apiPath, reportPath } from "@/lib/paths";
-import { storeUserId } from "@/lib/storage/client";
+import {
+  getStoredUserName,
+  storeUserId,
+  storeUserName,
+} from "@/lib/storage/client";
 import type { SkillLevel, SportId } from "@/types";
 
 const LEVELS: { id: SkillLevel; label: string }[] = [
@@ -37,8 +43,10 @@ const LEVELS: { id: SkillLevel; label: string }[] = [
 
 type HomeView =
   | "home"
+  | "name"
   | "sport"
   | "level"
+  | "guard"
   | "reupload"
   | "progress"
   | "compare"
@@ -66,8 +74,9 @@ export function NetflixHome() {
   const [demoLoading, setDemoLoading] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
-  const [isPro, setIsPro] = useState(false);
+  const [isPro, setIsPro] = useState(isClientProUnlocked());
   const [userName, setUserName] = useState<string | null>(null);
+  const [nameDraft, setNameDraft] = useState("");
   const [libraryPaywallMode, setLibraryPaywallMode] = useState<"pro" | "topup" | null>(
     null
   );
@@ -192,6 +201,11 @@ export function NetflixHome() {
   }, [goToHome, reset]);
 
   useEffect(() => {
+    const stored = getStoredUserName();
+    if (stored) setUserName(formatDisplayName(stored));
+  }, []);
+
+  useEffect(() => {
     if (error && paywallMode) setShowPaywall(true);
   }, [error, paywallMode]);
 
@@ -202,9 +216,11 @@ export function NetflixHome() {
     void fetch(apiPath(`/api/user/status?userId=${userId}`))
       .then((res) => res.json())
       .then((data: { isPro?: boolean; email?: string | null }) => {
-        if (data.isPro) setIsPro(true);
-        const name = displayNameFromEmail(data.email);
-        if (name) setUserName(name);
+        if (data.isPro || isClientProUnlocked()) setIsPro(true);
+        if (!getStoredUserName()) {
+          const name = displayNameFromEmail(data.email);
+          if (name) setUserName(name);
+        }
       })
       .catch(() => {});
   }, []);
@@ -229,6 +245,13 @@ export function NetflixHome() {
 
   const renderFlow = () => {
     switch (view) {
+      case "guard":
+        return (
+          <GuardDropFlow
+            insight={insights?.guard ?? null}
+            onUpload={openUpload}
+          />
+        );
       case "reupload":
         return (
           <ReuploadFlow
@@ -318,8 +341,13 @@ export function NetflixHome() {
               <HomeSettingsChips
                 sport={sport}
                 level={level}
+                userName={userName}
                 onSportClick={() => setView("sport")}
                 onLevelClick={() => setView("level")}
+                onNameClick={() => {
+                  setNameDraft(userName ?? "");
+                  setView("name");
+                }}
               />
             </header>
 
@@ -335,7 +363,7 @@ export function NetflixHome() {
                 {error && paywallMode && (
                   <button
                     type="button"
-                    className="w-full rounded-full border border-white/20 py-3 text-sm text-white"
+                    className="w-full rounded-card border border-white/20 py-3 text-sm text-white"
                     onClick={() => setShowPaywall(true)}
                   >
                     {paywallMode === "topup" ? "Buy scan pack" : "Upgrade to Pro"}
@@ -357,6 +385,60 @@ export function NetflixHome() {
               1 free analysis · Pro {PRICING.pro.displayMonthly} · Top-up{" "}
               {PRICING.topUp.display}
             </p>
+          </div>
+        ) : view === "name" ? (
+          <div className="glass-home-inner">
+            <header className="glass-greeting">
+              <h1 className="glass-greeting-title glass-greeting-title--sm">
+                What should we call you?
+              </h1>
+              <p className="glass-greeting-sub">
+                Your name appears on the home greeting.
+              </p>
+            </header>
+            <label className="home-name-field">
+              First name
+              <input
+                className="home-name-input"
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                maxLength={24}
+                placeholder="e.g. Alex"
+                autoComplete="given-name"
+                autoFocus
+              />
+            </label>
+            <button
+              type="button"
+              className="home-flow-action home-flow-action--primary"
+              onClick={() => {
+                const formatted = formatDisplayName(nameDraft);
+                if (formatted) {
+                  storeUserName(formatted);
+                  setUserName(formatted);
+                } else {
+                  storeUserName(null);
+                  setUserName(null);
+                }
+                setView("home");
+              }}
+            >
+              Save
+            </button>
+            {userName ? (
+              <button
+                type="button"
+                className="home-flow-action home-flow-action--secondary"
+                onClick={() => {
+                  storeUserName(null);
+                  setUserName(null);
+                  setNameDraft("");
+                  setView("home");
+                }}
+              >
+                Clear name
+              </button>
+            ) : null}
           </div>
         ) : view === "sport" ? (
           <div className="glass-home-inner">
@@ -429,7 +511,6 @@ export function NetflixHome() {
           <HomeStickyNav
             activeTab={mainTab}
             onTabChange={(tab) => (tab === "library" ? goToLibrary() : goToHome())}
-            onUpload={openUpload}
             libraryCount={sessions.length}
           />
         )}

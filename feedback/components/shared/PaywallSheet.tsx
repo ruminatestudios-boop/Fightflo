@@ -63,7 +63,7 @@ export function PaywallSheet({
         <button
           type="button"
           onClick={onCheckout}
-          className="mt-6 flex w-full items-center justify-center rounded-full bg-white px-6 py-4 font-medium text-black"
+          className="mt-6 flex w-full items-center justify-center rounded-card bg-white px-6 py-4 font-medium text-black"
         >
           {isTopUp ? "Buy scan pack" : "Upgrade now"}
         </button>

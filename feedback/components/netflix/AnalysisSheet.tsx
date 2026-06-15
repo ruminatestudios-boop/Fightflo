@@ -62,7 +62,7 @@ export function AnalysisSheet({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/70"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card bg-white/10 text-white/70"
             aria-label="Close"
           >
             ×

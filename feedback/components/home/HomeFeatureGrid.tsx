@@ -5,6 +5,7 @@ import type { HomeInsights } from "@/lib/insights/types";
 
 export type HomeFeatureId =
   | "upload"
+  | "guard"
   | "reupload"
   | "progress"
   | "compare"
@@ -42,6 +43,22 @@ export function HomeFeatureGrid({
 
   const secondary: FeatureBlock[] = [
     {
+      id: "guard",
+      label: "Track your guard",
+      hint:
+        complete > 0
+          ? insights?.guard?.dropCount
+            ? `${insights.guard.dropCount} drop${insights.guard.dropCount === 1 ? "" : "s"} flagged`
+            : "Red flags when hands drop"
+          : "Needs 1 analysed clip",
+      disabled: complete === 0,
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+        </svg>
+      ),
+    },
+    {
       id: "reupload",
       label: "Verify your fix",
       hint:
@@ -50,8 +67,9 @@ export function HomeFeatureGrid({
           : "Needs 1 analysed clip",
       disabled: complete === 0,
       icon: (
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 12.75L11.25 15 15 9.75" />
+          <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
     },
@@ -94,8 +112,8 @@ export function HomeFeatureGrid({
       hint: complete > 0 ? "Send report link" : "Needs 1 analysed clip",
       disabled: complete === 0,
       icon: (
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684L12 7.632l-1.367-.684a3 3 0 00-5.367 2.684l6.632 3.316z" />
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.935-2.186 2.25 2.25 0 00-3.935 2.186z" />
         </svg>
       ),
     },
@@ -103,20 +121,30 @@ export function HomeFeatureGrid({
 
   return (
     <div className="home-feature-grid">
-      <button
-        type="button"
-        className={`glass-card glass-card--hero ${activeId === "upload" ? "glass-card--active" : ""}`}
-        onClick={() => onSelect("upload")}
+      <div
+        className={`home-upload-border ${activeId === "upload" ? "home-upload-border--active" : ""}`}
       >
-        <IconBadge>
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-        </IconBadge>
-        <span className="glass-card-label glass-card-label--hero">
-          Upload a clip and get timestamped coaching
-        </span>
-      </button>
+        <button
+          type="button"
+          className={`glass-card glass-card--hero ${activeId === "upload" ? "glass-card--active" : ""}`}
+          onClick={() => onSelect("upload")}
+        >
+          <span className="glass-card-label glass-card-label--hero">
+            Upload a clip and get timestamped coaching
+          </span>
+          <span className="glass-card-icon glass-card-icon--hero" aria-hidden>
+            <svg className="home-upload-hero-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 15V3" />
+              <path d="M8 7l4-4 4 4" />
+              <path d="M4 21h16" />
+            </svg>
+          </span>
+          <span className="home-feature-hint home-feature-hint--hero">
+            Film sparring or drills, tap to upload, then get faults, timestamps, and
+            drills to work on
+          </span>
+        </button>
+      </div>
 
       <div className="home-feature-grid-secondary">
         {secondary.map((block) => (

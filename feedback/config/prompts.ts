@@ -34,8 +34,8 @@ export const ANALYSIS_STEPS: Record<string, AnalysisStepConfig> = {
     percent: 48,
     eyebrow: "Pose tracking",
     headline: "Mapping your body",
-    detail: "Running MediaPipe pose tracking on each frame…",
-    ticks: ["Running MediaPipe pose tracking on each frame…"],
+    detail: "Tracking body position on each frame…",
+    ticks: ["Tracking body position on each frame…"],
   },
   finding_patterns: {
     percent: 62,

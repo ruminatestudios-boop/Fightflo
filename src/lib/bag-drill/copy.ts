@@ -236,6 +236,9 @@ export const BAG_COPY = {
   },
   upgradeBody:
     "Unlimited rounds, full history, progress charts, and corner feedback. Cancel anytime.",
+  freeSessionsUsed: "Free sessions used today",
+  goProPill: "Go Pro",
+  goProUpsell: "Unlimited drills & progress tracking",
   timerUpsellTitle: "Want boxing combos called on the bag?",
   timerUpsellBody:
     "fightflo calls jab-cross-hook in your ear, counts punches, checks your combo, and flags dropped hands.",

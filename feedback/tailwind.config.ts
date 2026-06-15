@@ -11,6 +11,11 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      borderRadius: {
+        card: "var(--radius-card)",
+        control: "var(--radius-control)",
+        pill: "var(--radius-pill)",
+      },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
         display: ["var(--font-display)", "system-ui", "sans-serif"],

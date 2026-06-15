@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/shared/AppShell";
 import { PaywallSheet, type PaywallMode } from "@/components/shared/PaywallSheet";
 import { ReportEmailCapture } from "@/components/shared/ReportEmailCapture";
@@ -10,6 +11,7 @@ import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { useReportEmailCapture } from "@/hooks/useReportEmailCapture";
 import { SHARE_CAPTIONS } from "@/config/prompts";
 import { apiPath } from "@/lib/paths";
+import { isClientProUnlocked } from "@/lib/config/proAccess";
 import type { AnalysisAllowance, Report, Session, SportId } from "@/types";
 
 interface ReportPageClientProps {
@@ -25,6 +27,8 @@ export function ReportPageClient({
   initialSession,
   initialIsPro = false,
 }: ReportPageClientProps) {
+  const searchParams = useSearchParams();
+  const reportMode = searchParams.get("mode") === "guard" ? "guard" : "full";
   const polled = useAnalysisProgress(initialReport ? null : sessionId);
   const report = initialReport ?? polled.report;
   const session = initialSession ?? polled.session;
@@ -32,7 +36,7 @@ export function ReportPageClient({
   const sport = (session?.sport ?? "boxing") as SportId;
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallMode, setPaywallMode] = useState<PaywallMode>("pro");
-  const [isPro, setIsPro] = useState(initialIsPro);
+  const [isPro, setIsPro] = useState(initialIsPro || isClientProUnlocked());
   const [bonusScans, setBonusScans] = useState(0);
   const [hasEmail, setHasEmail] = useState<boolean | null>(null);
   const [showEmailCapture, setShowEmailCapture] = useState(true);
@@ -59,7 +63,7 @@ export function ReportPageClient({
             email?: string | null;
           }
         ) => {
-          if (d.isPro) setIsPro(true);
+          if (d.isPro || isClientProUnlocked()) setIsPro(true);
           if (d.bonusScans) setBonusScans(d.bonusScans);
           if (d.hasEmail) {
             setHasEmail(true);
@@ -162,6 +166,7 @@ export function ReportPageClient({
         report={report}
         session={session}
         isPro={isPro}
+        mode={reportMode}
         onShare={handleShare}
         onUpgrade={() => openPaywall(isPro ? "topup" : "pro")}
       />

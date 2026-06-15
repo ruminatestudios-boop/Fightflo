@@ -9,6 +9,7 @@ import {
   toWeaknessTimestamps,
 } from "@/components/video/AnnotatedPlayer";
 import { PoseQualityBanner } from "@/components/video/PoseQualityBanner";
+import { OverlayGuide } from "@/components/video/OverlayGuide";
 import { resolvePlaybackUrl } from "@/components/video/utils";
 import { getSportConfig } from "@/config/sports";
 import type { Report, Session, SportId } from "@/types";
@@ -72,9 +73,17 @@ export function SimpleReportView({
           weaknesses={weaknesses}
           positives={positives}
           confirmedEvents={report.confirmed_events ?? []}
+          landmarkSummary={report.landmark_summary}
+          sport={sport}
+          poseQuality={report.pose_quality}
         />
 
         <PoseQualityBanner quality={report.pose_quality} />
+        <OverlayGuide
+          sport={sport}
+          poseQuality={report.pose_quality}
+          guardCalibrated={report.landmark_summary?.guard_calibrated === true}
+        />
 
         <section className="rounded-[1.25rem] border border-white/10 bg-[#141414] p-5">
           <p className="text-xs text-[#fa4141]">
@@ -128,7 +137,7 @@ export function SimpleReportView({
         </section>
 
         {onShare && (
-          <button type="button" onClick={onShare} className="flex w-full items-center justify-center rounded-full bg-[#2a2a2a] px-6 py-4 text-[0.9375rem] font-medium text-white active:scale-[0.98]">
+          <button type="button" onClick={onShare} className="flex w-full items-center justify-center rounded-card bg-[#2a2a2a] px-6 py-4 text-[0.9375rem] font-medium text-white active:scale-[0.98]">
             Share analysis
           </button>
         )}

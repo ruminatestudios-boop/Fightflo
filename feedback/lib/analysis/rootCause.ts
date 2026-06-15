@@ -77,6 +77,28 @@ const ROOT_CAUSE_TEMPLATES: Record<
       "Point toes down, strike with shin. Drill on heavy bag focusing on contact point only.",
     elite_reference: "Rodtang's roundhouses connect with the lower shin every time.",
   },
+  no_chamber_on_knee: {
+    what_is_happening:
+      "Knee never chambers to hip height before the kick fires.",
+    root_cause:
+      "Leg swings from the ground without lifting the knee first — no compression.",
+    fight_consequence:
+      "Telegraphed kick, less power, and easier to check or catch.",
+    mechanical_fix:
+      "Pause at hip-height chamber on every rep. Teeps and roundhouses start with knee up.",
+    elite_reference: "Buakaw's chamber is visible before every roundhouse leaves the ground.",
+  },
+  overcommitting_weight: {
+    what_is_happening:
+      "Weight drives too far past centre during punches — hips over-rotate past the target line.",
+    root_cause:
+      "Rear foot lifts or drifts instead of driving through. Centre of mass crosses the front foot.",
+    fight_consequence:
+      "Off-balance after combos — counters and pull-backs land while you are reaching.",
+    mechanical_fix:
+      "Punch to a point, not through it. Rear heel stays grounded until recoil.",
+    elite_reference: "Canelo stops his weight on a dime — never falls past the punch.",
+  },
   no_head_movement: {
     what_is_happening: "Head stays in fixed position throughout the round.",
     root_cause: "Feet planted, no slip-roll pattern integrated into defence.",

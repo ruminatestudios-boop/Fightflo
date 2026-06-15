@@ -3,7 +3,7 @@ import {
   PRO_MONTHLY_ANALYSIS_LIMIT,
 } from "@/config/limits";
 import { PRICING } from "@/config/pricing";
-import { isAnalysisLimitBypassed } from "@/lib/config/env";
+import { isAnalysisLimitBypassed, hasProAccess } from "@/lib/config/env";
 import {
   createAnonymousUser,
   decrementBonusScans,
@@ -36,7 +36,7 @@ export async function getAnalysisAllowance(
   if (isAnalysisLimitBypassed()) {
     return {
       canAnalyse: true,
-      isPro: false,
+      isPro: hasProAccess(null),
       used: 0,
       limit: FREE_ANALYSIS_LIMIT,
       bonusScans: 0,
@@ -49,7 +49,7 @@ export async function getAnalysisAllowance(
   if (!user) {
     return {
       canAnalyse: true,
-      isPro: false,
+      isPro: hasProAccess(null),
       used: 0,
       limit: FREE_ANALYSIS_LIMIT,
       bonusScans: 0,
@@ -81,7 +81,7 @@ export async function getAnalysisAllowance(
 
   return {
     canAnalyse,
-    isPro: false,
+    isPro: hasProAccess(user),
     used,
     limit,
     bonusScans: 0,

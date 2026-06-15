@@ -8,5 +8,15 @@ export function displayNameFromEmail(
   const segment = local.split(/[._+\-]/)[0]?.trim();
   if (!segment || segment.length < 2) return null;
 
-  return segment.charAt(0).toUpperCase() + segment.slice(1).toLowerCase();
+  return formatDisplayName(segment);
+}
+
+export function formatDisplayName(raw: string): string {
+  const cleaned = raw.trim().replace(/\s+/g, " ");
+  if (!cleaned) return "";
+
+  return cleaned
+    .split(" ")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
 }

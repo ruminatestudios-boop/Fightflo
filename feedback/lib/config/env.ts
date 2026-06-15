@@ -37,6 +37,19 @@ export function isAnalysisLimitBypassed(): boolean {
   return process.env.ANALYSIS_LIMIT_BYPASS === "true";
 }
 
+/** Unlock Pro features (download, clips) — on by default in local dev */
+export function isProFeaturesBypassed(): boolean {
+  if (process.env.PRO_FEATURES_BYPASS === "true") return true;
+  if (process.env.PRO_FEATURES_BYPASS === "false") return false;
+  if (process.env.NODE_ENV === "development") return true;
+  return isLocalDevMode();
+}
+
+export function hasProAccess(user: { is_pro: boolean } | null | undefined): boolean {
+  if (isProFeaturesBypassed()) return true;
+  return user?.is_pro ?? false;
+}
+
 export function isLoopsConfigured(): boolean {
   return Boolean(process.env.LOOPS_API_KEY?.trim());
 }
