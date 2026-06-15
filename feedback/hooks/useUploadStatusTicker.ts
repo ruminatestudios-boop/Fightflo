@@ -18,6 +18,9 @@ export function useUploadStatusTicker(
     if (progress >= 50) {
       return `Uploading your video securely (${Math.round(progress)}%)…`;
     }
+    if (progress <= 15) {
+      return "Large clips can sit here on mobile — keep the app open on Wi‑Fi if you can…";
+    }
     return `Transferring video to secure storage (${Math.round(progress)}%)…`;
   }, [active, baseMessage, progress]);
 

@@ -61,22 +61,55 @@ function uploadToCloudinary(
 ): Promise<CloudinaryUploadResult> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
+    let lastReported = 0;
+    let heartbeat: ReturnType<typeof setInterval> | null = null;
+
+    const report = (percent: number) => {
+      const clamped = Math.max(lastReported, Math.min(100, percent));
+      if (clamped > lastReported) {
+        lastReported = clamped;
+        onProgress(clamped);
+      }
+    };
+
+    const stopHeartbeat = () => {
+      if (heartbeat) {
+        clearInterval(heartbeat);
+        heartbeat = null;
+      }
+    };
+
     const timeoutMs = Math.min(
       30 * 60 * 1000,
       Math.max(5 * 60 * 1000, Math.round(file.size / 40_000))
     );
     const timeoutId = window.setTimeout(() => {
+      stopHeartbeat();
       xhr.abort();
       reject(new Error("Upload timed out — check your connection and try again"));
     }, timeoutMs);
 
     xhr.upload.addEventListener("progress", (event) => {
-      if (event.lengthComputable) {
-        onProgress(Math.round((event.loaded / event.total) * 100));
+      if (event.lengthComputable && event.total > 0) {
+        report(Math.round((event.loaded / event.total) * 100));
+        return;
+      }
+      if (event.loaded > 0) {
+        report(Math.min(85, lastReported + 2));
       }
     });
 
+    xhr.addEventListener("loadstart", () => {
+      report(1);
+      heartbeat = setInterval(() => {
+        if (lastReported < 85) {
+          report(lastReported + 1);
+        }
+      }, 2500);
+    });
+
     xhr.addEventListener("load", () => {
+      stopHeartbeat();
       window.clearTimeout(timeoutId);
       try {
         const data = JSON.parse(xhr.responseText) as CloudinaryUploadResult;
@@ -93,6 +126,7 @@ function uploadToCloudinary(
           reject(new Error("Cloudinary upload returned incomplete data"));
           return;
         }
+        report(100);
         resolve(data);
       } catch {
         reject(new Error("Cloudinary upload failed — invalid response"));
@@ -100,11 +134,13 @@ function uploadToCloudinary(
     });
 
     xhr.addEventListener("error", () => {
+      stopHeartbeat();
       window.clearTimeout(timeoutId);
       reject(new Error("Network error during upload — try Wi‑Fi or a shorter clip"));
     });
 
     xhr.addEventListener("abort", () => {
+      stopHeartbeat();
       window.clearTimeout(timeoutId);
       reject(new Error("Upload cancelled"));
     });
@@ -165,8 +201,8 @@ export function useUpload() {
 
       setState({
         phase: "uploading",
-        progress: 10,
-        message: "Uploading your video...",
+        progress: 5,
+        message: "Preparing upload...",
         sessionId: null,
         userId: null,
         error: null,
@@ -198,14 +234,23 @@ export function useUpload() {
         }
 
         if (sign.mode === "cloudinary" && sign.cloudinary && sign.sessionId) {
+          setState((s) => ({
+            ...s,
+            progress: 12,
+            message: "Uploading your video...",
+          }));
+
           const cloudinaryResult = await uploadToCloudinary(
             file,
             sign.cloudinary,
             (percent) => {
               setState((s) => ({
                 ...s,
-                progress: 10 + Math.round(percent * 0.6),
-                message: "Uploading your video...",
+                progress: 12 + Math.round(percent * 0.63),
+                message:
+                  percent >= 85
+                    ? "Finishing upload..."
+                    : "Uploading your video...",
               }));
             }
           );
