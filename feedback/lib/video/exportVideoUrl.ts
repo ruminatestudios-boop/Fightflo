@@ -12,20 +12,24 @@ function isVerifiedExportUrl(url: string): boolean {
 function isVerifiedSkeletonExport(report: Report | null | undefined): boolean {
   if (!report) return false;
 
+  if (report.export_video_url && isVerifiedExportUrl(report.export_video_url)) {
+    return true;
+  }
+
   const summary = report.landmark_summary;
+  const summaryUrl = summary?.export_video_url;
+  if (
+    typeof summaryUrl === "string" &&
+    summaryUrl.length > 0 &&
+    isVerifiedExportUrl(summaryUrl)
+  ) {
+    return true;
+  }
+
   if (summary?.export_has_skeleton !== true) return false;
   if (summary?.export_cache_version !== exportCacheVersion()) return false;
 
-  if (report.export_video_url) {
-    return isVerifiedExportUrl(report.export_video_url);
-  }
-
-  const fromSummary = summary.export_video_url;
-  return (
-    typeof fromSummary === "string" &&
-    fromSummary.length > 0 &&
-    isVerifiedExportUrl(fromSummary)
-  );
+  return false;
 }
 
 export function getExportVideoUrl(report: Report | null | undefined): string | null {

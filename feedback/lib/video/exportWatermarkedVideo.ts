@@ -49,8 +49,8 @@ export async function exportWatermarkedVideo(
     );
 
     const filterComplex = [
-      `[1:v]fps=${fps},format=rgba[ovl]`,
-      "[0:v][ovl]overlay=0:0:format=auto:shortest=1[v]",
+      `[1:v][0:v]scale2ref=force_original_aspect_ratio=disable[ovl][base]`,
+      "[base][ovl]overlay=0:0:format=auto:shortest=1:eof_action=pass[v]",
       `[v]${WATERMARK_FILTER}[out]`,
     ].join(";");
 

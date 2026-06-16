@@ -6,10 +6,10 @@ import { parseTimestamp } from "./utils";
 export const LANDMARK_FPS = 12;
 
 export function frameTimeSeconds(frame: { timestamp: string; frame?: number }): number {
-  const fromTs = parseTimestamp(frame.timestamp);
-  if (fromTs > 0 || frame.timestamp === "0:00") return fromTs;
-  if (frame.frame !== undefined) return frame.frame / LANDMARK_FPS;
-  return 0;
+  if (frame.frame !== undefined && frame.frame >= 0) {
+    return frame.frame / LANDMARK_FPS;
+  }
+  return parseTimestamp(frame.timestamp);
 }
 
 function prepareSortedTimeline(timeline: LandmarkTimeline) {
@@ -27,7 +27,8 @@ export function getInterpolatedLandmarksAtTime(
 
   const sorted = prepareSortedTimeline(timeline);
 
-  if (currentTime <= sorted[0].timeSeconds) {
+  const firstTime = sorted[0].timeSeconds;
+  if (currentTime <= firstTime) {
     return sorted[0].landmarks;
   }
 
@@ -67,7 +68,7 @@ export function hasUsableStoredLandmarks(timeline: LandmarkTimeline): boolean {
 
 /** Looser check for export — partial tracking still burns visible skeleton */
 export function hasExportableLandmarks(timeline: LandmarkTimeline): boolean {
-  return countDrawableLandmarkFrames(timeline) >= 2;
+  return countDrawableLandmarkFrames(timeline) >= 1;
 }
 
 /** Frames with enough joints to draw a visible skeleton */
@@ -83,19 +84,23 @@ export function landmarksAreDrawable(
   landmarks: FrameLandmarks | null | undefined
 ): boolean {
   if (!landmarks) return false;
+  const visible = Object.values(landmarks).filter(
+    (p) => p && (p.visibility ?? 1) >= 0.08
+  );
+  if (visible.length < 3) return false;
   const ls = landmarks.left_shoulder;
   const rs = landmarks.right_shoulder;
   const lw = landmarks.left_wrist;
   const rw = landmarks.right_wrist;
   const hasShoulder =
-    Boolean(ls && (ls.visibility ?? 1) >= 0.1) ||
-    Boolean(rs && (rs.visibility ?? 1) >= 0.1);
+    Boolean(ls && (ls.visibility ?? 1) >= 0.08) ||
+    Boolean(rs && (rs.visibility ?? 1) >= 0.08);
   const hasLimb =
-    Boolean(lw && (lw.visibility ?? 1) >= 0.1) ||
-    Boolean(rw && (rw.visibility ?? 1) >= 0.1) ||
-    Boolean(landmarks.left_elbow && (landmarks.left_elbow.visibility ?? 1) >= 0.1) ||
-    Boolean(landmarks.right_elbow && (landmarks.right_elbow.visibility ?? 1) >= 0.1);
-  return hasShoulder && hasLimb;
+    Boolean(lw && (lw.visibility ?? 1) >= 0.08) ||
+    Boolean(rw && (rw.visibility ?? 1) >= 0.08) ||
+    Boolean(landmarks.left_elbow && (landmarks.left_elbow.visibility ?? 1) >= 0.08) ||
+    Boolean(landmarks.right_elbow && (landmarks.right_elbow.visibility ?? 1) >= 0.08);
+  return hasShoulder || hasLimb;
 }
 
 /** Shift landmark timestamps for clip playback (clip starts at offset in full video) */

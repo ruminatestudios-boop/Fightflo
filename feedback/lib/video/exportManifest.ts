@@ -4,7 +4,7 @@ import { join } from "path";
 const EXPORT_DIR = join(process.cwd(), ".local-data", "exports");
 
 /** Bump when export burn logic changes — invalidates stale watermark-only caches */
-const EXPORT_CACHE_VERSION = 5;
+const EXPORT_CACHE_VERSION = 7;
 
 export interface ExportManifestRecord {
   url: string;

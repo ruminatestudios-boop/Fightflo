@@ -28,6 +28,8 @@ import {
 export interface CacheExportOptions {
   framePaths?: string[];
   timeline?: LandmarkTimeline;
+  videoWidth?: number;
+  videoHeight?: number;
   guardCalibration?: ReturnType<typeof parseGuardCalibration>;
   confirmedEvents?: ConfirmedPoseEvent[];
   /** Ignore cached export and burn fresh overlay */
@@ -41,23 +43,32 @@ function sessionFramesDir(sessionId: string): string {
 async function resolveFramePaths(
   sessionId: string,
   videoUrl: string,
-  provided?: string[]
+  provided?: string[],
+  forceRefresh = false
 ): Promise<string[]> {
   if (provided && provided.length > 0) return provided;
 
   const sessionDir = sessionFramesDir(sessionId);
-  try {
-    const files = await readdir(sessionDir);
-    const existing = files
-      .filter((name) => name.startsWith("frame_") && name.endsWith(".jpg"))
-      .sort()
-      .map((name) => join(sessionDir, name));
-    if (existing.length > 0) return existing;
-  } catch {
-    /* extract below */
+  if (!forceRefresh) {
+    try {
+      const files = await readdir(sessionDir);
+      const existing = files
+        .filter((name) => name.startsWith("frame_") && name.endsWith(".jpg"))
+        .sort()
+        .map((name) => join(sessionDir, name));
+      if (existing.length > 0) return existing;
+    } catch {
+      /* extract below */
+    }
   }
 
-  return extractFrames(videoUrl, sessionId);
+  return extractFrames(videoUrl, sessionId, { forceRefresh });
+}
+
+function timelineHasStoredLandmarks(timeline: LandmarkTimeline): boolean {
+  return timeline.some(
+    (frame) => frame.landmarks && Object.keys(frame.landmarks).length > 0
+  );
 }
 
 async function buildExportBuffer(
@@ -66,8 +77,49 @@ async function buildExportBuffer(
   timeline: LandmarkTimeline,
   guardCalibration: ReturnType<typeof parseGuardCalibration>,
   confirmedEvents: ConfirmedPoseEvent[],
-  framePaths?: string[]
+  framePaths?: string[],
+  clientProvidedTimeline = false
 ): Promise<{ buffer: Buffer; skeletonBurned: boolean }> {
+  const hasClientPose =
+    hasExportableLandmarks(timeline) || timelineHasStoredLandmarks(timeline);
+
+  if (hasClientPose && clientProvidedTimeline) {
+    const resolvedFrames = await resolveFramePaths(
+      sessionId,
+      session.video_url,
+      framePaths,
+      true
+    );
+
+    const buffer = await exportFromAnalysisFrames(
+      sessionId,
+      resolvedFrames,
+      timeline,
+      { guardCalibration, confirmedEvents }
+    );
+
+    return { buffer, skeletonBurned: true };
+  }
+
+  if (hasClientPose) {
+    const result = await exportWatermarkedVideo(
+      session.video_url,
+      sessionId,
+      {
+        landmarkTimeline: timeline,
+        guardCalibration,
+        confirmedEvents,
+      }
+    );
+    return { buffer: result.buffer, skeletonBurned: true };
+  }
+
+  if (clientProvidedTimeline) {
+    throw new Error(
+      "Not enough pose data to burn skeleton overlay — re-film with your full body in frame"
+    );
+  }
+
   const resolvedFrames = await resolveFramePaths(
     sessionId,
     session.video_url,
@@ -76,7 +128,7 @@ async function buildExportBuffer(
 
   if (resolvedFrames.length > 0) {
     let exportTimeline = timeline;
-    if (!hasExportableLandmarks(exportTimeline)) {
+    if (!timelineHasStoredLandmarks(exportTimeline)) {
       exportTimeline = await detectPose(
         resolvedFrames,
         session.sport as SportId
@@ -94,21 +146,8 @@ async function buildExportBuffer(
     return { buffer, skeletonBurned: drawable >= 2 };
   }
 
-  const overlayOptions = hasExportableLandmarks(timeline)
-    ? {
-        landmarkTimeline: timeline,
-        guardCalibration,
-        confirmedEvents,
-      }
-    : undefined;
-
-  const result = await exportWatermarkedVideo(
-    session.video_url,
-    sessionId,
-    overlayOptions
-  );
-
-  return { buffer: result.buffer, skeletonBurned: Boolean(overlayOptions) };
+  const result = await exportWatermarkedVideo(session.video_url, sessionId);
+  return { buffer: result.buffer, skeletonBurned: false };
 }
 
 /** Build overlay export during analysis — download is instant after this */
@@ -140,7 +179,8 @@ export async function cacheExportVideo(
     timeline,
     guardCalibration,
     confirmedEvents,
-    options?.framePaths
+    options?.framePaths,
+    Boolean(options?.timeline)
   );
 
   if (!skeletonBurned) {

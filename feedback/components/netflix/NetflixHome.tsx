@@ -13,9 +13,10 @@ import { LegalFooter } from "@/components/shared/LegalFooter";
 import { PaywallSheet } from "@/components/shared/PaywallSheet";
 import { PricingModal } from "@/components/shared/PricingModal";
 import { HomeStickyNav } from "@/components/netflix/HomeStickyNav";
+import { LiveRecordScreen } from "@/components/live/LiveRecordScreen";
 import { NetflixShell } from "@/components/netflix/NetflixShell";
 import { SessionLibrary } from "@/components/netflix/SessionLibrary";
-import { ProgressBar } from "@/components/upload/ProgressBar";
+import { AnalysisProgressView } from "@/components/shared/AnalysisProgressView";
 import { UploadZone, type UploadZoneHandle } from "@/components/upload/UploadZone";
 import { PRICING } from "@/config/pricing";
 import { SELECTABLE_SPORTS, SPORTS } from "@/config/sports";
@@ -24,6 +25,10 @@ import { useSessionLibrary } from "@/hooks/useSessionLibrary";
 import { isClientProUnlocked } from "@/lib/config/proAccess";
 import { useUpload } from "@/hooks/useUpload";
 import { useUploadStatusTicker } from "@/hooks/useUploadStatusTicker";
+import {
+  blendedProgressPercent,
+  userPhaseForUploadClient,
+} from "@/lib/analysis/userPhases";
 import { parseJsonResponse } from "@/lib/api/parseResponse";
 import { displayNameFromEmail, formatDisplayName } from "@/lib/user/displayName";
 import { apiPath, reportPath } from "@/lib/paths";
@@ -80,10 +85,13 @@ export function NetflixHome() {
     null
   );
   const [followUpParentId, setFollowUpParentId] = useState<string | null>(null);
+  const [liveRecordOpen, setLiveRecordOpen] = useState(false);
   const { phase, progress, message, error, paywallMode, upload, reset } =
     useUpload();
   const isBusy = phase === "uploading" || phase === "processing" || demoLoading;
   const uploadStatus = useUploadStatusTicker(isBusy, message, progress);
+  const busyUserPhase = userPhaseForUploadClient(phase, progress);
+  const busyOverallProgress = blendedProgressPercent(busyUserPhase.index, progress);
   const {
     sessions,
     loading: libraryLoading,
@@ -95,6 +103,12 @@ export function NetflixHome() {
     loading: insightsLoading,
     refetch: refetchInsights,
   } = useHomeInsights(true);
+
+  const openLiveRecord = useCallback(() => {
+    setView("home");
+    setMainTab("home");
+    setLiveRecordOpen(true);
+  }, []);
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -112,6 +126,14 @@ export function NetflixHome() {
       }
     },
     [upload, sport, level, followUpParentId, router, refetchInsights, refetchLibrary]
+  );
+
+  const handleLiveRecordingComplete = useCallback(
+    async (file: File) => {
+      setLiveRecordOpen(false);
+      await handleFile(file);
+    },
+    [handleFile]
   );
 
   const handleDemo = useCallback(async () => {
@@ -303,16 +325,19 @@ export function NetflixHome() {
 
         {isBusy ? (
           <div className="glass-home-inner glass-home-inner--busy">
-            <p className="glass-greeting-sub">{uploadStatus.eyebrow}</p>
-            <h1 className="glass-greeting-title">{uploadStatus.headline}</h1>
-            <div className="glass-progress-wrap">
-              <ProgressBar progress={progress} message={uploadStatus.message} />
-            </div>
-            <p className="glass-meta">
-              {uploadStatus.elapsedSec >= 60
-                ? `${Math.floor(uploadStatus.elapsedSec / 60)}m ${uploadStatus.elapsedSec % 60}s — keep this screen open`
-                : "Usually 2–5 minutes on Wi‑Fi"}
-            </p>
+            <AnalysisProgressView
+              className="text-center"
+              eyebrow={uploadStatus.eyebrow}
+              headline={uploadStatus.headline}
+              message={uploadStatus.message}
+              progress={busyOverallProgress}
+              userPhase={busyUserPhase}
+              footer={
+                uploadStatus.elapsedSec >= 60
+                  ? `${Math.floor(uploadStatus.elapsedSec / 60)}m ${uploadStatus.elapsedSec % 60}s — step ${busyUserPhase.index} of 3, keep this screen open`
+                  : `Step ${busyUserPhase.index} of 3 — ${busyUserPhase.detail}. Usually 2–5 minutes total.`
+              }
+            />
           </div>
         ) : mainTab === "library" ? (
           <div className="glass-home-inner glass-home-inner--library">
@@ -528,11 +553,19 @@ export function NetflixHome() {
 
         <UploadZone ref={uploadRef} hidden onFileSelect={handleFile} />
 
-        {!isBusy && (
+        {!isBusy && !liveRecordOpen && (
           <HomeStickyNav
             activeTab={mainTab}
             onTabChange={(tab) => (tab === "library" ? goToLibrary() : goToHome())}
+            onRecord={openLiveRecord}
             libraryCount={sessions.length}
+          />
+        )}
+
+        {liveRecordOpen && (
+          <LiveRecordScreen
+            onClose={() => setLiveRecordOpen(false)}
+            onRecordingComplete={(file) => void handleLiveRecordingComplete(file)}
           />
         )}
 

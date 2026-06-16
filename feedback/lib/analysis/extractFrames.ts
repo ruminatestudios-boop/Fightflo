@@ -39,20 +39,27 @@ async function materializeVideo(
 
 export async function extractFrames(
   videoUrl: string,
-  sessionId: string
+  sessionId: string,
+  options?: { forceRefresh?: boolean }
 ): Promise<string[]> {
   const sessionDir = join(tmpdir(), "feedback-frames", sessionId);
+  if (options?.forceRefresh) {
+    await rm(sessionDir, { recursive: true, force: true }).catch(() => undefined);
+  }
   await mkdir(sessionDir, { recursive: true });
 
   const videoPath = join(sessionDir, "source.mp4");
   await materializeVideo(videoUrl, videoPath);
 
   configureFfmpeg();
+
+  const vf = `fps=${FRAMES_PER_SECOND},setsar=1`;
+
   const outputPattern = join(sessionDir, "frame_%04d.jpg");
 
   await new Promise<void>((resolve, reject) => {
     ffmpeg(videoPath)
-      .outputOptions([`-vf fps=${FRAMES_PER_SECOND}`])
+      .outputOptions(["-vf", vf, "-q:v", "2"])
       .output(outputPattern)
       .on("end", () => resolve())
       .on("error", (err) => reject(err))

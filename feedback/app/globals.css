@@ -857,15 +857,29 @@ body {
 
 .overlay-guide-pill {
   pointer-events: auto;
+  position: relative;
+  overflow: hidden;
   border-radius: var(--radius-card);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.04) 38%,
+      rgba(0, 0, 0, 0.52) 100%
+    );
   padding: 0.625rem 1rem;
   font-size: 0.75rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  color: #ffffff;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.85),
+    0 0 12px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(24px) saturate(1.35);
+  -webkit-backdrop-filter: blur(24px) saturate(1.35);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 
 .overlay-guide-swatch {
@@ -976,46 +990,102 @@ body {
 }
 
 .stepguide-cinema-pill {
+  position: relative;
+  overflow: hidden;
   border-radius: var(--radius-card);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.04) 38%,
+      rgba(0, 0, 0, 0.52) 100%
+    );
   padding: 0.625rem 1.25rem;
   font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1.35;
   text-align: center;
-  color: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  color: #ffffff;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.85),
+    0 0 12px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(24px) saturate(1.35);
+  -webkit-backdrop-filter: blur(24px) saturate(1.35);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.stepguide-cinema-pill::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  opacity: 0.35;
 }
 
 .stepguide-cinema-pill--green {
-  border-color: rgba(52, 211, 153, 0.35);
-  background: rgba(52, 211, 153, 0.12);
-  color: #6ee7b7;
+  border-color: rgba(34, 197, 94, 0.42);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(34, 197, 94, 0.28) 0%,
+      rgba(255, 255, 255, 0.06) 32%,
+      rgba(0, 0, 0, 0.58) 100%
+    );
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 3px 0 0 rgba(34, 197, 94, 0.9);
 }
 
 .stepguide-cinema-pill--red {
-  border-color: rgba(250, 65, 65, 0.4);
-  background: rgba(250, 65, 65, 0.14);
-  color: #fca5a5;
+  border-color: rgba(250, 65, 65, 0.45);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(250, 65, 65, 0.3) 0%,
+      rgba(255, 255, 255, 0.05) 32%,
+      rgba(0, 0, 0, 0.58) 100%
+    );
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 3px 0 0 rgba(250, 65, 65, 0.92);
 }
 
 .stepguide-cinema-pill--detail {
-  border-color: rgba(250, 65, 65, 0.22);
-  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(0, 0, 0, 0.55) 100%
+    );
   font-size: 0.75rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(255, 255, 255, 0.96);
 }
 
 .stepguide-cinema-pill--fix {
-  border-color: rgba(255, 149, 0, 0.28);
-  background: rgba(255, 149, 0, 0.1);
+  border-color: rgba(255, 149, 0, 0.45);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 149, 0, 0.26) 0%,
+      rgba(255, 255, 255, 0.05) 32%,
+      rgba(0, 0, 0, 0.58) 100%
+    );
   font-size: 0.75rem;
   font-weight: 600;
-  color: #fdba74;
+  color: #ffffff;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 3px 0 0 rgba(255, 149, 0, 0.92);
 }
 
 @keyframes stepguide-restore-in {
@@ -3383,6 +3453,88 @@ button.stepguide-card-ts:active {
   padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
 }
 
+.analysis-progress-view {
+  text-align: center;
+}
+
+/* ─── 3-step analysis progress ─── */
+
+.analysis-phase-indicator {
+  text-align: center;
+}
+
+.analysis-phase-kicker {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.analysis-phase-track {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.analysis-phase-node {
+  display: flex;
+  flex: 1;
+  max-width: 6.5rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.analysis-phase-node--active {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.analysis-phase-node--done {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.analysis-phase-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.analysis-phase-node--active .analysis-phase-dot {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+}
+
+.analysis-phase-node--done .analysis-phase-dot {
+  border-color: rgba(250, 65, 65, 0.55);
+  background: rgba(250, 65, 65, 0.16);
+  color: #fa4141;
+}
+
+.analysis-phase-label {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.25;
+}
+
 /* ─── Sticky home nav ─── */
 
 .home-sticky-nav {
@@ -3392,10 +3544,10 @@ button.stepguide-card-ts:active {
   right: 0;
   z-index: 40;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr auto 1fr;
   align-items: end;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem max(0.75rem, env(safe-area-inset-bottom));
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem max(0.75rem, env(safe-area-inset-bottom));
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(8, 8, 8, 0.92);
   backdrop-filter: blur(20px);
@@ -3425,6 +3577,55 @@ button.stepguide-card-ts:active {
   justify-self: end;
 }
 
+.home-sticky-nav-record {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-self: center;
+  gap: 0.15rem;
+  margin-top: -1.25rem;
+  padding: 0 0.25rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.home-sticky-nav-record-ring {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.03) 40%,
+      rgba(0, 0, 0, 0.55) 100%
+    );
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.home-sticky-nav-record-dot {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: var(--radius-card);
+  background: #fa4141;
+  box-shadow: 0 0 0 3px rgba(250, 65, 65, 0.28);
+}
+
+.home-sticky-nav-record-label {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .home-sticky-nav-tab--active {
   color: rgba(255, 255, 255, 0.92);
 }
@@ -3448,6 +3649,206 @@ button.stepguide-card-ts:active {
   line-height: 1rem;
   text-align: center;
   color: #fff;
+}
+
+/* ─── Live record (camera + skeleton) ─── */
+
+.live-record-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+}
+
+.live-record-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+.live-record-video--mirror {
+  transform: scaleX(-1);
+}
+
+.live-record-top {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: max(0.75rem, env(safe-area-inset-top)) 1rem 0.5rem;
+}
+
+.live-record-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.live-record-icon-btn:disabled {
+  opacity: 0.35;
+}
+
+.live-record-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-card);
+  background: rgba(0, 0, 0, 0.55);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.live-record-rec-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: #fa4141;
+  animation: live-record-pulse 1s ease-in-out infinite;
+}
+
+@keyframes live-record-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.live-record-note {
+  position: absolute;
+  left: 50%;
+  bottom: 9rem;
+  z-index: 8;
+  width: min(92vw, 22rem);
+  transform: translateX(-50%);
+  margin: 0;
+}
+
+.live-record-status,
+.live-record-hint {
+  position: relative;
+  z-index: 8;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.live-record-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.live-record-error {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.live-record-retry {
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-card);
+  background: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #000;
+}
+
+.live-record-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem max(1.5rem, env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
+}
+
+.live-record-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.live-record-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.live-record-ring-track {
+  stroke: rgba(255, 255, 255, 0.18);
+  stroke-width: 4;
+}
+
+.live-record-ring-progress {
+  stroke: #fa4141;
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+.live-record-btn-inner {
+  position: relative;
+  z-index: 1;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-card);
+  background: #fa4141;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.92);
+}
+
+.live-record-btn:not(.live-record-btn--stop) .live-record-btn-inner {
+  border-radius: 50%;
+}
+
+.live-record-btn--stop .live-record-btn-inner {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 0.35rem;
+  box-shadow: none;
 }
 
 /* ─── Session library ─── */
@@ -3613,6 +4014,29 @@ button.stepguide-card-ts:active {
   border: 2px solid rgba(255, 255, 255, 0.25);
   border-top-color: rgba(255, 255, 255, 0.9);
   animation: session-library-spin 0.7s linear infinite;
+}
+
+.download-progress-ring {
+  display: block;
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.download-progress-ring-track {
+  stroke: rgba(255, 255, 255, 0.18);
+  stroke-width: 3;
+}
+
+.download-progress-ring-fill {
+  stroke: #fa4141;
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.35s linear;
+}
+
+.download-progress-ring--rail {
+  height: 1.375rem;
+  width: 1.375rem;
 }
 
 @keyframes session-library-spin {

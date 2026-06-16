@@ -1,13 +1,20 @@
 "use strict";
 
 const { join, dirname } = require("path");
-const { readFileSync } = require("fs");
+const { readFileSync, existsSync } = require("fs");
 const vm = require("vm");
 const { pathToFileURL } = require("url");
 
 let patched = false;
 
 function packageRoot() {
+  const roots = [process.cwd(), join(process.cwd(), "feedback")];
+  for (const root of roots) {
+    const candidate = join(root, "node_modules", "@mediapipe", "tasks-vision");
+    if (existsSync(join(candidate, "wasm", "vision_wasm_internal.js"))) {
+      return candidate;
+    }
+  }
   return join(process.cwd(), "node_modules", "@mediapipe", "tasks-vision");
 }
 
@@ -299,19 +306,20 @@ function installDocumentPolyfill() {
 
 /** Browser globals MediaPipe expects when running in Node. */
 function prepareServerRuntime() {
-  if (patched) return;
-  patched = true;
+  if (!patched) {
+    patched = true;
 
-  if (typeof globalThis.self === "undefined") {
-    globalThis.self = globalThis;
+    if (typeof globalThis.self === "undefined") {
+      globalThis.self = globalThis;
+    }
+
+    installDocumentPolyfill();
+
+    mockWebGlClass("WebGLRenderingContext");
+    mockWebGlClass("WebGL2RenderingContext");
+    mockWebGlClass("HTMLCanvasElement");
+    mockWebGlClass("HTMLVideoElement");
   }
-
-  installDocumentPolyfill();
-
-  mockWebGlClass("WebGLRenderingContext");
-  mockWebGlClass("WebGL2RenderingContext");
-  mockWebGlClass("HTMLCanvasElement");
-  mockWebGlClass("HTMLVideoElement");
 
   if (typeof globalThis.ModuleFactory !== "function") {
     globalThis.ModuleFactory = loadEmscriptenFactory(false);

@@ -25,6 +25,7 @@
   "functions": {
     "app/api/upload/route.ts": { "maxDuration": 300 },
     "app/api/analyse/route.ts": { "maxDuration": 300 },
+    "app/api/video/download/route.ts": { "maxDuration": 300 },
     "app/api/cron/emails/route.ts": { "maxDuration": 60 }
   }
 }

@@ -7,7 +7,12 @@ import { apiPath } from "@/lib/paths";
 import {
   DownloadSessionVideoError,
   downloadSessionVideo,
+  type DownloadProgressUpdate,
 } from "@/lib/video/downloadSessionVideo";
+import {
+  DownloadProgressRing,
+  formatDownloadTimeLeft,
+} from "@/components/shared/DownloadProgressRing";
 import {
   isPresetThumbnail,
   presetEmoji,
@@ -72,6 +77,8 @@ export function SessionLibraryRow({
   onDeleted,
 }: SessionLibraryRowProps) {
   const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] =
+    useState<DownloadProgressUpdate | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const statusClass = `session-library-status--${session.status}`;
@@ -84,8 +91,9 @@ export function SessionLibraryRow({
     if (!userId) return;
 
     setDownloading(true);
+    setDownloadProgress(null);
     try {
-      await downloadSessionVideo(session.id, userId);
+      await downloadSessionVideo(session.id, userId, setDownloadProgress);
     } catch (err) {
       if (err instanceof DownloadSessionVideoError && err.code === "PRO_REQUIRED") {
         onUpgrade();
@@ -94,6 +102,7 @@ export function SessionLibraryRow({
       alert(err instanceof Error ? err.message : "Download failed");
     } finally {
       setDownloading(false);
+      setDownloadProgress(null);
     }
   };
 
@@ -148,12 +157,18 @@ export function SessionLibraryRow({
         <button
           type="button"
           className={`session-library-download${isPro ? "" : " session-library-download--locked"}`}
-          aria-label={isPro ? "Download video" : "Upgrade to download video"}
+          aria-label={
+            downloading && downloadProgress
+              ? `${downloadProgress.message} — ${formatDownloadTimeLeft(downloadProgress.secondsRemaining)} left`
+              : isPro
+                ? "Download video"
+                : "Upgrade to download video"
+          }
           disabled={downloading}
           onClick={(e) => void handleDownload(e)}
         >
-          {downloading ? (
-            <span className="session-library-download-spinner" aria-hidden />
+          {downloading && downloadProgress ? (
+            <DownloadProgressRing percent={downloadProgress.percent} />
           ) : (
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

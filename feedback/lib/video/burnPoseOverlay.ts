@@ -6,7 +6,7 @@ import {
   computeFrameMetrics,
   type GuardCalibration,
 } from "@/lib/analysis/poseMetrics";
-import { getInterpolatedLandmarksAtTime } from "@/components/video/landmarkPlayback";
+import { getInterpolatedLandmarksAtTime, LANDMARK_FPS } from "@/components/video/landmarkPlayback";
 import { computeVideoContentRect } from "@/components/video/videoLayout";
 import {
   drawBiomechanics,
@@ -16,9 +16,16 @@ import {
   drawSkeleton,
   type WristTrailPoint,
 } from "@/lib/video/poseOverlayDraw";
-import type { VideoProbe } from "@/lib/video/videoProbe";
+import { displayDimensions, type VideoProbe } from "@/lib/video/videoProbe";
 
-const MAX_EXPORT_FRAMES = 720;
+const MAX_EXPORT_FRAMES = 3600;
+
+function exportFpsForDuration(duration: number): number {
+  const fps = LANDMARK_FPS;
+  const frameCount = duration * fps;
+  if (frameCount <= MAX_EXPORT_FRAMES) return fps;
+  return Math.round((MAX_EXPORT_FRAMES / Math.max(duration, 1)) * 100) / 100;
+}
 
 function guardAlertAtTime(
   guardDropped: boolean,
@@ -35,15 +42,6 @@ function guardAlertAtTime(
   );
 }
 
-function exportFpsForDuration(sourceFps: number, duration: number): number {
-  let fps = Math.min(sourceFps, 12);
-  const frameCount = duration * fps;
-  if (frameCount > MAX_EXPORT_FRAMES) {
-    fps = Math.max(8, MAX_EXPORT_FRAMES / Math.max(duration, 1));
-  }
-  return Math.round(fps * 100) / 100;
-}
-
 /** Render transparent PNG overlay frames matching the on-screen skeleton */
 export async function renderOverlayFrameSequence(
   workDir: string,
@@ -57,8 +55,9 @@ export async function renderOverlayFrameSequence(
   const overlayDir = join(workDir, "overlays");
   await mkdir(overlayDir, { recursive: true });
 
-  const { width, height, duration } = probe;
-  const fps = exportFpsForDuration(probe.fps, duration);
+  const { width, height } = displayDimensions(probe);
+  const duration = probe.duration;
+  const fps = exportFpsForDuration(duration);
   const frameCount = Math.max(1, Math.ceil(duration * fps));
   const layout = computeVideoContentRect(width, height, width, height);
   const trails = { left: [] as WristTrailPoint[], right: [] as WristTrailPoint[] };

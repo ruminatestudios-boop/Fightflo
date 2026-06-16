@@ -5,6 +5,11 @@ import {
   ANALYSIS_STEPS,
   DEFAULT_ANALYSIS_STEP,
 } from "@/config/prompts";
+import {
+  blendedProgressPercent,
+  userPhaseForStep,
+  type UserAnalysisPhase,
+} from "@/lib/analysis/userPhases";
 import { hapticStep, hapticSuccess } from "@/lib/haptics";
 import { parseJsonResponse } from "@/lib/api/parseResponse";
 import { apiPath } from "@/lib/paths";
@@ -20,6 +25,8 @@ interface AnalysisProgressState {
   headline: string;
   message: string;
   progressPercent: number;
+  userPhase: UserAnalysisPhase;
+  overallProgressPercent: number;
 }
 
 function getStepConfig(step?: string) {
@@ -34,20 +41,24 @@ function resolveMessage(step: string, serverMessage: string): string {
 }
 
 export function useAnalysisProgress(sessionId: string | null) {
-  const [state, setState] = useState<AnalysisProgressState>(() => {
-    const config = ANALYSIS_STEPS.uploading;
-    return {
-      report: null,
-      session: null,
-      loading: !!sessionId,
-      error: null,
-      step: "uploading",
-      eyebrow: config.eyebrow,
-      headline: config.headline,
-      message: config.detail ?? config.ticks[0],
-      progressPercent: config.percent,
-    };
-  });
+  const initialConfig = ANALYSIS_STEPS.uploading;
+  const initialPhase = userPhaseForStep("uploading");
+  const [state, setState] = useState<AnalysisProgressState>(() => ({
+    report: null,
+    session: null,
+    loading: !!sessionId,
+    error: null,
+    step: "uploading",
+    eyebrow: initialConfig.eyebrow,
+    headline: initialConfig.headline,
+    message: initialConfig.detail ?? initialConfig.ticks[0],
+    progressPercent: initialConfig.percent,
+    userPhase: initialPhase,
+    overallProgressPercent: blendedProgressPercent(
+      initialPhase.index,
+      initialConfig.percent
+    ),
+  }));
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -82,6 +93,7 @@ export function useAnalysisProgress(sessionId: string | null) {
           lastStepRef.current = "complete";
         }
 
+        const completePhase = userPhaseForStep("complete");
         setState({
           report: data.report,
           session,
@@ -92,6 +104,8 @@ export function useAnalysisProgress(sessionId: string | null) {
           headline: ANALYSIS_STEPS.complete.headline,
           message: ANALYSIS_STEPS.complete.detail ?? ANALYSIS_STEPS.complete.ticks[0],
           progressPercent: 100,
+          userPhase: completePhase,
+          overallProgressPercent: 100,
         });
         return true;
       }
@@ -110,15 +124,25 @@ export function useAnalysisProgress(sessionId: string | null) {
         lastStepRef.current = step;
       }
 
-      setState((s) => ({
-        ...s,
-        session,
-        step,
-        eyebrow: config.eyebrow,
-        headline: config.headline,
-        message: resolveMessage(step, serverMessage),
-        progressPercent: Math.max(s.progressPercent, config.percent - 8),
-      }));
+      const userPhase = userPhaseForStep(step);
+
+      setState((prev) => {
+        const stepProgress = Math.max(prev.progressPercent, config.percent - 8);
+        return {
+          ...prev,
+          session,
+          step,
+          eyebrow: config.eyebrow,
+          headline: config.headline,
+          message: resolveMessage(step, serverMessage),
+          progressPercent: stepProgress,
+          userPhase,
+          overallProgressPercent: blendedProgressPercent(
+            userPhase.index,
+            stepProgress
+          ),
+        };
+      });
 
       return false;
     } catch (error) {
@@ -158,9 +182,14 @@ export function useAnalysisProgress(sessionId: string | null) {
       setState((s) => {
         const target = targetProgressRef.current;
         if (s.progressPercent >= target) return s;
+        const nextStepProgress = Math.min(target, s.progressPercent + 0.6);
         return {
           ...s,
-          progressPercent: Math.min(target, s.progressPercent + 0.6),
+          progressPercent: nextStepProgress,
+          overallProgressPercent: blendedProgressPercent(
+            s.userPhase.index,
+            nextStepProgress
+          ),
         };
       });
     }, 400);

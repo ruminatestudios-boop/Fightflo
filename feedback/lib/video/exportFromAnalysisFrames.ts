@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "fs/promises";
+import { mkdir, readFile, writeFile, stat } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { createCanvas, loadImage } from "@napi-rs/canvas";
@@ -12,6 +12,7 @@ import { FRAMES_PER_SECOND } from "@/lib/analysis/timestamps";
 import { configureFfmpeg } from "@/lib/config/ffmpeg";
 import {
   countDrawableLandmarkFrames,
+  frameTimeSeconds,
   getInterpolatedLandmarksAtTime,
 } from "@/components/video/landmarkPlayback";
 import {
@@ -23,6 +24,7 @@ import {
   type WristTrailPoint,
 } from "@/lib/video/poseOverlayDraw";
 import { computeVideoContentRect } from "@/components/video/videoLayout";
+import { probeVideo } from "@/lib/video/videoProbe";
 
 const WATERMARK_FILTER =
   "drawtext=text='FIGHTFLO.':fontcolor=white@0.82:fontsize=32:x=(w-tw)/2:y=h-th-28:shadowcolor=black@0.55:shadowx=2:shadowy=2";
@@ -77,6 +79,14 @@ export async function exportFromAnalysisFrames(
 
   let drawnFrames = 0;
 
+  let videoDuration = frameCount / FRAMES_PER_SECOND;
+  try {
+    const probe = await probeVideo(sourcePath);
+    videoDuration = probe.duration;
+  } catch {
+    /* use frame-derived duration */
+  }
+
   for (let i = 0; i < frameCount; i++) {
     const image = await loadImage(framePaths[i]);
     const width = image.width;
@@ -87,9 +97,15 @@ export async function exportFromAnalysisFrames(
     ctx.drawImage(image as unknown as CanvasImageSource, 0, 0, width, height);
 
     const layout = computeVideoContentRect(width, height, width, height);
-    const t = i / FRAMES_PER_SECOND;
+    const timelineFrame = timeline[i];
+    const t =
+      timelineFrame !== undefined
+        ? frameTimeSeconds(timelineFrame)
+        : frameCount > 1
+          ? (i / (frameCount - 1)) * videoDuration
+          : 0;
     const frameLandmarks =
-      getInterpolatedLandmarksAtTime(timeline, t) ?? timeline[i]?.landmarks;
+      getInterpolatedLandmarksAtTime(timeline, t) ?? timelineFrame?.landmarks;
 
     if (frameLandmarks && Object.keys(frameLandmarks).length > 0) {
       const lw = frameLandmarks.left_wrist;
@@ -155,35 +171,63 @@ export async function exportFromAnalysisFrames(
 
   configureFfmpeg();
 
+  const hasSourceAudio = await stat(sourcePath)
+    .then(() => true)
+    .catch(() => false);
+
   await new Promise<void>((resolve, reject) => {
-    ffmpeg()
+    const command = ffmpeg()
       .input(join(compositedDir, "frame_%04d.jpg"))
-      .inputOptions([`-framerate ${FRAMES_PER_SECOND}`])
-      .input(sourcePath)
+      .inputOptions([`-framerate ${FRAMES_PER_SECOND}`]);
+
+    if (hasSourceAudio) {
+      command.input(sourcePath);
+    }
+
+    const outputOptions = hasSourceAudio
+      ? [
+          "-map",
+          "0:v",
+          "-map",
+          "1:a?",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "fast",
+          "-crf",
+          "23",
+          "-pix_fmt",
+          "yuv420p",
+          "-profile:v",
+          "main",
+          "-c:a",
+          "aac",
+          "-b:a",
+          "128k",
+          "-movflags",
+          "+faststart",
+          "-shortest",
+        ]
+      : [
+          "-map",
+          "0:v",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "fast",
+          "-crf",
+          "23",
+          "-pix_fmt",
+          "yuv420p",
+          "-profile:v",
+          "main",
+          "-movflags",
+          "+faststart",
+        ];
+
+    command
       .videoFilters([WATERMARK_FILTER])
-      .outputOptions([
-        "-map",
-        "0:v",
-        "-map",
-        "1:a?",
-        "-c:v",
-        "libx264",
-        "-preset",
-        "fast",
-        "-crf",
-        "23",
-        "-pix_fmt",
-        "yuv420p",
-        "-profile:v",
-        "main",
-        "-c:a",
-        "aac",
-        "-b:a",
-        "128k",
-        "-movflags",
-        "+faststart",
-        "-shortest",
-      ])
+      .outputOptions(outputOptions)
       .output(outputPath)
       .on("end", () => resolve())
       .on("error", (err) => reject(err))

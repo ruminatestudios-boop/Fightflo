@@ -1,12 +1,15 @@
 "use client";
 
 import { ProgressBar } from "@/components/upload/ProgressBar";
+import { AnalysisPhaseIndicator } from "@/components/shared/AnalysisPhaseIndicator";
+import type { UserAnalysisPhase } from "@/lib/analysis/userPhases";
 
 interface AnalysisProgressViewProps {
   eyebrow: string;
   headline: string;
   message: string;
   progress: number;
+  userPhase: UserAnalysisPhase;
   footer?: string;
   className?: string;
 }
@@ -16,17 +19,24 @@ export function AnalysisProgressView({
   headline,
   message,
   progress,
-  footer = "Usually 2–5 minutes",
+  userPhase,
+  footer,
   className = "",
 }: AnalysisProgressViewProps) {
+  const footerText =
+    footer ??
+    `Step ${userPhase.index} of 3 — ${userPhase.detail}. Usually 2–5 minutes total.`;
+
   return (
-    <div className={`text-center ${className}`}>
-      <p className="text-sm text-white/40">{eyebrow}</p>
+    <div className={`analysis-progress-view ${className}`}>
+      <AnalysisPhaseIndicator currentPhase={userPhase} />
+
+      <p className="mt-6 text-sm text-white/40">{eyebrow}</p>
       <h1 className="mt-2 text-2xl font-medium text-white">{headline}</h1>
-      <div className="mx-auto mt-10 max-w-xs">
+      <div className="mx-auto mt-8 max-w-xs">
         <ProgressBar progress={progress} message={message} />
       </div>
-      <p className="mt-6 text-xs text-white/30">{footer}</p>
+      <p className="mt-6 text-xs text-white/30">{footerText}</p>
     </div>
   );
 }

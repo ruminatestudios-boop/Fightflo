@@ -1,35 +1,25 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const INTRO_DISMISSED_COOKIE = "feedback_intro_session";
 const basePath = process.env.FEEDBACK_BASE_PATH ?? "/feedback";
 
-/** Dismiss intro without client JS — anchor href `/?started=1` sets session cookie + redirects. */
+/** Dev helper: `?reset=intro` clears any legacy intro cookies. */
 export function middleware(request: NextRequest) {
-  if (request.nextUrl.searchParams.get("reset") === "intro") {
-    const url = request.nextUrl.clone();
-    url.searchParams.delete("reset");
-    const response = NextResponse.redirect(url);
-    response.cookies.set(INTRO_DISMISSED_COOKIE, "", {
-      path: basePath,
-      maxAge: 0,
-      sameSite: "lax",
-    });
-    return response;
-  }
-
-  if (request.nextUrl.searchParams.get("started") !== "1") {
+  if (request.nextUrl.searchParams.get("reset") !== "intro") {
     return NextResponse.next();
   }
 
   const url = request.nextUrl.clone();
-  url.searchParams.delete("started");
+  url.searchParams.delete("reset");
 
   const response = NextResponse.redirect(url);
-  response.cookies.set(INTRO_DISMISSED_COOKIE, "1", {
-    path: basePath,
-    sameSite: "lax",
-  });
+  for (const name of ["feedback_intro_session", "feedback_intro_dismissed"]) {
+    response.cookies.set(name, "", {
+      path: basePath,
+      maxAge: 0,
+      sameSite: "lax",
+    });
+  }
 
   return response;
 }

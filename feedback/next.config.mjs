@@ -55,7 +55,14 @@ const nextConfig = {
         "./node_modules/@mediapipe/tasks-vision/wasm/**",
         "./node_modules/ffmpeg-static/**",
       ],
-      "/api/video/download/route": ["./node_modules/ffmpeg-static/**"],
+      "/api/video/download/route": [
+        "./lib/analysis/mediaPipeWasmLoader.cjs",
+        "./node_modules/@mediapipe/tasks-vision/wasm/**",
+        "./node_modules/@napi-rs/canvas/**",
+        "./node_modules/ffmpeg-static/**",
+        "./scripts/detect-pose-cli.ts",
+        "./lib/analysis/poseDetectionCore.ts",
+      ],
     },
     outputFileTracingExcludes: {
       "/api/video/download/status/route": [

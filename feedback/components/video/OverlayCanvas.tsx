@@ -35,6 +35,9 @@ interface OverlayCanvasProps {
   guardFocusMode?: boolean;
   /** Server-calibrated guard line — matches analysis pipeline */
   guardCalibration?: GuardCalibration | null;
+  /** Parent-supplied live pose (e.g. camera VIDEO mode) — skips internal hook */
+  externalLivePose?: boolean;
+  externalLiveLandmarks?: FrameLandmarks | null;
 }
 
 function resolveLivePoseEnabled(
@@ -285,6 +288,8 @@ export function OverlayCanvas({
   suppressAnnotationLabel = false,
   guardFocusMode = false,
   guardCalibration = null,
+  externalLivePose = false,
+  externalLiveLandmarks = null,
 }: OverlayCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
@@ -299,7 +304,16 @@ export function OverlayCanvas({
     [landmarks]
   );
   const liveEnabled = resolveLivePoseEnabled(useLivePose, storedReady);
-  const liveLandmarks = useLivePoseLandmarks(videoRef, liveEnabled);
+  const internalLiveLandmarks = useLivePoseLandmarks(
+    videoRef,
+    liveEnabled && !externalLivePose
+  );
+  const liveLandmarks = externalLivePose
+    ? externalLiveLandmarks
+    : internalLiveLandmarks;
+  const usingLivePose = externalLivePose
+    ? externalLiveLandmarks !== null
+    : liveEnabled && internalLiveLandmarks !== null;
 
   const syncCanvasSize = useCallback(() => {
     const video = videoRef.current;
@@ -350,7 +364,7 @@ export function OverlayCanvas({
           suppressAnnotationLabel,
           guardFocusMode,
           guardCalibration,
-          liveEnabled
+          usingLivePose
         );
       }
 
@@ -380,6 +394,9 @@ export function OverlayCanvas({
     guardFocusMode,
     guardCalibration,
     liveEnabled,
+    externalLivePose,
+    externalLiveLandmarks,
+    usingLivePose,
   ]);
 
   return (

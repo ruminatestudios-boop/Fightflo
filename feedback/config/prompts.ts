@@ -94,6 +94,7 @@ export const UPLOAD_CONFIG = {
   maxSizeBytes: 500 * 1024 * 1024,
   acceptedMimeTypes: [
     "video/mp4",
+    "video/webm",
     "video/quicktime",
     "video/x-msvideo",
     "video/3gpp",
@@ -101,7 +102,7 @@ export const UPLOAD_CONFIG = {
     "video/hevc",
     "video/x-m4v",
   ],
-  acceptedExtensions: [".mp4", ".mov", ".avi", ".m4v", ".3gp"],
+  acceptedExtensions: [".mp4", ".mov", ".avi", ".m4v", ".3gp", ".webm"],
   /** Broad accept list — required for reliable iOS video picker */
   acceptAttribute: "video/*,.mp4,.mov,.m4v,.avi",
 };

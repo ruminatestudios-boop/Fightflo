@@ -6,7 +6,7 @@ import { AppShell } from "@/components/shared/AppShell";
 import { PaywallSheet, type PaywallMode } from "@/components/shared/PaywallSheet";
 import { ReportEmailCapture } from "@/components/shared/ReportEmailCapture";
 import { StepGuideReport } from "@/components/netflix/StepGuideReport";
-import { ProgressBar } from "@/components/upload/ProgressBar";
+import { AnalysisProgressView } from "@/components/shared/AnalysisProgressView";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { useReportEmailCapture } from "@/hooks/useReportEmailCapture";
 import { SHARE_CAPTIONS } from "@/config/prompts";
@@ -128,17 +128,14 @@ export function ReportPageClient({
   if (loading) {
     return (
       <AppShell showLogo showBack>
-        <div className="flex flex-1 flex-col justify-center px-2 pb-20">
-          <p className="text-center text-sm text-white/40">{polled.eyebrow}</p>
-          <p className="mt-2 text-center text-2xl font-medium text-white">
-            {polled.headline}
-          </p>
-          <div className="mt-10">
-            <ProgressBar progress={polled.progressPercent} message={polled.message} />
-          </div>
-          <p className="mt-6 text-center text-xs text-white/30">
-            Usually 2–5 minutes
-          </p>
+        <div className="flex flex-1 flex-col justify-center px-4 pb-20">
+          <AnalysisProgressView
+            eyebrow={polled.eyebrow}
+            headline={polled.headline}
+            message={polled.message}
+            progress={polled.overallProgressPercent}
+            userPhase={polled.userPhase}
+          />
         </div>
       </AppShell>
     );

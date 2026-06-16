@@ -23,7 +23,12 @@ import { apiPath, reportPath } from "@/lib/paths";
 import {
   DownloadSessionVideoError,
   downloadSessionVideo,
+  type DownloadProgressUpdate,
 } from "@/lib/video/downloadSessionVideo";
+import {
+  DownloadProgressRing,
+  formatDownloadTimeLeft,
+} from "@/components/shared/DownloadProgressRing";
 import { analyzeGuardFromReport, liveGuardDropLabel } from "@/lib/guard/guardAnalysis";
 import { parseGuardCalibration } from "@/lib/analysis/guardCalibration";
 import { OverlayGuide } from "@/components/video/OverlayGuide";
@@ -134,6 +139,8 @@ export function StepGuideReport({
   const [videoError, setVideoError] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] =
+    useState<DownloadProgressUpdate | null>(null);
   const [notesVisible, setNotesVisible] = useState(!isGuardMode);
 
   const guardAnalysis = useMemo(
@@ -157,8 +164,11 @@ export function StepGuideReport({
     if (!userId) return;
 
     setDownloading(true);
+    setDownloadProgress(null);
     try {
-      await downloadSessionVideo(session.id, userId);
+      await downloadSessionVideo(session.id, userId, setDownloadProgress, {
+        video: videoRef.current,
+      });
     } catch (err) {
       if (err instanceof DownloadSessionVideoError && err.code === "PRO_REQUIRED") {
         onUpgrade?.();
@@ -167,6 +177,7 @@ export function StepGuideReport({
       alert(err instanceof Error ? err.message : "Download failed");
     } finally {
       setDownloading(false);
+      setDownloadProgress(null);
     }
   }, [onUpgrade, session.id, session.user_id]);
 
@@ -688,10 +699,19 @@ export function StepGuideReport({
               onClick={handleDownload}
               disabled={downloading}
               className={`stepguide-rail-btn ${isPro ? "" : "stepguide-rail-btn--locked"}`}
-              aria-label={isPro ? "Download video" : "Upgrade to download"}
+              aria-label={
+                downloading && downloadProgress
+                  ? `${downloadProgress.message} — ${formatDownloadTimeLeft(downloadProgress.secondsRemaining)} left`
+                  : isPro
+                    ? "Download video"
+                    : "Upgrade to download"
+              }
             >
-              {downloading ? (
-                <span className="text-xs">…</span>
+              {downloading && downloadProgress ? (
+                <DownloadProgressRing
+                  percent={downloadProgress.percent}
+                  className="download-progress-ring--rail"
+                />
               ) : (
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
