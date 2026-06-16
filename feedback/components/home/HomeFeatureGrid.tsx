@@ -110,9 +110,11 @@ export function HomeFeatureGrid({
           </span>
           <span className="glass-card-icon glass-card-icon--hero" aria-hidden>
             <svg className="home-upload-hero-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 15V3" />
-              <path d="M8 7l4-4 4 4" />
-              <path d="M4 21h16" />
+              <g className="home-upload-hero-arrow">
+                <path d="M12 15V3" />
+                <path d="M8 7l4-4 4 4" />
+              </g>
+              <path className="home-upload-hero-tray" d="M4 21h16" />
             </svg>
           </span>
           <span className="home-feature-hint home-feature-hint--hero">

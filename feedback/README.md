@@ -33,6 +33,18 @@ Best results: bag work, pad rounds, and shadowboxing with your full body visible
 4. `npm install`
 5. `npm run dev` — runs on http://localhost:3001
 
+### If dev breaks (`Cannot find module './NNN.js'`)
+
+This is a **stale `.next` cache**, not bad app code. It happens when:
+
+- More than one `npm run dev` runs on port 3001 (common with IDE agents)
+- `npm run build` runs while dev is still up (both write to `.next`)
+- A hot reload fails mid-compile after large edits
+
+**Fix:** `npm run dev:clean` (stops port 3001, wipes `.next`, restarts dev).
+
+`npm run dev` now stops any existing server on 3001 before starting so duplicates are less likely.
+
 ## Project structure
 
 ```

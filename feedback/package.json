@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3001",
+    "dev": "node scripts/dev.mjs",
+    "dev:clean": "node scripts/dev.mjs --clean",
+    "prebuild": "node scripts/guard-build.mjs",
     "build": "next build",
     "postbuild": "node -e \"console.log('\\n  Styles apply after restart — run: npm run start  (or npm run prod for clean deploy)\\n')\"",
     "start": "lsof -ti:3001 2>/dev/null | xargs kill -9 2>/dev/null; PATH=\"$HOME/bin:/opt/homebrew/bin:/usr/local/bin:$PATH\" next start --port 3001",
