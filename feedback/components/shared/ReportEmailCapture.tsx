@@ -19,9 +19,12 @@ export function ReportEmailCapture({
 }: ReportEmailCaptureProps) {
   if (status === "success") {
     return (
-      <div className="rounded-[1.25rem] border border-emerald-500/30 bg-emerald-500/10 p-5 text-center">
-        <p className="text-sm font-medium text-white">Check your inbox 👊</p>
-        <p className="mt-2 text-xs text-white/50">
+      <div className="glass-surface-card glass-inline-card glass-inline-card--success">
+        <p className="glass-greeting-sub">Email sent</p>
+        <h3 className="glass-greeting-title glass-greeting-title--sm">
+          Check your inbox
+        </h3>
+        <p className="loading-panel-status">
           We sent your report link{mainFinding ? ` — ${mainFinding}` : ""}.
         </p>
       </div>
@@ -29,56 +32,49 @@ export function ReportEmailCapture({
   }
 
   return (
-    <div className="rounded-[1.25rem] border border-white/10 bg-[#141414] p-5">
-      <p className="text-[10px] font-medium tracking-[0.18em] text-white/40 uppercase">
-        Get notified
-      </p>
-      <h3 className="mt-2 text-lg font-medium text-white">
+    <div className="glass-surface-card glass-inline-card">
+      <p className="loading-panel-kicker">Get notified</p>
+      <h3 className="glass-greeting-title glass-greeting-title--sm">
         Email me when my report is ready
       </h3>
-      <p className="mt-2 text-sm text-white/45">
+      <p className="loading-panel-status">
         Link to this breakdown plus your main finding — no spam.
       </p>
 
-      <div className="mt-4 space-y-3">
-        <input
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          placeholder="your@email.com"
-          value={email}
-          onChange={(e) => onEmailChange(e.target.value)}
-          disabled={status === "submitting"}
-          className="h-12 w-full rounded-card border border-white/10 bg-black px-4 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none"
-          aria-label="Email address"
-        />
+      <div className="glass-inline-card-form">
+        <label className="home-name-field">
+          Email
+          <input
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            placeholder="your@email.com"
+            value={email}
+            onChange={(e) => onEmailChange(e.target.value)}
+            disabled={status === "submitting"}
+            className="home-name-input"
+            aria-label="Email address"
+          />
+        </label>
 
         <button
           type="button"
           onClick={onSubmit}
           disabled={status === "submitting"}
-          className="flex h-12 w-full items-center justify-center rounded-card bg-white text-sm font-medium text-black disabled:opacity-50"
+          className="ff-primary-btn w-full"
         >
           {status === "submitting" ? "Sending…" : "Send my report link"}
         </button>
 
         {status === "invalid" && (
-          <p className="text-center text-xs text-[#fa4141]">
-            Double check that email
-          </p>
+          <p className="glass-error">Double check that email</p>
         )}
         {status === "error" && (
-          <p className="text-center text-xs text-[#fa4141]">
-            Something went wrong — try again
-          </p>
+          <p className="glass-error">Something went wrong — try again</p>
         )}
 
         {onDismiss && status !== "submitting" && (
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="w-full py-1 text-xs text-white/35"
-          >
+          <button type="button" className="home-sample-link" onClick={onDismiss}>
             Skip for now
           </button>
         )}

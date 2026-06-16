@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AppShell } from "@/components/shared/AppShell";
+import { GlassPage } from "@/components/shared/GlassPage";
+import { GlassStatusCard } from "@/components/shared/GlassStatusCard";
 import { PaywallSheet, type PaywallMode } from "@/components/shared/PaywallSheet";
 import { ReportEmailCapture } from "@/components/shared/ReportEmailCapture";
 import { StepGuideReport } from "@/components/netflix/StepGuideReport";
@@ -127,33 +128,40 @@ export function ReportPageClient({
 
   if (loading) {
     return (
-      <AppShell showLogo showBack>
-        <div className="flex flex-1 flex-col justify-center px-4 pb-20">
-          <AnalysisProgressView
-            eyebrow={polled.eyebrow}
-            headline={polled.headline}
-            message={polled.message}
-            progress={polled.overallProgressPercent}
-            userPhase={polled.userPhase}
-          />
-        </div>
-      </AppShell>
+      <GlassPage showBack innerClassName="glass-home-inner glass-home-inner--busy">
+        <AnalysisProgressView
+          eyebrow={polled.eyebrow}
+          headline={polled.headline}
+          message={polled.message}
+          progress={polled.overallProgressPercent}
+          userPhase={polled.userPhase}
+        />
+      </GlassPage>
     );
   }
 
   if (polled.error && !report) {
     return (
-      <AppShell showLogo showBack>
-        <p className="mt-20 text-center text-sm text-[#fa4141]">{polled.error}</p>
-      </AppShell>
+      <GlassPage showBack innerClassName="glass-home-inner glass-home-inner--busy">
+        <GlassStatusCard
+          kicker="Error"
+          title="Couldn't load report"
+          message={polled.error}
+          variant="error"
+        />
+      </GlassPage>
     );
   }
 
   if (!report || !session) {
     return (
-      <AppShell showLogo showBack>
-        <p className="mt-20 text-center text-sm text-white/45">Report not found</p>
-      </AppShell>
+      <GlassPage showBack innerClassName="glass-home-inner glass-home-inner--busy">
+        <GlassStatusCard
+          kicker="Not found"
+          title="Report unavailable"
+          message="This session may have expired or the link is incorrect."
+        />
+      </GlassPage>
     );
   }
 
@@ -169,8 +177,8 @@ export function ReportPageClient({
       />
 
       {hasEmail === false && showEmailCapture && userId && (
-        <div className="fixed inset-x-0 bottom-0 z-30 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <div className="mx-auto max-w-lg">
+        <div className="glass-floating-sheet">
+          <div className="glass-floating-sheet-inner">
             <ReportEmailCapture
               email={emailCapture.email}
               onEmailChange={(v) => {

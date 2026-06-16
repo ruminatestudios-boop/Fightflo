@@ -7,6 +7,9 @@ import { PWARegister } from "@/components/shared/PWARegister";
 import "./globals.css";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "/feedback";
+const appOrigin =
+  process.env.NEXT_PUBLIC_APP_URL ??
+  `http://localhost:3001${basePath === "/" ? "" : basePath}`;
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,6 +24,7 @@ const barlow = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(appOrigin),
   title: "Fightflo — AI Coaching",
   description:
     "Film your training. AI tracks your movement and tells you exactly what to improve.",

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ensureDevDatabaseReady } from "@/lib/db/devFallback";
 import { getUserSessionLibrary } from "@/lib/db/queries";
 
 export async function GET(request: NextRequest) {
@@ -9,6 +10,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await ensureDevDatabaseReady();
     const sessions = await getUserSessionLibrary(userId);
     return NextResponse.json({ sessions });
   } catch (error) {

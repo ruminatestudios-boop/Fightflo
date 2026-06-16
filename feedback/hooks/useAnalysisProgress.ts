@@ -40,6 +40,17 @@ function resolveMessage(step: string, serverMessage: string): string {
   return config.detail ?? config.ticks[0] ?? "Working…";
 }
 
+function humanizeReportError(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes("fetch failed") || lower.includes("enotfound")) {
+    return "Couldn't download your video for analysis. Try Preview sample report on home, or upload again.";
+  }
+  if (lower.includes("session not found")) {
+    return "This session expired after a server restart. Upload again or use Preview sample report.";
+  }
+  return message;
+}
+
 export function useAnalysisProgress(sessionId: string | null) {
   const initialConfig = ANALYSIS_STEPS.uploading;
   const initialPhase = userPhaseForStep("uploading");
@@ -114,7 +125,7 @@ export function useAnalysisProgress(sessionId: string | null) {
         setState((s) => ({
           ...s,
           loading: false,
-          error: serverMessage || "Analysis failed",
+          error: humanizeReportError(serverMessage || "Analysis failed"),
         }));
         return true;
       }
@@ -146,10 +157,12 @@ export function useAnalysisProgress(sessionId: string | null) {
 
       return false;
     } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load report";
       setState((s) => ({
         ...s,
         loading: false,
-        error: error instanceof Error ? error.message : "Failed to load report",
+        error: humanizeReportError(message),
       }));
       return true;
     }

@@ -8,6 +8,9 @@ function runtimeBasePath(): string {
   if (pathname === "/feedback" || pathname.startsWith("/feedback/")) {
     return "/feedback";
   }
+  if (pathname === "/report" || pathname.startsWith("/report/")) {
+    return "/feedback";
+  }
   return "";
 }
 

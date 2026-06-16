@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isCloudinaryConfigured } from "@/lib/config/env";
+import { devFallbackUserMessage, ensureDevDatabaseReady } from "@/lib/db/devFallback";
 import { getSignedUploadParams } from "@/lib/storage/cloudinary";
 import {
   ensureUser,
@@ -11,6 +12,7 @@ export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
+    await ensureDevDatabaseReady();
     const body = (await request.json()) as {
       sport?: SportId;
       level?: SkillLevel;
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[upload/sign]", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Could not start upload" },
+      { error: devFallbackUserMessage(error) },
       { status: 500 }
     );
   }

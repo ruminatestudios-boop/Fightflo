@@ -12,6 +12,7 @@ import { FlowAction, FlowEmpty, FlowPanel, FlowShell } from "../FlowShell";
 interface CoachShareFlowProps {
   sessions: SessionLibraryEntry[];
   defaultSessionId?: string | null;
+  onBack: () => void;
 }
 
 function formatSessionDate(iso: string): string {
@@ -51,6 +52,7 @@ function ClipThumbnail({ session }: { session: SessionLibraryEntry }) {
 export function CoachShareFlow({
   sessions,
   defaultSessionId,
+  onBack,
 }: CoachShareFlowProps) {
   const completeSessions = useMemo(
     () =>
@@ -119,7 +121,7 @@ export function CoachShareFlow({
   };
 
   return (
-    <FlowShell title="Share with coach" subtitle="View-only report link">
+    <FlowShell title="Share with coach" subtitle="View-only report link" onBack={onBack}>
       {completeSessions.length === 0 ? (
         <FlowEmpty message="Analyse a clip first — then send your coach the breakdown link." />
       ) : (

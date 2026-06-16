@@ -37,3 +37,4 @@ next-env.d.ts
 # temp processing
 /tmp
 .local-data
+.dev-db.json

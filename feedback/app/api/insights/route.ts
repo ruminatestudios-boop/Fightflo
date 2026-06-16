@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ensureDevDatabaseReady } from "@/lib/db/devFallback";
 import { buildHomeInsights } from "@/lib/insights/homeInsights";
 
 export async function GET(request: NextRequest) {
@@ -9,6 +10,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await ensureDevDatabaseReady();
     const insights = await buildHomeInsights(userId);
     return NextResponse.json({ insights });
   } catch (error) {

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isRealAnalysisPipelineEnabled } from "@/lib/config/env";
-import { runDemoAnalysisPipeline } from "@/lib/analysis/demo-pipeline";
-import { runAnalysisPipeline } from "@/lib/analysis/pipeline";
+import { startAnalysisPipeline } from "@/lib/analysis/startPipeline";
 import { getSessionById } from "@/lib/db/queries";
 
 export const runtime = "nodejs";
@@ -28,11 +26,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: "processing", sessionId });
     }
 
-    const runPipeline = isRealAnalysisPipelineEnabled()
-      ? runAnalysisPipeline
-      : runDemoAnalysisPipeline;
-
-    runPipeline(sessionId).catch(console.error);
+    startAnalysisPipeline(sessionId);
 
     return NextResponse.json({ status: "processing", sessionId });
   } catch (error) {

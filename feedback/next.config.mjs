@@ -12,6 +12,14 @@ const nextConfig = {
         basePath: false,
       },
       {
+        // Some browsers request the manifest at the origin root even when the app
+        // is mounted under a basePath.
+        source: "/manifest.webmanifest",
+        destination: "/feedback/manifest.webmanifest",
+        permanent: false,
+        basePath: false,
+      },
+      {
         source: "/report/:id",
         destination: "/feedback/report/:id",
         permanent: false,

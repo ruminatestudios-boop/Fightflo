@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { AnalysisSheet } from "@/components/netflix/AnalysisSheet";
 import {
   buildOverlayGuideContent,
@@ -19,30 +19,123 @@ interface OverlayGuideProps {
 }
 
 function LegendSwatch({ type }: { type: OverlayGuideLegendItem["swatch"] }) {
+  const className = `overlay-guide-swatch overlay-guide-swatch--${type}`;
+
   if (type === "skeleton") {
     return (
-      <span className="overlay-guide-swatch overlay-guide-swatch--skeleton" aria-hidden />
-    );
-  }
-  if (type === "guard-ok") {
-    return (
-      <span className="overlay-guide-swatch overlay-guide-swatch--guard-ok" aria-hidden />
-    );
-  }
-  if (type === "guard-bad") {
-    return (
-      <span className="overlay-guide-swatch overlay-guide-swatch--guard-bad" aria-hidden />
-    );
-  }
-  if (type === "angle") {
-    return (
-      <span className="overlay-guide-swatch overlay-guide-swatch--angle" aria-hidden>
-        165°
+      <span className={className} aria-hidden>
+        <svg viewBox="0 0 24 24" fill="none" className="overlay-guide-swatch-svg">
+          <circle cx="12" cy="5.25" r="1.75" stroke="currentColor" strokeWidth="1.35" />
+          <path
+            d="M12 7.25v5.5M8.25 10.75h7.5M12 12.75l-2.75 4.5M12 12.75l2.75 4.5"
+            stroke="currentColor"
+            strokeWidth="1.35"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </span>
     );
   }
+
+  if (type === "guard-ok") {
+    return (
+      <span className={className} aria-hidden>
+        <svg viewBox="0 0 24 24" fill="none" className="overlay-guide-swatch-svg">
+          <line
+            x1="5"
+            y1="14.5"
+            x2="19"
+            y2="14.5"
+            stroke="currentColor"
+            strokeWidth="1.1"
+            strokeOpacity="0.45"
+          />
+          <circle cx="8" cy="10" r="2.1" fill="currentColor" />
+          <circle cx="16" cy="10" r="2.1" fill="currentColor" />
+        </svg>
+      </span>
+    );
+  }
+
+  if (type === "guard-bad") {
+    return (
+      <span className={className} aria-hidden>
+        <svg viewBox="0 0 24 24" fill="none" className="overlay-guide-swatch-svg">
+          <line
+            x1="5"
+            y1="11.5"
+            x2="19"
+            y2="11.5"
+            stroke="currentColor"
+            strokeWidth="1.35"
+            strokeDasharray="2.5 2"
+            strokeLinecap="round"
+          />
+          <circle cx="8" cy="15.75" r="2" fill="currentColor" fillOpacity="0.9" />
+          <circle cx="16" cy="15.75" r="2" fill="currentColor" fillOpacity="0.9" />
+        </svg>
+      </span>
+    );
+  }
+
+  if (type === "angle") {
+    return (
+      <span className={className} aria-hidden>
+        <svg viewBox="0 0 24 24" fill="none" className="overlay-guide-swatch-svg">
+          <path
+            d="M7.5 16.5h9"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+            strokeOpacity="0.55"
+          />
+          <path
+            d="M7.5 16.5V11a4.5 4.5 0 0 1 9 0"
+            stroke="currentColor"
+            strokeWidth="1.35"
+            strokeLinecap="round"
+          />
+          <text
+            x="12"
+            y="9.25"
+            textAnchor="middle"
+            className="overlay-guide-swatch-angle-text"
+          >
+            165°
+          </text>
+        </svg>
+      </span>
+    );
+  }
+
   return (
-    <span className="overlay-guide-swatch overlay-guide-swatch--trail" aria-hidden />
+    <TrailSwatch className={className} />
+  );
+}
+
+function TrailSwatch({ className }: { className: string }) {
+  const gradientId = useId();
+
+  return (
+    <span className={className} aria-hidden>
+      <svg viewBox="0 0 24 24" fill="none" className="overlay-guide-swatch-svg">
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#34d399" />
+            <stop offset="100%" stopColor="#fa4141" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M5.5 16.25c2.75-5.5 5.5-7.25 8.25-7.25s5.5 1.75 5.25 7.25"
+          stroke={`url(#${gradientId})`}
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <circle cx="5.5" cy="16.25" r="1.6" fill="#34d399" />
+        <circle cx="19" cy="16.25" r="1.6" fill="#fa4141" fillOpacity="0.85" />
+      </svg>
+    </span>
   );
 }
 
@@ -59,54 +152,49 @@ export function OverlayGuideContent({
   });
 
   return (
-    <div className="overlay-guide-content space-y-6">
-      {content.qualityNote && (
-        <p className="rounded-card border border-white/10 bg-white/[0.04] px-4 py-3 text-sm leading-relaxed text-white/70">
-          {content.qualityNote}
-        </p>
-      )}
+    <div className="overlay-guide-content">
+      {content.qualityNote ? (
+        <div className="overlay-guide-quality">
+          <p className="overlay-guide-quality-label">Tracking quality</p>
+          <p className="overlay-guide-quality-body">{content.qualityNote}</p>
+        </div>
+      ) : null}
 
-      <section>
-        <h3 className="text-[10px] font-medium tracking-[0.18em] text-white/40 uppercase">
-          On-screen overlay
-        </h3>
-        <ul className="mt-3 space-y-3">
+      <section className="overlay-guide-section">
+        <p className="overlay-guide-section-label">On-screen overlay</p>
+        <ul className="overlay-guide-legend">
           {content.legend.map((item) => (
-            <li key={item.label} className="flex gap-3">
+            <li key={item.label} className="overlay-guide-legend-item">
               <LegendSwatch type={item.swatch} />
-              <div>
-                <p className="text-sm font-medium text-white/90">{item.label}</p>
-                <p className="mt-0.5 text-sm leading-relaxed text-white/55">
-                  {item.detail}
-                </p>
+              <div className="overlay-guide-legend-copy">
+                <p className="overlay-guide-legend-title">{item.label}</p>
+                <p className="overlay-guide-legend-detail">{item.detail}</p>
               </div>
             </li>
           ))}
         </ul>
       </section>
 
-      <section>
-        <h3 className="text-[10px] font-medium tracking-[0.18em] text-white/40 uppercase">
-          How we read your video
-        </h3>
-        <ol className="mt-3 list-decimal space-y-2 pl-4 text-sm leading-relaxed text-white/60">
-          {content.howItWorks.map((step) => (
-            <li key={step}>{step}</li>
+      <section className="overlay-guide-section">
+        <p className="overlay-guide-section-label">How we read your video</p>
+        <ol className="overlay-guide-steps">
+          {content.howItWorks.map((step, index) => (
+            <li key={step} className="overlay-guide-step">
+              <span className="overlay-guide-step-num" aria-hidden>
+                {index + 1}
+              </span>
+              <p className="overlay-guide-step-body">{step}</p>
+            </li>
           ))}
         </ol>
       </section>
 
-      <section>
-        <h3 className="text-[10px] font-medium tracking-[0.18em] text-white/40 uppercase">
-          Set your expectations
-        </h3>
-        <ul className="mt-3 space-y-2">
+      <section className="overlay-guide-section">
+        <p className="overlay-guide-section-label">Set your expectations</p>
+        <ul className="overlay-guide-expectations">
           {content.expectations.map((line) => (
-            <li
-              key={line}
-              className="flex gap-2 text-sm leading-relaxed text-white/55 before:shrink-0 before:content-['·']"
-            >
-              <span>{line}</span>
+            <li key={line} className="overlay-guide-expectation">
+              {line}
             </li>
           ))}
         </ul>
@@ -168,6 +256,7 @@ export function OverlayGuide({
         title="Pose overlay guide"
         subtitle="What you see on the video"
         accent="neutral"
+        bodyClassName="overlay-guide-sheet-body"
       >
         <OverlayGuideContent
           sport={sport}

@@ -1,6 +1,7 @@
 "use client";
 
 import { PRICING } from "@/config/pricing";
+import { ModalShell } from "@/components/shared/ModalShell";
 
 export type PaywallMode = "pro" | "topup";
 
@@ -19,77 +20,78 @@ export function PaywallSheet({
   onCheckout,
   bonusScans = 0,
 }: PaywallSheetProps) {
-  if (!open) return null;
-
   const isTopUp = mode === "topup";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/70 p-4">
-      <div className="w-full rounded-[1.25rem] border border-white/10 bg-[#141414] p-6">
-        <h2 className="text-lg font-medium">
-          {isTopUp ? "Need more scans?" : "Go Pro"}
-        </h2>
-        <p className="mt-2 text-sm text-white/45">
-          {isTopUp ? (
-            <>
-              You&apos;ve used your {PRICING.pro.scansPerMonth} analyses this
-              month
-              {bonusScans > 0 ? ` (${bonusScans} bonus left)` : ""}. Add{" "}
-              {PRICING.topUp.scans} more now, or wait until the 1st.
-            </>
-          ) : (
-            <>
-              {PRICING.pro.scansPerMonth} analyses per month, clip playback,
-              watermarked video download & progress tracking.
-            </>
-          )}
-        </p>
-        <ul className="paywall-features">
-          {isTopUp ? (
-            <>
-              <li>+{PRICING.topUp.scans} analyses added instantly</li>
-              <li>Use anytime this month</li>
-              <li>Stacks with your Pro allowance</li>
-            </>
-          ) : (
-            <>
-              <li>{PRICING.pro.scansPerMonth} analyses every month</li>
-              <li>Download videos with skeleton overlay</li>
-              <li>Clip playback, progress & history</li>
-            </>
-          )}
-        </ul>
-        <p className="mt-4 text-2xl font-medium">
-          {isTopUp ? (
-            <>
-              {PRICING.topUp.displayShort}
-              <span className="text-sm text-white/40">
-                {" "}
-                for {PRICING.topUp.scans} scans
-              </span>
-            </>
-          ) : (
-            <>
-              {PRICING.pro.displayMonthly.replace("/mo", "")}
-              <span className="text-sm text-white/40">/mo</span>
-            </>
-          )}
-        </p>
-        <button
-          type="button"
-          onClick={onCheckout}
-          className="mt-6 flex w-full items-center justify-center rounded-card bg-white px-6 py-4 font-medium text-black"
-        >
-          {isTopUp ? "Buy scan pack" : "Upgrade now"}
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-3 w-full py-2 text-xs text-white/40"
-        >
-          Maybe later
-        </button>
-      </div>
-    </div>
+    <ModalShell
+      open={open}
+      onClose={onClose}
+      title={isTopUp ? "Need more scans?" : "Go Pro"}
+      accent="red"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onCheckout}
+            className="ff-primary-btn w-full"
+          >
+            {isTopUp ? "Buy scan pack" : "Upgrade now"}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-3 w-full py-2 text-xs text-white/40"
+          >
+            Maybe later
+          </button>
+        </>
+      }
+    >
+      <p className="loading-panel-status">
+        {isTopUp ? (
+          <>
+            You&apos;ve used your {PRICING.pro.scansPerMonth} analyses this month
+            {bonusScans > 0 ? ` (${bonusScans} bonus left)` : ""}. Add{" "}
+            {PRICING.topUp.scans} more now, or wait until the 1st.
+          </>
+        ) : (
+          <>
+            {PRICING.pro.scansPerMonth} analyses per month, clip playback,
+            watermarked video download & progress tracking.
+          </>
+        )}
+      </p>
+      <ul className="paywall-features">
+        {isTopUp ? (
+          <>
+            <li>+{PRICING.topUp.scans} analyses added instantly</li>
+            <li>Use anytime this month</li>
+            <li>Stacks with your Pro allowance</li>
+          </>
+        ) : (
+          <>
+            <li>{PRICING.pro.scansPerMonth} analyses every month</li>
+            <li>Download videos with skeleton overlay</li>
+            <li>Clip playback, progress & history</li>
+          </>
+        )}
+      </ul>
+      <p className="glass-greeting-title glass-greeting-title--sm mt-4">
+        {isTopUp ? (
+          <>
+            {PRICING.topUp.displayShort}
+            <span className="text-sm text-white/40">
+              {" "}
+              for {PRICING.topUp.scans} scans
+            </span>
+          </>
+        ) : (
+          <>
+            {PRICING.pro.displayMonthly.replace("/mo", "")}
+            <span className="text-sm text-white/40">/mo</span>
+          </>
+        )}
+      </p>
+    </ModalShell>
   );
 }

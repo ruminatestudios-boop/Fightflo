@@ -2,52 +2,64 @@
 
 import type { GuardInsight } from "@/lib/insights/types";
 import { reportPath } from "@/lib/paths";
-import { FlowAction, FlowEmpty, FlowPanel, FlowShell } from "../FlowShell";
+import { InsightCard } from "@/components/home/InsightCard";
+import { FlowAction, FlowEmpty, FlowShell } from "../FlowShell";
 
 interface GuardDropFlowProps {
   insight: GuardInsight | null;
   onUpload: () => void;
+  onBack: () => void;
 }
 
 export function GuardDropFlow({
   insight,
   onUpload,
+  onBack,
 }: GuardDropFlowProps) {
   return (
-    <FlowShell title="Guard drop tracker" subtitle="Hands-up focus">
+    <FlowShell title="Guard drop tracker" subtitle="Hands-up focus" onBack={onBack}>
       {!insight ? (
         <FlowEmpty message="Upload and analyse a clip first — we'll flag every moment your guard drops." />
       ) : (
         <>
-          <FlowPanel className="home-flow-panel--guard">
-            <p className="home-flow-eyebrow home-flow-eyebrow--red">Latest clip</p>
-            <h2 className="home-flow-heading">{insight.title}</h2>
-            <p className="home-flow-label">Guard drops</p>
-            <p className="home-flow-body home-flow-body--stat">
-              {insight.dropCount === 0
-                ? "None detected — strong discipline."
-                : `${insight.dropCount} moment${insight.dropCount === 1 ? "" : "s"} flagged${
-                    insight.dropPercent > 0 ? ` · ${insight.dropPercent}% of frames` : ""
-                  }`}
-            </p>
-            <p className="home-flow-label">What we track</p>
-            <p className="home-flow-body">{insight.summary}</p>
-            {insight.dropCount > 0 && (
-              <>
-                <p className="home-flow-label">How to improve</p>
-                <p className="home-flow-body">{insight.mechanicalFix}</p>
-                <p className="home-flow-label">Drill</p>
-                <p className="home-flow-body">{insight.drillName}</p>
-              </>
-            )}
-          </FlowPanel>
-          <p className="home-flow-hint">
-            Guard mode replays your clip with red alerts only when hands fall below
-            guard height — plus timestamps and fixes.
-          </p>
-          <FlowAction href={reportPath(insight.sessionId, "guard")}>
-            Open guard mode
-          </FlowAction>
+          <InsightCard
+            kicker="Latest clip"
+            accentKicker
+            variant="guard"
+            title={insight.title}
+            metric={
+              insight.dropCount === 0
+                ? {
+                    value: "0",
+                    label: "guard drops detected",
+                    progressHint: "Keep this discipline in live rounds",
+                  }
+                : {
+                    value: insight.dropCount,
+                    suffix: insight.dropCount === 1 ? "drop" : "drops",
+                    label: "flagged in this clip",
+                    progress: insight.dropPercent,
+                    progressHint:
+                      insight.dropPercent > 0
+                        ? `${insight.dropPercent}% of frames with pose`
+                        : undefined,
+                  }
+            }
+            summary={insight.dropCount > 0 ? insight.summary : undefined}
+            fix={insight.dropCount > 0 ? insight.mechanicalFix : insight.summary}
+            fixLabel={insight.dropCount > 0 ? "How to improve" : "Summary"}
+            drill={insight.dropCount > 0 ? insight.drillName : undefined}
+          />
+
+          {insight.dropCount > 0 ? (
+            <FlowAction href={reportPath(insight.sessionId, "guard")}>
+              Replay drops in guard mode
+            </FlowAction>
+          ) : (
+            <FlowAction href={reportPath(insight.sessionId, "guard")}>
+              Open guard mode
+            </FlowAction>
+          )}
           <FlowAction variant="secondary" onClick={onUpload}>
             Upload new clip
           </FlowAction>

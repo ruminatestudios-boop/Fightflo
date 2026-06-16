@@ -1,4 +1,6 @@
 import { randomUUID } from "crypto";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import path from "path";
 import { startOfCurrentMonthUtc } from "@/config/limits";
 import { exportCacheVersion } from "@/lib/video/exportManifest";
 import type {
@@ -28,6 +30,78 @@ const reportsBySession = new Map<string, string>();
 const clips = new Map<string, ClipRecord[]>();
 const weaknesses = new Map<string, WeaknessRecord>();
 
+const DEV_DB_FILE = path.join(process.cwd(), ".dev-db.json");
+let hydrated = false;
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
+function serializeDevStore() {
+  return {
+    users: [...users.values()],
+    sessions: [...sessions.values()],
+    reports: [...reports.values()],
+    reportsBySession: [...reportsBySession.entries()],
+    clips: [...clips.entries()],
+    weaknesses: [...weaknesses.values()],
+  };
+}
+
+function schedulePersist() {
+  if (process.env.NODE_ENV !== "development") return;
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => {
+    try {
+      writeFileSync(DEV_DB_FILE, JSON.stringify(serializeDevStore()), "utf8");
+    } catch (error) {
+      console.warn("[dev-store] Failed to persist:", error);
+    }
+  }, 150);
+}
+
+export function hydrateDevStore(): void {
+  if (hydrated) return;
+  hydrated = true;
+
+  if (process.env.NODE_ENV !== "development" || !existsSync(DEV_DB_FILE)) return;
+
+  try {
+    const data = JSON.parse(readFileSync(DEV_DB_FILE, "utf8")) as {
+      users?: User[];
+      sessions?: DevSession[];
+      reports?: Report[];
+      reportsBySession?: [string, string][];
+      clips?: [string, ClipRecord[]][];
+      weaknesses?: WeaknessRecord[];
+    };
+
+    users.clear();
+    sessions.clear();
+    reports.clear();
+    reportsBySession.clear();
+    clips.clear();
+    weaknesses.clear();
+
+    for (const user of data.users ?? []) users.set(user.id, user);
+    for (const session of data.sessions ?? []) sessions.set(session.id, session);
+    for (const report of data.reports ?? []) reports.set(report.id, report);
+    for (const [sessionId, reportId] of data.reportsBySession ?? []) {
+      reportsBySession.set(sessionId, reportId);
+    }
+    for (const [reportId, clipRows] of data.clips ?? []) {
+      clips.set(reportId, clipRows);
+    }
+    for (const weakness of data.weaknesses ?? []) {
+      weaknesses.set(weakness.id, weakness);
+    }
+  } catch (error) {
+    console.warn("[dev-store] Failed to load persisted data:", error);
+  }
+}
+
+function touchDevStore() {
+  hydrateDevStore();
+  schedulePersist();
+}
+
 function now() {
   return new Date().toISOString();
 }
@@ -50,10 +124,12 @@ export async function createAnonymousUser(
     bonus_scans: 0,
   };
   users.set(user.id, user);
+  touchDevStore();
   return user;
 }
 
 export async function getUserById(userId: string): Promise<User | null> {
+  hydrateDevStore();
   const user = users.get(userId);
   if (!user) return null;
   return { ...user, bonus_scans: user.bonus_scans ?? 0 };
@@ -66,12 +142,16 @@ export async function updateUserEmail(
   const user = users.get(userId);
   if (!user) return null;
   user.email = email.trim().toLowerCase();
+  touchDevStore();
   return user;
 }
 
 export async function incrementFreeAnalyses(userId: string): Promise<void> {
   const user = users.get(userId);
-  if (user) user.free_analyses_used += 1;
+  if (user) {
+    user.free_analyses_used += 1;
+    touchDevStore();
+  }
 }
 
 export async function createSession(input: {
@@ -107,12 +187,14 @@ export async function createSession(input: {
     parent_session_id: input.parentSessionId ?? null,
   };
   sessions.set(session.id, session);
+  touchDevStore();
   return session;
 }
 
 export async function getSessionById(
   sessionId: string
 ): Promise<DevSession | null> {
+  hydrateDevStore();
   return sessions.get(sessionId) ?? null;
 }
 
@@ -128,6 +210,7 @@ export async function updateSessionStatus(
     session.progress_step = progress.step;
     session.progress_message = progress.message;
   }
+  touchDevStore();
 }
 
 export async function updateSessionSport(
@@ -135,7 +218,10 @@ export async function updateSessionSport(
   sport: SportId
 ): Promise<void> {
   const session = sessions.get(sessionId);
-  if (session) session.sport = sport;
+  if (session) {
+    session.sport = sport;
+    touchDevStore();
+  }
 }
 
 export async function updateSessionMetadata(
@@ -153,6 +239,7 @@ export async function updateSessionMetadata(
   if (patch.summary !== undefined) session.summary = patch.summary;
   if (patch.thumbnail_url !== undefined) session.thumbnail_url = patch.thumbnail_url;
 
+  touchDevStore();
   return session;
 }
 
@@ -171,6 +258,7 @@ export async function deleteSession(
   }
 
   sessions.delete(sessionId);
+  touchDevStore();
   return true;
 }
 
@@ -247,6 +335,7 @@ export async function saveReport(input: {
     });
   }
 
+  touchDevStore();
   return report;
 }
 
@@ -265,6 +354,7 @@ export async function updateReportExportUrl(
     export_cache_version: exportCacheVersion(),
     export_has_skeleton: true,
   };
+  touchDevStore();
 }
 
 export async function getUserSessions(userId: string): Promise<Session[]> {
@@ -318,6 +408,7 @@ export async function upsertWeakness(
     weaknesses.set(record.id, record);
   }
   void key;
+  touchDevStore();
 }
 
 export async function getWeaknessHistory(
@@ -344,12 +435,14 @@ export async function addBonusScans(
   const user = users.get(userId);
   if (!user) return;
   user.bonus_scans = (user.bonus_scans ?? 0) + count;
+  touchDevStore();
 }
 
 export async function decrementBonusScans(userId: string): Promise<void> {
   const user = users.get(userId);
   if (!user || (user.bonus_scans ?? 0) <= 0) return;
   user.bonus_scans -= 1;
+  touchDevStore();
 }
 
 export async function setUserPro(
@@ -366,6 +459,7 @@ export async function setUserPro(
       user.is_pro = isActive;
       user.subscription_status = subscriptionStatus as User["subscription_status"];
       user.stripe_customer_id = stripeCustomerId;
+      touchDevStore();
       return;
     }
   }
@@ -374,6 +468,7 @@ export async function setUserPro(
     if (user.stripe_customer_id === stripeCustomerId) {
       user.is_pro = isActive;
       user.subscription_status = subscriptionStatus as User["subscription_status"];
+      touchDevStore();
       return;
     }
   }
@@ -390,6 +485,7 @@ export async function linkStripeCustomer(
   if (email?.trim() && !user.email) {
     user.email = email.trim().toLowerCase();
   }
+  touchDevStore();
 }
 
 export interface ScheduledEmailUserRow {

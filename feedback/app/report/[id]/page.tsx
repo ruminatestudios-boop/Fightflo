@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { ReportPageClient } from "./ReportPageClient";
+import { ensureDevDatabaseReady } from "@/lib/db/devFallback";
 import {
   getReportBySessionId,
   getSessionById,
@@ -20,6 +21,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
   let isPro = false;
 
   try {
+    await ensureDevDatabaseReady();
     initialSession = await getSessionById(id);
     if (initialSession?.user_id) {
       const user = await getUserById(initialSession.user_id);

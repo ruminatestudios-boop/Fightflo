@@ -14,6 +14,7 @@ import {
   getDemoPoseQuality,
 } from "@/lib/demo/sampleData";
 import { formatDbError } from "@/lib/db/formatError";
+import { ensureDevDatabaseReady } from "@/lib/db/devFallback";
 import { saveReport, updateSessionMetadata } from "@/lib/db/queries";
 import { createSession, ensureUser } from "@/lib/storage/sessions";
 import type { SkillLevel, SportId } from "@/types";
@@ -23,6 +24,7 @@ export const runtime = "nodejs";
 /** Create a completed session + report from a real baked analysis (Session 21njj). */
 export async function POST(request: NextRequest) {
   try {
+    await ensureDevDatabaseReady();
     const body = (await request.json()) as {
       sport?: SportId;
       level?: SkillLevel;

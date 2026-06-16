@@ -1,38 +1,37 @@
 "use client";
 
 import type { ReuploadInsight } from "@/lib/insights/types";
-import { FlowAction, FlowEmpty, FlowPanel, FlowShell } from "../FlowShell";
+import { InsightCard } from "@/components/home/InsightCard";
+import { FlowAction, FlowEmpty, FlowShell } from "../FlowShell";
 
 interface ReuploadFlowProps {
   insight: ReuploadInsight | null;
   onUploadFollowUp: (parentSessionId: string) => void;
   onViewReport: (sessionId: string) => void;
+  onBack: () => void;
 }
 
 export function ReuploadFlow({
   insight,
   onUploadFollowUp,
   onViewReport,
+  onBack,
 }: ReuploadFlowProps) {
   return (
-    <FlowShell
-      title="Did you fix it?"
-      subtitle="Fix verification"
-    >
+    <FlowShell title="Did you fix it?" subtitle="Fix verification" onBack={onBack}>
       {!insight ? (
         <FlowEmpty message="Upload and analyse your first clip — then come back to verify the fix." />
       ) : (
         <>
-          <FlowPanel>
-            <p className="home-flow-eyebrow">Last session</p>
-            <h2 className="home-flow-heading">{insight.title}</h2>
-            <p className="home-flow-label">Main fault</p>
-            <p className="home-flow-body">{insight.weaknessTitle}</p>
-            <p className="home-flow-label">What to change</p>
-            <p className="home-flow-body">{insight.mechanicalFix}</p>
-            <p className="home-flow-label">Drill to run first</p>
-            <p className="home-flow-body">{insight.drillName}</p>
-          </FlowPanel>
+          <InsightCard
+            kicker="Last session"
+            title={insight.title}
+            highlight={insight.weaknessTitle}
+            highlightLabel="Main fault"
+            fix={insight.mechanicalFix}
+            fixLabel="What to change"
+            drill={insight.drillName}
+          />
           <p className="home-flow-hint">
             Film the same drill or round again — we&apos;ll compare it to your last
             breakdown.

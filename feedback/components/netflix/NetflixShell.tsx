@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { BackButton } from "@/components/shared/BackButton";
-import { LogoHeader } from "@/components/shared/LogoHeader";
+import { SiteTopBar } from "@/components/shared/SiteTopBar";
 import { useNavigateBack } from "@/hooks/useNavigateBack";
 
 interface NetflixShellProps {
@@ -34,24 +34,13 @@ export function NetflixShell({
     <div
       className={`netflix-viewport relative bg-black text-white ${immersive ? "netflix-viewport--immersive" : ""}`}
     >
-      <div className="netflix-topbar">
-        {hasBack ? (
-          backHref ? (
-            <BackButton href={backHref} />
-          ) : (
-            <BackButton onClick={backClick} />
-          )
-        ) : (
-          <div className="w-10" />
-        )}
-        <LogoHeader
-          size="sm"
-          align="center"
-          className="pointer-events-auto"
-          onClick={onLogoClick}
-        />
-        <div className="w-10" />
-      </div>
+      <SiteTopBar
+        showBack={hasBack}
+        backHref={backHref}
+        onBack={backClick}
+        onLogoClick={onLogoClick}
+        immersive={immersive}
+      />
       {topBar}
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>
     </div>

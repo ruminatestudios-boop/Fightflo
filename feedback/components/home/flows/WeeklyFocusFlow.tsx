@@ -7,18 +7,21 @@ import {
   formatJournalTimestamp,
   formatWeekLabel,
 } from "@/lib/storage/weeklyJournal";
+import { InsightCard } from "@/components/home/InsightCard";
 import { FlowAction, FlowEmpty, FlowPanel, FlowShell } from "../FlowShell";
 
 interface WeeklyFocusFlowProps {
   insight: WeeklyFocusInsight | null;
   onUpload: () => void;
   onViewReport: (sessionId: string) => void;
+  onBack: () => void;
 }
 
 export function WeeklyFocusFlow({
   insight,
   onUpload,
   onViewReport,
+  onBack,
 }: WeeklyFocusFlowProps) {
   const { entries, addEntry, updateEntry, deleteEntry, weekKey } = useWeeklyJournal();
   const [draft, setDraft] = useState("");
@@ -29,29 +32,28 @@ export function WeeklyFocusFlow({
   };
 
   return (
-    <FlowShell title="This week's focus" subtitle="One thing to fix">
+    <FlowShell title="This week's focus" subtitle="One thing to fix" onBack={onBack}>
       {!insight ? (
         <FlowEmpty message="Your weekly focus appears after your first analysed clip." />
       ) : (
         <>
-          <FlowPanel className="home-flow-panel--accent">
-            <p className="home-flow-eyebrow">Fix first</p>
-            <h2 className="home-flow-heading">{insight.weaknessTitle}</h2>
-          </FlowPanel>
-          <FlowPanel>
-            <p className="home-flow-label">Drill</p>
-            <h3 className="home-flow-heading home-flow-heading--sm">
-              {insight.drillName}
-            </h3>
-            <p className="home-flow-body">{insight.drillDescription}</p>
-            <p className="home-flow-label">Success marker</p>
-            <p className="home-flow-body">{insight.successMarker}</p>
-          </FlowPanel>
+          <InsightCard
+            kicker="Fix first"
+            accentKicker
+            variant="accent"
+            title={insight.weaknessTitle}
+            highlight={insight.drillName}
+            highlightLabel="This week's drill"
+            fix={insight.drillDescription}
+            fixLabel="What to do"
+            marker={insight.successMarker}
+          />
           {insight.patternInsight ? (
-            <FlowPanel>
-              <p className="home-flow-label">Pattern</p>
-              <p className="home-flow-body">{insight.patternInsight}</p>
-            </FlowPanel>
+            <InsightCard
+              kicker="Pattern"
+              title="What we keep seeing"
+              summary={insight.patternInsight}
+            />
           ) : null}
           <FlowAction onClick={onUpload}>Upload practice clip</FlowAction>
           <FlowAction

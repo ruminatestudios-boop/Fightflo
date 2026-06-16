@@ -2,35 +2,20 @@
 
 import { usePwaInstall } from "@/hooks/usePwaInstall";
 import { PWA_INSTALL_COPY } from "@/lib/copy";
+import { ModalShell } from "@/components/shared/ModalShell";
 
 export function PwaInstallModal() {
   const { visible, installing, mode, install, dismiss } = usePwaInstall();
 
-  if (!visible) return null;
-
   return (
-    <div className="pwa-install-modal" role="dialog" aria-labelledby="pwa-install-title">
-      <button
-        type="button"
-        className="netflix-modal-backdrop"
-        aria-label="Dismiss install prompt"
-        onClick={dismiss}
-      />
-      <div className="netflix-modal-sheet pwa-install-sheet">
-        <div className="pwa-install-handle" aria-hidden />
-        <p id="pwa-install-title" className="pwa-install-title">
-          {PWA_INSTALL_COPY.title}
-        </p>
-        <p className="pwa-install-body">
-          {mode === "ios" ? PWA_INSTALL_COPY.iosBody : PWA_INSTALL_COPY.body}
-        </p>
-        {mode === "ios" ? (
-          <ol className="pwa-install-steps">
-            {PWA_INSTALL_COPY.iosSteps.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ol>
-        ) : null}
+    <ModalShell
+      open={visible}
+      onClose={dismiss}
+      title={PWA_INSTALL_COPY.title}
+      titleId="pwa-install-title"
+      showClose={false}
+      zIndex={210}
+      footer={
         <div className="pwa-install-actions">
           <button
             type="button"
@@ -48,7 +33,18 @@ export function PwaInstallModal() {
             {PWA_INSTALL_COPY.dismiss}
           </button>
         </div>
-      </div>
-    </div>
+      }
+    >
+      <p className="pwa-install-body">
+        {mode === "ios" ? PWA_INSTALL_COPY.iosBody : PWA_INSTALL_COPY.body}
+      </p>
+      {mode === "ios" ? (
+        <ol className="pwa-install-steps">
+          {PWA_INSTALL_COPY.iosSteps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+      ) : null}
+    </ModalShell>
   );
 }

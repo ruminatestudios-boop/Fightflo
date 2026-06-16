@@ -20,7 +20,15 @@ async function materializeVideo(
     videoUrl.startsWith("http://") ||
     videoUrl.startsWith("https://")
   ) {
-    const videoResponse = await fetch(videoUrl);
+    let videoResponse: Response;
+    try {
+      videoResponse = await fetch(videoUrl);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "network error";
+      throw new Error(
+        `Couldn't download your video (${detail}). Check your connection and try again.`
+      );
+    }
     if (!videoResponse.ok) {
       throw new Error(`Failed to download video: ${videoResponse.statusText}`);
     }

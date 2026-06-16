@@ -4,6 +4,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import type { SportId } from "@/types";
 import type { PoseDetectionResult } from "@/lib/analysis/poseDetectionCore";
+import { assessPoseQuality } from "@/lib/analysis/poseQuality";
 
 function feedbackRoot(): string {
   const cwd = process.cwd();
@@ -32,7 +33,8 @@ export async function detectPoseWithMetaSubprocess(
     );
 
     const scriptPath = resolveCliScript();
-    await new Promise<void>((resolve, reject) => {
+    try {
+      await new Promise<void>((resolve, reject) => {
       const child = spawn(
         "npx",
         ["--yes", "tsx", scriptPath, inputPath, outputPath],
@@ -52,7 +54,31 @@ export async function detectPoseWithMetaSubprocess(
         if (code === 0) resolve();
         else reject(new Error(err.trim() || `Pose CLI exited with code ${code}`));
       });
-    });
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const lower = message.toLowerCase();
+
+      // Cursor sandbox + Node 24 can block tsx IPC pipe creation. In dev, degrade gracefully.
+      if (
+        process.env.NODE_ENV === "development" &&
+        (lower.includes("eperm") || lower.includes("operation not permitted")) &&
+        (lower.includes("tsx") || lower.includes(".pipe"))
+      ) {
+        console.warn("[pose/subprocess] Disabled in this environment:", message);
+        return {
+          timeline: [],
+          quality: assessPoseQuality([]),
+          confirmed_events: [],
+          landmark_summary: {
+            error: "pose_subprocess_unavailable",
+            detail: message.slice(0, 240),
+          },
+        };
+      }
+
+      throw error;
+    }
 
     const raw = await readFile(outputPath, "utf8");
     return JSON.parse(raw) as PoseDetectionResult;

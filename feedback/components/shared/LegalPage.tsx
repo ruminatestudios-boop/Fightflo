@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AppShell } from "@/components/shared/AppShell";
+import { GlassPage } from "@/components/shared/GlassPage";
 import { LEGAL_LAST_UPDATED } from "@/lib/legal/content";
 
 interface LegalPageProps {
@@ -9,10 +9,16 @@ interface LegalPageProps {
 
 export function LegalPage({ title, sections }: LegalPageProps) {
   return (
-    <AppShell showBack>
+    <GlassPage showBack>
+      <header className="glass-greeting">
+        <p className="glass-greeting-sub">Legal</p>
+        <h1 className="glass-greeting-title glass-greeting-title--sm">{title}</h1>
+        <p className="glass-greeting-sub legal-page-updated">
+          Last updated {LEGAL_LAST_UPDATED}
+        </p>
+      </header>
+
       <article className="legal-page">
-        <h1 className="legal-page-title">{title}</h1>
-        <p className="legal-page-updated">Last updated {LEGAL_LAST_UPDATED}</p>
         {sections.map((section) => (
           <section key={section.title} className="legal-page-section">
             <h2 className="legal-page-heading">{section.title}</h2>
@@ -23,6 +29,6 @@ export function LegalPage({ title, sections }: LegalPageProps) {
           <Link href="/">Back to coaching</Link>
         </p>
       </article>
-    </AppShell>
+    </GlassPage>
   );
 }

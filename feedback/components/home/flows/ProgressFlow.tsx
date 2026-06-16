@@ -8,6 +8,7 @@ import { FlowEmpty, FlowPanel, FlowShell } from "../FlowShell";
 
 interface ProgressFlowProps {
   insight: ProgressInsight | null;
+  onBack: () => void;
 }
 
 const TREND_LABEL: Record<WeaknessTrend, string> = {
@@ -169,7 +170,7 @@ function ProgressSection({
   );
 }
 
-export function ProgressFlow({ insight }: ProgressFlowProps) {
+export function ProgressFlow({ insight, onBack }: ProgressFlowProps) {
   const [openMetricId, setOpenMetricId] = useState<ProgressMetricId | null>(null);
   const initialized = useRef(false);
 
@@ -195,14 +196,14 @@ export function ProgressFlow({ insight }: ProgressFlowProps) {
 
   if (!insight) {
     return (
-      <FlowShell title="Your progress" subtitle="Session metrics">
+      <FlowShell title="Your progress" subtitle="Session metrics" onBack={onBack}>
         <FlowEmpty message="Complete at least one analysis to start tracking progress." />
       </FlowShell>
     );
   }
 
   return (
-    <FlowShell title="Your progress" subtitle="Strengths & areas to sharpen">
+    <FlowShell title="Your progress" subtitle="Strengths & areas to sharpen" onBack={onBack}>
       <FlowPanel className="progress-overview">
         <p className="home-flow-eyebrow">{insight.headline}</p>
         <p className="progress-overview-detail">{insight.headlineDetail}</p>

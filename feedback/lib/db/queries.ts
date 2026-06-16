@@ -1,7 +1,13 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { startOfCurrentMonthUtc } from "@/config/limits";
-import { isSupabaseConfigured } from "@/lib/config/env";
 import * as devStore from "@/lib/db/dev-store";
+import {
+  activateDevFallback,
+  ensureDevDatabaseReady,
+  isConnectionError,
+  useDevStore,
+  withDevFallback,
+} from "@/lib/db/devFallback";
 import {
   toSessionLibraryEntry,
   type SessionLibraryEntry,
@@ -52,7 +58,7 @@ export async function createAnonymousUser(
   sport: SportId,
   level: SkillLevel
 ): Promise<User> {
-  if (!isSupabaseConfigured()) return devStore.createAnonymousUser(sport, level);
+  if (useDevStore()) return devStore.createAnonymousUser(sport, level);
 
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -61,12 +67,18 @@ export async function createAnonymousUser(
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    if (isConnectionError(error)) {
+      activateDevFallback(error);
+      return devStore.createAnonymousUser(sport, level);
+    }
+    throw error;
+  }
   return data as User;
 }
 
 export async function getUserById(userId: string): Promise<User | null> {
-  if (!isSupabaseConfigured()) return devStore.getUserById(userId);
+  if (useDevStore()) return devStore.getUserById(userId);
 
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -75,7 +87,13 @@ export async function getUserById(userId: string): Promise<User | null> {
     .eq("id", userId)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    if (isConnectionError(error)) {
+      activateDevFallback(error);
+      return devStore.getUserById(userId);
+    }
+    throw error;
+  }
   if (!data) return null;
   return normalizeUser(data as User);
 }
@@ -91,7 +109,7 @@ export async function addBonusScans(
   userId: string,
   count: number
 ): Promise<void> {
-  if (!isSupabaseConfigured()) {
+  if (useDevStore()) {
     return devStore.addBonusScans(userId, count);
   }
 
@@ -106,7 +124,7 @@ export async function addBonusScans(
 }
 
 export async function decrementBonusScans(userId: string): Promise<void> {
-  if (!isSupabaseConfigured()) {
+  if (useDevStore()) {
     return devStore.decrementBonusScans(userId);
   }
 
@@ -124,7 +142,7 @@ export async function updateUserEmail(
   userId: string,
   email: string
 ): Promise<User | null> {
-  if (!isSupabaseConfigured()) {
+  if (useDevStore()) {
     return devStore.updateUserEmail(userId, email);
   }
 
@@ -137,12 +155,14 @@ export async function updateUserEmail(
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    return withDevFallback(error, () => devStore.updateUserEmail(userId, email));
+  }
   return data as User;
 }
 
 export async function incrementFreeAnalyses(userId: string): Promise<void> {
-  if (!isSupabaseConfigured()) return devStore.incrementFreeAnalyses(userId);
+  if (useDevStore()) return devStore.incrementFreeAnalyses(userId);
 
   const user = await getUserById(userId);
   if (!user) return;
@@ -155,7 +175,7 @@ export async function incrementFreeAnalyses(userId: string): Promise<void> {
 }
 
 export async function getMonthlySessionCount(userId: string): Promise<number> {
-  if (!isSupabaseConfigured()) {
+  if (useDevStore()) {
     return devStore.getMonthlySessionCount(userId);
   }
 
@@ -166,7 +186,9 @@ export async function getMonthlySessionCount(userId: string): Promise<number> {
     .eq("user_id", userId)
     .gte("created_at", startOfCurrentMonthUtc());
 
-  if (error) throw error;
+  if (error) {
+    return withDevFallback(error, () => devStore.getMonthlySessionCount(userId));
+  }
   return count ?? 0;
 }
 
@@ -180,7 +202,7 @@ export async function createSession(input: {
   cloudinaryPublicId?: string;
   parentSessionId?: string | null;
 }): Promise<Session> {
-  if (!isSupabaseConfigured()) return devStore.createSession(input);
+  if (useDevStore()) return devStore.createSession(input);
 
   const supabase = getSupabase();
 
@@ -236,13 +258,13 @@ export async function createSession(input: {
   }
 
   if (error) {
-    throw new Error(formatSupabaseError(error));
+    return withDevFallback(error, () => devStore.createSession(input));
   }
   return data as Session;
 }
 
 export async function getSessionById(sessionId: string): Promise<Session | null> {
-  if (!isSupabaseConfigured()) return devStore.getSessionById(sessionId);
+  if (useDevStore()) return devStore.getSessionById(sessionId);
 
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -251,7 +273,9 @@ export async function getSessionById(sessionId: string): Promise<Session | null>
     .eq("id", sessionId)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    return withDevFallback(error, () => devStore.getSessionById(sessionId));
+  }
   return data as Session | null;
 }
 
@@ -260,7 +284,7 @@ export async function updateSessionStatus(
   status: SessionStatus,
   progress?: { step: string; message: string }
 ): Promise<void> {
-  if (!isSupabaseConfigured()) {
+  if (useDevStore()) {
     return devStore.updateSessionStatus(sessionId, status, progress);
   }
 
@@ -280,7 +304,7 @@ export async function updateSessionSport(
   sessionId: string,
   sport: SportId
 ): Promise<void> {
-  if (!isSupabaseConfigured()) {
+  if (useDevStore()) {
     return devStore.updateSessionSport(sessionId, sport);
   }
 
@@ -291,7 +315,7 @@ export async function updateSessionSport(
 export async function getReportBySessionId(
   sessionId: string
 ): Promise<Report | null> {
-  if (!isSupabaseConfigured()) return devStore.getReportBySessionId(sessionId);
+  if (useDevStore()) return devStore.getReportBySessionId(sessionId);
 
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -300,7 +324,9 @@ export async function getReportBySessionId(
     .eq("session_id", sessionId)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    return withDevFallback(error, () => devStore.getReportBySessionId(sessionId));
+  }
   return data as Report | null;
 }
 
@@ -308,7 +334,7 @@ export async function updateReportExportUrl(
   sessionId: string,
   exportVideoUrl: string
 ): Promise<void> {
-  if (!isSupabaseConfigured()) {
+  if (useDevStore()) {
     return devStore.updateReportExportUrl(sessionId, exportVideoUrl);
   }
 
@@ -358,7 +384,7 @@ export async function updateReportExportUrl(
 }
 
 export async function getReportById(reportId: string): Promise<Report | null> {
-  if (!isSupabaseConfigured()) return devStore.getReportById(reportId);
+  if (useDevStore()) return devStore.getReportById(reportId);
 
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -367,7 +393,9 @@ export async function getReportById(reportId: string): Promise<Report | null> {
     .eq("id", reportId)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    return withDevFallback(error, () => devStore.getReportById(reportId));
+  }
   return data as Report | null;
 }
 
@@ -384,7 +412,7 @@ export async function saveReport(input: {
   followUpComparison?: FollowUpComparison | null;
   markComplete?: boolean;
 }): Promise<Report> {
-  if (!isSupabaseConfigured()) return devStore.saveReport(input);
+  if (useDevStore()) return devStore.saveReport(input);
 
   const supabase = getSupabase();
 
@@ -424,7 +452,7 @@ export async function saveReport(input: {
   }
 
   if (error) {
-    throw new Error(formatSupabaseError(error));
+    return withDevFallback(error, () => devStore.saveReport(input));
   }
 
   const report = data as Report;
@@ -475,7 +503,7 @@ export async function saveReport(input: {
 }
 
 export async function getUserSessions(userId: string): Promise<Session[]> {
-  if (!isSupabaseConfigured()) return devStore.getUserSessions(userId);
+  if (useDevStore()) return devStore.getUserSessions(userId);
 
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -484,7 +512,9 @@ export async function getUserSessions(userId: string): Promise<Session[]> {
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    return withDevFallback(error, () => devStore.getUserSessions(userId));
+  }
   return (data ?? []) as Session[];
 }
 
@@ -498,7 +528,7 @@ export async function updateSessionMetadata(
 ): Promise<Session | null> {
   await writeSessionMetadata(sessionId, patch);
 
-  if (!isSupabaseConfigured()) {
+  if (useDevStore()) {
     return devStore.updateSessionMetadata(sessionId, patch);
   }
 
@@ -555,7 +585,7 @@ export async function deleteSession(
   await cleanupSessionAssets(session);
   await deleteSessionMetadata(sessionId);
 
-  if (!isSupabaseConfigured()) {
+  if (useDevStore()) {
     const deleted = await devStore.deleteSession(sessionId, userId);
     if (!deleted) throw new Error("Session not found");
     return;
@@ -568,7 +598,13 @@ export async function deleteSession(
     .eq("id", sessionId)
     .eq("user_id", userId);
 
-  if (error) throw error;
+  if (error) {
+    return withDevFallback(error, () =>
+      devStore.deleteSession(sessionId, userId).then((deleted) => {
+        if (!deleted) throw new Error("Session not found");
+      })
+    );
+  }
 }
 
 export async function upsertWeakness(
@@ -577,7 +613,7 @@ export async function upsertWeakness(
   sessionNumber: number,
   count: number
 ): Promise<void> {
-  if (!isSupabaseConfigured()) {
+  if (useDevStore()) {
     return devStore.upsertWeakness(userId, weaknessType, sessionNumber, count);
   }
 
@@ -634,7 +670,7 @@ export async function getWeaknessHistory(
   userId: string,
   weaknessType: string
 ): Promise<WeaknessRecord | null> {
-  if (!isSupabaseConfigured()) {
+  if (useDevStore()) {
     return devStore.getWeaknessHistory(userId, weaknessType);
   }
 
@@ -648,14 +684,18 @@ export async function getWeaknessHistory(
     .limit(1)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    return withDevFallback(error, () =>
+      devStore.getWeaknessHistory(userId, weaknessType)
+    );
+  }
   return data as WeaknessRecord | null;
 }
 
 export async function getClipsByReportId(
   reportId: string
 ): Promise<ClipRecord[]> {
-  if (!isSupabaseConfigured()) return devStore.getClipsByReportId(reportId);
+  if (useDevStore()) return devStore.getClipsByReportId(reportId);
 
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -663,7 +703,9 @@ export async function getClipsByReportId(
     .select()
     .eq("report_id", reportId);
 
-  if (error) throw error;
+  if (error) {
+    return withDevFallback(error, () => devStore.getClipsByReportId(reportId));
+  }
   return (data ?? []) as ClipRecord[];
 }
 
@@ -672,7 +714,7 @@ export async function setUserPro(
   subscriptionStatus: string,
   userId?: string | null
 ): Promise<void> {
-  if (!isSupabaseConfigured()) {
+  if (useDevStore()) {
     return devStore.setUserPro(stripeCustomerId, subscriptionStatus, userId);
   }
 
@@ -702,7 +744,7 @@ export async function linkStripeCustomer(
   stripeCustomerId: string,
   email?: string | null
 ): Promise<void> {
-  if (!isSupabaseConfigured()) {
+  if (useDevStore()) {
     return devStore.linkStripeCustomer(userId, stripeCustomerId, email);
   }
 
@@ -746,7 +788,7 @@ function startOfWeekUtc(date = new Date()): number {
 export async function listUsersForScheduledEmails(): Promise<
   ScheduledEmailUserRow[]
 > {
-  if (!isSupabaseConfigured()) {
+  if (useDevStore()) {
     return devStore.listUsersForScheduledEmails();
   }
 
@@ -757,7 +799,9 @@ export async function listUsersForScheduledEmails(): Promise<
     .not("email", "is", null)
     .neq("email", "");
 
-  if (error) throw error;
+  if (error) {
+    return withDevFallback(error, () => devStore.listUsersForScheduledEmails());
+  }
 
   const now = Date.now();
   const weekStart = startOfWeekUtc();

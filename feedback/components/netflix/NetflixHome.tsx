@@ -4,12 +4,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { HomeFeatureGrid, type HomeFeatureId } from "@/components/home/HomeFeatureGrid";
 import { HomeSettingsChips } from "@/components/home/HomeSettingsChips";
+import {
+  HomeSettingsModals,
+  type HomeSettingsModal,
+} from "@/components/home/HomeSettingsModals";
 import { GuardDropFlow } from "@/components/home/flows/GuardDropFlow";
 import { ProgressFlow } from "@/components/home/flows/ProgressFlow";
 import { ReuploadFlow } from "@/components/home/flows/ReuploadFlow";
 import { WeeklyFocusFlow } from "@/components/home/flows/WeeklyFocusFlow";
+import { BackButton } from "@/components/shared/BackButton";
 import { DevModeBanner } from "@/components/shared/DevModeBanner";
-import { LegalFooter } from "@/components/shared/LegalFooter";
+import { HomePricingFooter } from "@/components/home/HomePricingFooter";
 import { PaywallSheet } from "@/components/shared/PaywallSheet";
 import { PricingModal } from "@/components/shared/PricingModal";
 import { HomeStickyNav } from "@/components/netflix/HomeStickyNav";
@@ -18,8 +23,6 @@ import { NetflixShell } from "@/components/netflix/NetflixShell";
 import { SessionLibrary } from "@/components/netflix/SessionLibrary";
 import { AnalysisProgressView } from "@/components/shared/AnalysisProgressView";
 import { UploadZone, type UploadZoneHandle } from "@/components/upload/UploadZone";
-import { PRICING } from "@/config/pricing";
-import { SELECTABLE_SPORTS, SPORTS } from "@/config/sports";
 import { useHomeInsights } from "@/hooks/useHomeInsights";
 import { useSessionLibrary } from "@/hooks/useSessionLibrary";
 import { isClientProUnlocked } from "@/lib/config/proAccess";
@@ -32,39 +35,21 @@ import {
 import { parseJsonResponse } from "@/lib/api/parseResponse";
 import { displayNameFromEmail, formatDisplayName } from "@/lib/user/displayName";
 import { apiPath, reportPath } from "@/lib/paths";
+import { readHomeUrlState, writeHomeUrlState } from "@/lib/homeViews";
 import {
   getStoredUserName,
   storeUserId,
-  storeUserName,
 } from "@/lib/storage/client";
 import type { SkillLevel, SportId } from "@/types";
 
-const LEVELS: { id: SkillLevel; label: string }[] = [
-  { id: "beginner", label: "Beginner" },
-  { id: "intermediate", label: "Intermediate" },
-  { id: "advanced", label: "Advanced" },
-  { id: "pro", label: "Pro" },
-];
-
 type HomeView =
   | "home"
-  | "name"
-  | "sport"
-  | "level"
   | "guard"
   | "reupload"
   | "progress"
   | "weekly";
 
 type MainTab = "home" | "library";
-
-function IconBadge({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="glass-card-icon" aria-hidden>
-      {children}
-    </span>
-  );
-}
 
 export function NetflixHome() {
   const router = useRouter();
@@ -81,6 +66,7 @@ export function NetflixHome() {
   const [isPro, setIsPro] = useState(isClientProUnlocked());
   const [userName, setUserName] = useState<string | null>(null);
   const [nameDraft, setNameDraft] = useState("");
+  const [settingsModal, setSettingsModal] = useState<HomeSettingsModal>(null);
   const [libraryPaywallMode, setLibraryPaywallMode] = useState<"pro" | "topup" | null>(
     null
   );
@@ -108,6 +94,7 @@ export function NetflixHome() {
   const openLiveRecord = useCallback(() => {
     setView("home");
     setMainTab("home");
+    writeHomeUrlState("home", "home");
     setLiveRecordOpen(true);
   }, []);
 
@@ -177,6 +164,7 @@ export function NetflixHome() {
     setMainTab("home");
     setView("home");
     setActiveCard("upload");
+    writeHomeUrlState("home", "home");
     uploadRef.current?.open();
   }, []);
 
@@ -185,18 +173,21 @@ export function NetflixHome() {
     setMainTab("home");
     setView("home");
     setActiveCard("reupload");
+    writeHomeUrlState("home", "home");
     uploadRef.current?.open();
   }, []);
 
   const goToLibrary = useCallback(() => {
     setView("home");
     setMainTab("library");
+    writeHomeUrlState("home", "library");
     void refetchLibrary();
   }, [refetchLibrary]);
 
   const goToHome = useCallback(() => {
     setView("home");
     setMainTab("home");
+    writeHomeUrlState("home", "home");
     void refetchInsights();
   }, [refetchInsights]);
 
@@ -215,15 +206,16 @@ export function NetflixHome() {
         return;
       }
       setView(id);
+      setMainTab("home");
+      writeHomeUrlState(id, "home");
     },
     [openUpload]
   );
 
-  const showShellBack = view !== "home" || mainTab === "library";
-
   const handleShellBack = useCallback(() => {
     if (view !== "home") {
       setView("home");
+      writeHomeUrlState("home", mainTab);
       return;
     }
     if (mainTab === "library") {
@@ -241,6 +233,17 @@ export function NetflixHome() {
   useEffect(() => {
     const stored = getStoredUserName();
     if (stored) setUserName(formatDisplayName(stored));
+  }, []);
+
+  useEffect(() => {
+    const { view: urlView, tab } = readHomeUrlState();
+    if (urlView !== "home") {
+      setView(urlView);
+      setActiveCard(urlView);
+    }
+    if (tab === "library") {
+      setMainTab("library");
+    }
   }, []);
 
   useEffect(() => {
@@ -288,6 +291,7 @@ export function NetflixHome() {
           <GuardDropFlow
             insight={insights?.guard ?? null}
             onUpload={openUpload}
+            onBack={handleShellBack}
           />
         );
       case "reupload":
@@ -296,11 +300,15 @@ export function NetflixHome() {
             insight={insights?.reupload ?? null}
             onUploadFollowUp={openFollowUpUpload}
             onViewReport={openReport}
+            onBack={handleShellBack}
           />
         );
       case "progress":
         return (
-          <ProgressFlow insight={insights?.progress ?? null} />
+          <ProgressFlow
+            insight={insights?.progress ?? null}
+            onBack={handleShellBack}
+          />
         );
       case "weekly":
         return (
@@ -308,6 +316,7 @@ export function NetflixHome() {
             insight={insights?.weeklyFocus ?? null}
             onUpload={openUpload}
             onViewReport={openReport}
+            onBack={handleShellBack}
           />
         );
       default:
@@ -316,10 +325,7 @@ export function NetflixHome() {
   };
 
   return (
-    <NetflixShell
-      onBack={showShellBack ? handleShellBack : undefined}
-      onLogoClick={handleLogoHome}
-    >
+    <NetflixShell onLogoClick={handleLogoHome}>
       <div className="glass-home">
         <div className="glass-orb glass-orb--a" aria-hidden />
         <div className="glass-orb glass-orb--b" aria-hidden />
@@ -327,23 +333,37 @@ export function NetflixHome() {
         {isBusy ? (
           <div className="glass-home-inner glass-home-inner--busy">
             <AnalysisProgressView
-              className="text-center"
               eyebrow={uploadStatus.eyebrow}
               headline={uploadStatus.headline}
               message={uploadStatus.message}
               progress={busyBarProgress}
               userPhase={busyUserPhase}
               footer={
-                uploadStatus.elapsedSec >= 60
-                  ? `${Math.floor(uploadStatus.elapsedSec / 60)}m ${uploadStatus.elapsedSec % 60}s — step ${busyUserPhase.index} of 3, keep this screen open`
-                  : `Step ${busyUserPhase.index} of 3 — ${busyUserPhase.detail}. Usually 2–5 minutes total.`
+                uploadStatus.elapsedSec >= 60 ? (
+                  <>
+                    <span className="loading-panel-keyword">
+                      Step {busyUserPhase.index} of 3
+                    </span>
+                    {` — ${Math.floor(uploadStatus.elapsedSec / 60)}m ${uploadStatus.elapsedSec % 60}s elapsed, keep this screen open`}
+                  </>
+                ) : (
+                  <>
+                    <span className="loading-panel-keyword">
+                      Step {busyUserPhase.index} of 3
+                    </span>
+                    {` — ${busyUserPhase.detail}. Usually 2–5 minutes total.`}
+                  </>
+                )
               }
             />
           </div>
         ) : mainTab === "library" ? (
           <div className="glass-home-inner glass-home-inner--library">
             <header className="glass-greeting">
-              <p className="glass-greeting-sub">Your coaching</p>
+              <div className="glass-greeting-eyebrow">
+                <BackButton onClick={handleShellBack} />
+                <p className="glass-greeting-sub">Your coaching</p>
+              </div>
               <h1 className="glass-greeting-title glass-greeting-title--sm">
                 Session library
               </h1>
@@ -373,11 +393,11 @@ export function NetflixHome() {
                 sport={sport}
                 level={level}
                 userName={userName}
-                onSportClick={() => setView("sport")}
-                onLevelClick={() => setView("level")}
+                onSportClick={() => setSettingsModal("sport")}
+                onLevelClick={() => setSettingsModal("level")}
                 onNameClick={() => {
                   setNameDraft(userName ?? "");
-                  setView("name");
+                  setSettingsModal("name");
                 }}
               />
             </header>
@@ -410,143 +430,11 @@ export function NetflixHome() {
               </div>
             )}
 
-            <button
-              type="button"
-              className="home-sample-link"
-              onClick={() => void handleDemo()}
-              disabled={demoLoading}
-            >
-              {demoLoading ? "Loading sample…" : "See a sample breakdown report"}
-            </button>
-
-            <p className="glass-meta glass-meta--footer">
-              {PRICING.free.lifetimeScans}{" "}
-              <span className="pricing-free-tag">FREE</span> analysis · Pro{" "}
-              {PRICING.pro.displayMonthly} · Top-up {PRICING.topUp.display}{" "}
-              <button
-                type="button"
-                className="pricing-inline-link"
-                onClick={() => setShowPricingModal(true)}
-              >
-                See plans
-              </button>
-            </p>
-            <LegalFooter />
-          </div>
-        ) : view === "name" ? (
-          <div className="glass-home-inner">
-            <header className="glass-greeting">
-              <h1 className="glass-greeting-title glass-greeting-title--sm">
-                What should we call you?
-              </h1>
-              <p className="glass-greeting-sub">
-                Your name appears on the home greeting.
-              </p>
-            </header>
-            <label className="home-name-field">
-              First name
-              <input
-                className="home-name-input"
-                value={nameDraft}
-                onChange={(e) => setNameDraft(e.target.value)}
-                maxLength={24}
-                placeholder="e.g. Alex"
-                autoComplete="given-name"
-                autoFocus
-              />
-            </label>
-            <button
-              type="button"
-              className="home-flow-action home-flow-action--primary"
-              onClick={() => {
-                const formatted = formatDisplayName(nameDraft);
-                if (formatted) {
-                  storeUserName(formatted);
-                  setUserName(formatted);
-                } else {
-                  storeUserName(null);
-                  setUserName(null);
-                }
-                setView("home");
-              }}
-            >
-              Save
-            </button>
-            {userName ? (
-              <button
-                type="button"
-                className="home-flow-action home-flow-action--secondary"
-                onClick={() => {
-                  storeUserName(null);
-                  setUserName(null);
-                  setNameDraft("");
-                  setView("home");
-                }}
-              >
-                Clear name
-              </button>
-            ) : null}
-          </div>
-        ) : view === "sport" ? (
-          <div className="glass-home-inner">
-            <header className="glass-greeting">
-              <h1 className="glass-greeting-title glass-greeting-title--sm">
-                What are you training?
-              </h1>
-            </header>
-            <div className="glass-grid">
-              {SELECTABLE_SPORTS.map((id) => {
-                const cfg = SPORTS[id];
-                const selected = sport === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    className={`glass-card ${selected ? "glass-card--active" : ""}`}
-                    onClick={() => {
-                      setSport(id);
-                      setView("home");
-                    }}
-                  >
-                    <IconBadge>
-                      <span className="text-base leading-none">{cfg.emoji}</span>
-                    </IconBadge>
-                    <span className="glass-card-label">{cfg.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : view === "level" ? (
-          <div className="glass-home-inner">
-            <header className="glass-greeting">
-              <h1 className="glass-greeting-title glass-greeting-title--sm">
-                How experienced are you?
-              </h1>
-            </header>
-            <div className="glass-grid">
-              {LEVELS.map((lvl) => {
-                const selected = level === lvl.id;
-                return (
-                  <button
-                    key={lvl.id}
-                    type="button"
-                    className={`glass-card ${selected ? "glass-card--active" : ""}`}
-                    onClick={() => {
-                      setLevel(lvl.id);
-                      setView("home");
-                    }}
-                  >
-                    <IconBadge>
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </IconBadge>
-                    <span className="glass-card-label">{lvl.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <HomePricingFooter
+              demoLoading={demoLoading}
+              onSampleClick={() => void handleDemo()}
+              onPlansClick={() => setShowPricingModal(true)}
+            />
           </div>
         ) : (
           renderFlow()
@@ -572,6 +460,19 @@ export function NetflixHome() {
 
         <DevModeBanner />
       </div>
+
+      <HomeSettingsModals
+        open={settingsModal}
+        onClose={() => setSettingsModal(null)}
+        sport={sport}
+        level={level}
+        userName={userName}
+        nameDraft={nameDraft}
+        onSportChange={setSport}
+        onLevelChange={setLevel}
+        onUserNameChange={setUserName}
+        onNameDraftChange={setNameDraft}
+      />
 
       <PricingModal
         open={showPricingModal}

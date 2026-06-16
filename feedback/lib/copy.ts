@@ -1,10 +1,10 @@
 /** Product copy — AI video coaching */
 
 export const INTRO_COPY = {
-  headline: "Upload your clip. Get coached.",
+  headline: "Fight better. Start here.",
   subtitle:
-    "Film bag work, pads, or shadowboxing — AI finds guard, footwork, and habit faults with timestamps.",
-  getStartedLabel: "Get started",
+    "Record your session. Our coaching engine finds what you can't see yourself — guard drops, footwork faults, bad habits. Timestamped. Unfiltered.",
+  getStartedLabel: "Get your free analysis",
 } as const;
 
 export const PWA_INSTALL_COPY = {

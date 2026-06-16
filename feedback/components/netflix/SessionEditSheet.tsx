@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ModalShell } from "@/components/shared/ModalShell";
 import { getStoredUserId } from "@/lib/storage/client";
 import { apiPath } from "@/lib/paths";
 import { isPresetThumbnail, type SessionLibraryEntry } from "@/lib/sessions/library";
@@ -135,14 +136,28 @@ export function SessionEditSheet({
   if (!open || !session) return null;
 
   return (
-    <div className="session-edit-root" role="dialog" aria-modal="true" aria-labelledby="session-edit-title">
-      <button type="button" className="session-edit-backdrop" onClick={onClose} aria-label="Close" />
-      <div className="session-edit-sheet">
-        <div className="session-edit-handle" aria-hidden />
-        <h2 id="session-edit-title" className="session-edit-title">
-          Edit session
-        </h2>
-
+    <ModalShell
+      open={open}
+      onClose={onClose}
+      title="Edit session"
+      titleId="session-edit-title"
+      accent="neutral"
+      footer={
+        <div className="session-edit-actions">
+          <button type="button" className="session-edit-cancel" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="session-edit-save"
+            onClick={() => void save()}
+            disabled={saving || deleting}
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      }
+    >
         <label className="session-edit-label">
           Name
           <input
@@ -203,20 +218,6 @@ export function SessionEditSheet({
 
         {error && <p className="session-edit-error">{error}</p>}
 
-        <div className="session-edit-actions">
-          <button type="button" className="session-edit-cancel" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="session-edit-save"
-            onClick={() => void save()}
-            disabled={saving || deleting}
-          >
-            {saving ? "Saving…" : "Save"}
-          </button>
-        </div>
-
         <div className="session-edit-danger">
           {!confirmDelete ? (
             <button
@@ -251,7 +252,6 @@ export function SessionEditSheet({
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

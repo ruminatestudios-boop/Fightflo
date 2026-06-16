@@ -20,27 +20,41 @@ export function HomeSettingsChips({
   onLevelClick,
   onNameClick,
 }: HomeSettingsChipsProps) {
+  const levelLabel = level.charAt(0).toUpperCase() + level.slice(1);
+
   return (
     <div className="home-settings-chips">
-      <button type="button" className="home-settings-chip" onClick={onNameClick}>
-        {userName ?? "Add your name"}
+      <button
+        type="button"
+        className="home-settings-chip-pill"
+        onClick={onNameClick}
+        title={userName ?? "Add your name"}
+      >
+        <span className="home-settings-chip-pill-kicker">Name</span>
+        <span className="home-settings-chip-pill-value">{userName ?? "Add"}</span>
       </button>
-      <span className="home-settings-dot" aria-hidden>
-        ·
-      </span>
-      <button type="button" className="home-settings-chip" onClick={onSportClick}>
-        {SPORTS[sport].emoji} {SPORTS[sport].name}
+
+      <button
+        type="button"
+        className="home-settings-chip-pill"
+        onClick={onSportClick}
+        title={`${SPORTS[sport].name} — change sport`}
+      >
+        <span className="home-settings-chip-pill-kicker">Sport</span>
+        <span className="home-settings-chip-pill-value">
+          {SPORTS[sport].emoji} {SPORTS[sport].name}
+        </span>
       </button>
-      <span className="home-settings-dot" aria-hidden>
-        ·
-      </span>
-      <button type="button" className="home-settings-chip" onClick={onLevelClick}>
-        {level.charAt(0).toUpperCase() + level.slice(1)}
+
+      <button
+        type="button"
+        className="home-settings-chip-pill"
+        onClick={onLevelClick}
+        title={`${levelLabel} — change level`}
+      >
+        <span className="home-settings-chip-pill-kicker">Level</span>
+        <span className="home-settings-chip-pill-value">{levelLabel}</span>
       </button>
-      <span className="home-settings-dot" aria-hidden>
-        ·
-      </span>
-      <span className="home-settings-hint">tap to change</span>
     </div>
   );
 }

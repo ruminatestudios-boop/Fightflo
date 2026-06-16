@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isRealAnalysisPipelineEnabled } from "@/lib/config/env";
-import { runDemoAnalysisPipeline } from "@/lib/analysis/demo-pipeline";
+import { startAnalysisPipeline } from "@/lib/analysis/startPipeline";
+import { ensureDevDatabaseReady } from "@/lib/db/devFallback";
 import { storeVideo } from "@/lib/storage/video-upload";
 import {
   getAnalysisAllowance,
@@ -13,14 +13,6 @@ import type { SkillLevel, SportId } from "@/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
-
-async function startPipeline(sessionId: string) {
-  const runPipeline = isRealAnalysisPipelineEnabled()
-    ? (await import("@/lib/analysis/pipeline")).runAnalysisPipeline
-    : runDemoAnalysisPipeline;
-
-  runPipeline(sessionId).catch(console.error);
-}
 
 /** Cloudinary direct upload finished — create session from metadata only */
 async function handleCloudinaryComplete(request: NextRequest) {
@@ -77,7 +69,7 @@ async function handleCloudinaryComplete(request: NextRequest) {
   });
 
   await recordAnalysisUsed(userId);
-  startPipeline(session.id);
+  startAnalysisPipeline(session.id);
 
   return NextResponse.json({
     sessionId: session.id,
@@ -132,7 +124,7 @@ async function handleDirectUpload(request: NextRequest) {
   });
 
   await recordAnalysisUsed(userId);
-  startPipeline(session.id);
+  startAnalysisPipeline(session.id);
 
   return NextResponse.json({
     sessionId: session.id,
@@ -144,6 +136,7 @@ async function handleDirectUpload(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await ensureDevDatabaseReady();
     const contentType = request.headers.get("content-type") ?? "";
 
     if (contentType.includes("application/json")) {

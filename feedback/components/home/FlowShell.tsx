@@ -2,18 +2,25 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { BackButton } from "@/components/shared/BackButton";
 
 interface FlowShellProps {
   title: string;
   subtitle?: string;
+  onBack?: () => void;
   children: ReactNode;
 }
 
-export function FlowShell({ title, subtitle, children }: FlowShellProps) {
+export function FlowShell({ title, subtitle, onBack, children }: FlowShellProps) {
   return (
     <div className="glass-home-inner">
       <header className="glass-greeting">
-        {subtitle ? <p className="glass-greeting-sub">{subtitle}</p> : null}
+        {onBack || subtitle ? (
+          <div className="glass-greeting-eyebrow">
+            {onBack ? <BackButton onClick={onBack} /> : null}
+            {subtitle ? <p className="glass-greeting-sub">{subtitle}</p> : null}
+          </div>
+        ) : null}
         <h1 className="glass-greeting-title glass-greeting-title--sm">{title}</h1>
       </header>
       {children}
