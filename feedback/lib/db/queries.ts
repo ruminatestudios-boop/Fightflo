@@ -5,7 +5,7 @@ import {
   activateDevFallback,
   ensureDevDatabaseReady,
   isConnectionError,
-  useDevStore,
+  isDevStoreActive,
   withDevFallback,
 } from "@/lib/db/devFallback";
 import {
@@ -58,7 +58,7 @@ export async function createAnonymousUser(
   sport: SportId,
   level: SkillLevel
 ): Promise<User> {
-  if (useDevStore()) return devStore.createAnonymousUser(sport, level);
+  if (isDevStoreActive()) return devStore.createAnonymousUser(sport, level);
 
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -78,7 +78,7 @@ export async function createAnonymousUser(
 }
 
 export async function getUserById(userId: string): Promise<User | null> {
-  if (useDevStore()) return devStore.getUserById(userId);
+  if (isDevStoreActive()) return devStore.getUserById(userId);
 
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -109,7 +109,7 @@ export async function addBonusScans(
   userId: string,
   count: number
 ): Promise<void> {
-  if (useDevStore()) {
+  if (isDevStoreActive()) {
     return devStore.addBonusScans(userId, count);
   }
 
@@ -124,7 +124,7 @@ export async function addBonusScans(
 }
 
 export async function decrementBonusScans(userId: string): Promise<void> {
-  if (useDevStore()) {
+  if (isDevStoreActive()) {
     return devStore.decrementBonusScans(userId);
   }
 
@@ -142,7 +142,7 @@ export async function updateUserEmail(
   userId: string,
   email: string
 ): Promise<User | null> {
-  if (useDevStore()) {
+  if (isDevStoreActive()) {
     return devStore.updateUserEmail(userId, email);
   }
 
@@ -162,7 +162,7 @@ export async function updateUserEmail(
 }
 
 export async function incrementFreeAnalyses(userId: string): Promise<void> {
-  if (useDevStore()) return devStore.incrementFreeAnalyses(userId);
+  if (isDevStoreActive()) return devStore.incrementFreeAnalyses(userId);
 
   const user = await getUserById(userId);
   if (!user) return;
@@ -175,7 +175,7 @@ export async function incrementFreeAnalyses(userId: string): Promise<void> {
 }
 
 export async function getMonthlySessionCount(userId: string): Promise<number> {
-  if (useDevStore()) {
+  if (isDevStoreActive()) {
     return devStore.getMonthlySessionCount(userId);
   }
 
@@ -202,7 +202,7 @@ export async function createSession(input: {
   cloudinaryPublicId?: string;
   parentSessionId?: string | null;
 }): Promise<Session> {
-  if (useDevStore()) return devStore.createSession(input);
+  if (isDevStoreActive()) return devStore.createSession(input);
 
   const supabase = getSupabase();
 
@@ -264,7 +264,7 @@ export async function createSession(input: {
 }
 
 export async function getSessionById(sessionId: string): Promise<Session | null> {
-  if (useDevStore()) return devStore.getSessionById(sessionId);
+  if (isDevStoreActive()) return devStore.getSessionById(sessionId);
 
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -284,7 +284,7 @@ export async function updateSessionStatus(
   status: SessionStatus,
   progress?: { step: string; message: string }
 ): Promise<void> {
-  if (useDevStore()) {
+  if (isDevStoreActive()) {
     return devStore.updateSessionStatus(sessionId, status, progress);
   }
 
@@ -304,7 +304,7 @@ export async function updateSessionSport(
   sessionId: string,
   sport: SportId
 ): Promise<void> {
-  if (useDevStore()) {
+  if (isDevStoreActive()) {
     return devStore.updateSessionSport(sessionId, sport);
   }
 
@@ -315,7 +315,7 @@ export async function updateSessionSport(
 export async function getReportBySessionId(
   sessionId: string
 ): Promise<Report | null> {
-  if (useDevStore()) return devStore.getReportBySessionId(sessionId);
+  if (isDevStoreActive()) return devStore.getReportBySessionId(sessionId);
 
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -334,7 +334,7 @@ export async function updateReportExportUrl(
   sessionId: string,
   exportVideoUrl: string
 ): Promise<void> {
-  if (useDevStore()) {
+  if (isDevStoreActive()) {
     return devStore.updateReportExportUrl(sessionId, exportVideoUrl);
   }
 
@@ -384,7 +384,7 @@ export async function updateReportExportUrl(
 }
 
 export async function getReportById(reportId: string): Promise<Report | null> {
-  if (useDevStore()) return devStore.getReportById(reportId);
+  if (isDevStoreActive()) return devStore.getReportById(reportId);
 
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -412,7 +412,7 @@ export async function saveReport(input: {
   followUpComparison?: FollowUpComparison | null;
   markComplete?: boolean;
 }): Promise<Report> {
-  if (useDevStore()) return devStore.saveReport(input);
+  if (isDevStoreActive()) return devStore.saveReport(input);
 
   const supabase = getSupabase();
 
@@ -503,7 +503,7 @@ export async function saveReport(input: {
 }
 
 export async function getUserSessions(userId: string): Promise<Session[]> {
-  if (useDevStore()) return devStore.getUserSessions(userId);
+  if (isDevStoreActive()) return devStore.getUserSessions(userId);
 
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -528,7 +528,7 @@ export async function updateSessionMetadata(
 ): Promise<Session | null> {
   await writeSessionMetadata(sessionId, patch);
 
-  if (useDevStore()) {
+  if (isDevStoreActive()) {
     return devStore.updateSessionMetadata(sessionId, patch);
   }
 
@@ -585,7 +585,7 @@ export async function deleteSession(
   await cleanupSessionAssets(session);
   await deleteSessionMetadata(sessionId);
 
-  if (useDevStore()) {
+  if (isDevStoreActive()) {
     const deleted = await devStore.deleteSession(sessionId, userId);
     if (!deleted) throw new Error("Session not found");
     return;
@@ -613,7 +613,7 @@ export async function upsertWeakness(
   sessionNumber: number,
   count: number
 ): Promise<void> {
-  if (useDevStore()) {
+  if (isDevStoreActive()) {
     return devStore.upsertWeakness(userId, weaknessType, sessionNumber, count);
   }
 
@@ -670,7 +670,7 @@ export async function getWeaknessHistory(
   userId: string,
   weaknessType: string
 ): Promise<WeaknessRecord | null> {
-  if (useDevStore()) {
+  if (isDevStoreActive()) {
     return devStore.getWeaknessHistory(userId, weaknessType);
   }
 
@@ -695,7 +695,7 @@ export async function getWeaknessHistory(
 export async function getClipsByReportId(
   reportId: string
 ): Promise<ClipRecord[]> {
-  if (useDevStore()) return devStore.getClipsByReportId(reportId);
+  if (isDevStoreActive()) return devStore.getClipsByReportId(reportId);
 
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -714,7 +714,7 @@ export async function setUserPro(
   subscriptionStatus: string,
   userId?: string | null
 ): Promise<void> {
-  if (useDevStore()) {
+  if (isDevStoreActive()) {
     return devStore.setUserPro(stripeCustomerId, subscriptionStatus, userId);
   }
 
@@ -744,7 +744,7 @@ export async function linkStripeCustomer(
   stripeCustomerId: string,
   email?: string | null
 ): Promise<void> {
-  if (useDevStore()) {
+  if (isDevStoreActive()) {
     return devStore.linkStripeCustomer(userId, stripeCustomerId, email);
   }
 
@@ -788,7 +788,7 @@ function startOfWeekUtc(date = new Date()): number {
 export async function listUsersForScheduledEmails(): Promise<
   ScheduledEmailUserRow[]
 > {
-  if (useDevStore()) {
+  if (isDevStoreActive()) {
     return devStore.listUsersForScheduledEmails();
   }
 

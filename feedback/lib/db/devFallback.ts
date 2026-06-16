@@ -5,7 +5,7 @@ import { formatSupabaseError } from "@/lib/db/supabaseErrors";
 let devFallbackActive = !isSupabaseConfigured();
 
 /** Use in-memory dev store instead of Supabase */
-export function useDevStore(): boolean {
+export function isDevStoreActive(): boolean {
   if (devFallbackActive) hydrateDevStore();
   return devFallbackActive;
 }
@@ -56,7 +56,7 @@ let probePromise: Promise<void> | null = null;
 
 /** Probe Supabase once in dev so parallel requests don't race before fallback activates. */
 export function ensureDevDatabaseReady(): Promise<void> {
-  if (useDevStore()) return Promise.resolve();
+  if (isDevStoreActive()) return Promise.resolve();
   if (probePromise) return probePromise;
 
   probePromise = Promise.race([
