@@ -3,6 +3,9 @@
 import { HeroMedia } from "@/components/shared/HeroMedia";
 import { INTRO_COPY } from "@/lib/copy";
 import { INTRO_VIDEO, INTRO_VIDEO_FALLBACK } from "@/lib/media";
+import { withBasePath } from "@/lib/paths";
+
+const INTRO_SKIP_HREF = withBasePath("/?intro=skip");
 
 interface FeedbackIntroScreenProps {
   onGetStarted: () => void;
@@ -22,6 +25,8 @@ export function FeedbackIntroScreen({ onGetStarted }: FeedbackIntroScreenProps) 
       </div>
 
       <div className="feedback-intro-content">
+        <div className="feedback-intro-spacer" aria-hidden />
+
         <div className="feedback-intro-footer">
           <div className="feedback-intro-footer-gradient" aria-hidden />
           <div className="feedback-intro-footer-copy">
@@ -33,13 +38,16 @@ export function FeedbackIntroScreen({ onGetStarted }: FeedbackIntroScreenProps) 
             </p>
           </div>
           <div className="feedback-intro-actions">
-            <button
-              type="button"
+            <a
+              href={INTRO_SKIP_HREF}
               className="ff-primary-btn feedback-intro-get-started"
-              onClick={onGetStarted}
+              onClick={(event) => {
+                event.preventDefault();
+                onGetStarted();
+              }}
             >
               {INTRO_COPY.getStartedLabel}
-            </button>
+            </a>
           </div>
         </div>
       </div>

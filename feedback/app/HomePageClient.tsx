@@ -19,6 +19,14 @@ export function HomePageClient() {
   useEffect(() => {
     purgeLegacyIntroPersistence();
     const params = new URLSearchParams(window.location.search);
+    if (params.get("intro") === "skip") {
+      markIntroDismissed();
+      setShowIntro(false);
+      params.delete("intro");
+      const qs = params.toString();
+      window.history.replaceState(null, "", withBasePath(`/${qs ? `?${qs}` : ""}`));
+      return;
+    }
     if (params.get("reset") === "intro") {
       clearIntroDismissed();
       window.history.replaceState(null, "", withBasePath("/"));
