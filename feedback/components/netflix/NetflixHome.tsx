@@ -92,6 +92,7 @@ export function NetflixHome() {
   const uploadStatus = useUploadStatusTicker(isBusy, message, progress);
   const busyUserPhase = userPhaseForUploadClient(phase, progress);
   const busyOverallProgress = blendedProgressPercent(busyUserPhase.index, progress);
+  const busyBarProgress = phase === "uploading" ? progress : busyOverallProgress;
   const {
     sessions,
     loading: libraryLoading,
@@ -330,7 +331,7 @@ export function NetflixHome() {
               eyebrow={uploadStatus.eyebrow}
               headline={uploadStatus.headline}
               message={uploadStatus.message}
-              progress={busyOverallProgress}
+              progress={busyBarProgress}
               userPhase={busyUserPhase}
               footer={
                 uploadStatus.elapsedSec >= 60

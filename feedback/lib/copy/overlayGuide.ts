@@ -78,7 +78,7 @@ export function buildOverlayGuideContent(
       ];
 
   const howItWorks = [
-    "We extract ~12 frames per second from your clip and run pose tracking on each frame.",
+    "We sample your clip at ~12 frames per second and map how your body moves in each frame.",
     guardCalibrated
       ? "Your personal guard height is calibrated from early frames where both hands were up."
       : "Guard height is estimated from shoulder and head position when calibration data is unavailable.",

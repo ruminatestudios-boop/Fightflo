@@ -32,7 +32,7 @@ export const ANALYSIS_STEPS: Record<string, AnalysisStepConfig> = {
   },
   analysing_movement: {
     percent: 48,
-    eyebrow: "Pose tracking",
+    eyebrow: "Movement scan",
     headline: "Mapping your body",
     detail: "Tracking body position on each frame…",
     ticks: ["Tracking body position on each frame…"],
@@ -48,8 +48,8 @@ export const ANALYSIS_STEPS: Record<string, AnalysisStepConfig> = {
     percent: 78,
     eyebrow: "AI coaching",
     headline: "Writing your report",
-    detail: "Gemini is reviewing tracked moments and drafting your breakdown…",
-    ticks: ["Gemini is reviewing tracked moments and drafting your breakdown…"],
+    detail: "Reviewing tracked moments and drafting your breakdown…",
+    ticks: ["Reviewing tracked moments and drafting your breakdown…"],
   },
   generating_clips: {
     percent: 92,

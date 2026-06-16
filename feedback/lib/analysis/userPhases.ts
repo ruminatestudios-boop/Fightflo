@@ -20,7 +20,7 @@ export const USER_ANALYSIS_PHASES: UserAnalysisPhase[] = [
     index: 2,
     label: "Analyze",
     shortLabel: "Read footage",
-    detail: "Frames, pose tracking, and pattern scan",
+    detail: "Reading frames and scanning your movement",
     serverSteps: [
       "extracting_frames",
       "detecting_sport",
@@ -32,7 +32,7 @@ export const USER_ANALYSIS_PHASES: UserAnalysisPhase[] = [
     index: 3,
     label: "Report",
     shortLabel: "AI coaching",
-    detail: "Gemini writes your breakdown",
+    detail: "Building your coaching report",
     serverSteps: ["writing_report", "generating_clips", "complete"],
   },
 ];

@@ -78,15 +78,15 @@ function buildFallbackFeedback(
           timestamp: s.timestamp,
           title: s.title,
           technical_detail: s.detail,
-          why_it_matters: "Verified from pose tracking on your footage.",
+          why_it_matters: "Verified from movement analysis on your footage.",
         }))
       : [
           {
             timestamp: "—",
-            title: "Limited pose data for strengths",
+            title: "Limited movement data for strengths",
             technical_detail:
               "Re-upload with full body visible for positive moment detection.",
-            why_it_matters: "Clearer angle improves tracking accuracy.",
+            why_it_matters: "Clearer angle improves analysis accuracy.",
           },
         ];
 

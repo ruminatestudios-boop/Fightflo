@@ -28,18 +28,18 @@ export function useUploadStatusTicker(
     if (!active) return baseMessage;
     if (baseMessage && !baseMessage.endsWith("...")) return baseMessage;
     if (progress >= 75) {
-      return "Upload finished — handing your clip to the analysis engine…";
+      return "Upload finished — starting your coaching analysis…";
     }
     if (progress >= 50) {
-      return `Uploading your video securely (${Math.round(progress)}%)…`;
+      return "Uploading your video securely…";
     }
     if (elapsedSec >= 90) {
-      return `Still uploading (${Math.round(progress)}%) — large clips on mobile can take several minutes. Stay on Wi‑Fi and keep this tab open.`;
+      return "Still uploading — large clips on mobile can take several minutes. Stay on Wi‑Fi and keep this tab open.";
     }
     if (progress <= 20) {
-      return `Sending your video (${Math.round(progress)}%) — the bar will move slowly on phones even when upload is working…`;
+      return "Sending your video — the bar may move slowly on phones even when upload is working…";
     }
-    return `Transferring video to secure storage (${Math.round(progress)}%)…`;
+    return "Transferring video to secure storage…";
   }, [active, baseMessage, progress, elapsedSec, tick]);
 
   return {

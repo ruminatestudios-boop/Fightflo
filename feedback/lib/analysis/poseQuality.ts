@@ -53,12 +53,12 @@ export function assessPoseQuality(timeline: LandmarkTimeline): PoseQualityReport
   const score = Math.round((poseRatio * 0.7 + avgVisibility * 0.3) * 100);
   const usable = score >= 45 && framesWithPose >= 3;
 
-  let message = "Pose tracking quality good.";
+  let message = "Movement tracking quality good.";
   if (score < 45) {
     message =
-      "Limited pose tracking — use front/side angle, single athlete, full body in frame.";
+      "Limited movement tracking — use front/side angle, single athlete, full body in frame.";
   } else if (score < 70) {
-    message = "Moderate pose tracking — overlays may be approximate in some frames.";
+    message = "Moderate movement tracking — overlays may be approximate in some frames.";
   }
 
   return {

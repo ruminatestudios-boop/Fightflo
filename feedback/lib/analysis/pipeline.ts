@@ -71,7 +71,7 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
 
     await updateSessionStatus(sessionId, "processing", {
       step: "analysing_movement",
-      message: `Running pose tracking on ${framePaths.length} frames…`,
+      message: `Mapping movement on ${framePaths.length} frames…`,
     });
 
     const poseResult = await detectPoseWithMeta(framePaths, sport);
@@ -112,7 +112,7 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
 
     await updateSessionStatus(sessionId, "processing", {
       step: "writing_report",
-      message: `Sending ${confirmedEvents.length} tracked moments and ${frameSamples.length} stills to Gemini…`,
+      message: `Preparing your coaching notes from ${confirmedEvents.length} tracked moments…`,
     });
 
     const parentSessionId = session.parent_session_id ?? null;
