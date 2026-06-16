@@ -2326,30 +2326,77 @@ button.stepguide-card-ts:active {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-  background: #080808;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -8%, rgba(250, 65, 65, 0.14), transparent 58%),
+    #080808;
+}
+
+.glass-home-ambient {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.glass-home-dots {
+  position: absolute;
+  inset: 0;
+  opacity: 0.45;
+  background-image: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.14) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 85% 70% at 50% 38%, #000 15%, transparent 72%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 70% at 50% 38%, #000 15%, transparent 72%);
 }
 
 .glass-orb {
-  pointer-events: none;
   position: absolute;
   border-radius: 9999px;
   filter: blur(80px);
+  animation: glass-orb-drift 14s ease-in-out infinite;
 }
 
 .glass-orb--a {
-  top: -5%;
-  left: -10%;
-  height: 16rem;
-  width: 16rem;
-  background: rgba(255, 255, 255, 0.04);
+  top: -8%;
+  left: -12%;
+  height: 18rem;
+  width: 18rem;
+  background: rgba(250, 65, 65, 0.16);
+  animation-duration: 16s;
 }
 
 .glass-orb--b {
-  top: 35%;
-  right: -15%;
-  height: 14rem;
-  width: 14rem;
-  background: rgba(120, 160, 255, 0.06);
+  top: 32%;
+  right: -18%;
+  height: 15rem;
+  width: 15rem;
+  background: rgba(255, 149, 0, 0.1);
+  animation-delay: -4s;
+  animation-duration: 18s;
+}
+
+.glass-orb--c {
+  bottom: 18%;
+  left: 20%;
+  height: 12rem;
+  width: 12rem;
+  background: rgba(140, 180, 255, 0.08);
+  animation-delay: -8s;
+  animation-duration: 20s;
+}
+
+@keyframes glass-orb-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(12px, -16px) scale(1.06);
+  }
 }
 
 .glass-home-inner {
@@ -2400,6 +2447,15 @@ button.stepguide-card-ts:active {
   color: rgba(255, 255, 255, 0.45);
 }
 
+.glass-greeting-sub--accent {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-red);
+  text-shadow: 0 0 24px rgba(250, 65, 65, 0.35);
+}
+
 .glass-greeting-title {
   margin-top: 0.35rem;
   max-width: 18rem;
@@ -2408,8 +2464,9 @@ button.stepguide-card-ts:active {
   font-weight: 500;
   line-height: 1.25;
   letter-spacing: -0.02em;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.96);
   text-transform: none;
+  text-wrap: balance;
 }
 
 .glass-greeting-title--sm {
@@ -2445,22 +2502,46 @@ button.stepguide-card-ts:active {
   justify-content: space-between;
   overflow: hidden;
   border-radius: var(--radius-card);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   background-color: transparent;
   background:
     linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.07) 0%,
-      rgba(255, 255, 255, 0.02) 100%
+      155deg,
+      rgba(255, 255, 255, 0.09) 0%,
+      rgba(255, 255, 255, 0.02) 42%,
+      rgba(0, 0, 0, 0.2) 100%
     );
   padding: 1rem;
   text-align: left;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 28px rgba(0, 0, 0, 0.28);
   transition:
     border-color 0.25s ease,
     box-shadow 0.25s ease,
     transform 0.15s ease;
+}
+
+.glass-card::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  background: radial-gradient(
+    circle at 18% 12%,
+    rgba(250, 65, 65, 0.12) 0%,
+    transparent 55%
+  );
+  transition: opacity 0.25s ease;
+}
+
+.glass-card:not(.glass-card--disabled):hover::after,
+.glass-card--active::after {
+  opacity: 1;
 }
 
 .glass-card::before {
@@ -2478,11 +2559,12 @@ button.stepguide-card-ts:active {
 }
 
 .glass-card--active {
-  border-color: rgba(255, 255, 255, 0.35);
+  border-color: rgba(250, 65, 65, 0.38);
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.12),
-    0 0 28px rgba(255, 255, 255, 0.12),
-    0 0 48px rgba(140, 180, 255, 0.08);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(250, 65, 65, 0.12),
+    0 0 32px rgba(250, 65, 65, 0.16),
+    0 12px 32px rgba(0, 0, 0, 0.35);
 }
 
 .glass-card-icon {
@@ -2494,9 +2576,46 @@ button.stepguide-card-ts:active {
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-card);
-  background: rgba(0, 0, 0, 0.35);
-  color: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease;
+}
+
+.glass-card--guard:not(.glass-card--disabled) .glass-card-icon {
+  color: #fca5a5;
+  border-color: rgba(250, 65, 65, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 16px rgba(250, 65, 65, 0.12);
+}
+
+.glass-card--weekly:not(.glass-card--disabled) .glass-card-icon {
+  color: #fdba74;
+  border-color: rgba(255, 149, 0, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 16px rgba(255, 149, 0, 0.12);
+}
+
+.glass-card--reupload:not(.glass-card--disabled) .glass-card-icon {
+  color: #86efac;
+  border-color: rgba(52, 211, 153, 0.32);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 16px rgba(52, 211, 153, 0.1);
+}
+
+.glass-card--progress:not(.glass-card--disabled) .glass-card-icon {
+  color: #93c5fd;
+  border-color: rgba(96, 165, 250, 0.32);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 16px rgba(96, 165, 250, 0.1);
 }
 
 .glass-card-label {
@@ -2524,6 +2643,14 @@ button.stepguide-card-ts:active {
   padding: 1.35rem 1.25rem;
   text-align: center;
   border: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(250, 65, 65, 0.1), transparent 68%),
+    linear-gradient(
+      165deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.03) 45%,
+      rgba(0, 0, 0, 0.25) 100%
+    );
 }
 
 .glass-card-icon--hero {
@@ -2625,6 +2752,10 @@ button.stepguide-card-ts:active {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .glass-orb,
+  .home-upload-border,
+  .home-feature-grid-secondary .glass-card,
+  .home-sticky-nav-record-ring,
   .glass-card-icon--hero,
   .glass-card-icon--hero .home-upload-hero-icon,
   .home-upload-hero-arrow,
@@ -2762,6 +2893,62 @@ button.stepguide-card-ts:active {
   gap: 0.75rem;
 }
 
+.home-feature-section-label {
+  margin: 0 0 0.15rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.home-feature-section-label::after {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  height: 2px;
+  margin-top: 0.45rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-red), transparent);
+  box-shadow: 0 0 12px rgba(250, 65, 65, 0.45);
+}
+
+.home-upload-border,
+.home-feature-grid-secondary .glass-card {
+  animation: home-card-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.home-upload-border {
+  animation-delay: 0.04s;
+}
+
+.home-feature-grid-secondary .glass-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.home-feature-grid-secondary .glass-card:nth-child(2) {
+  animation-delay: 0.16s;
+}
+
+.home-feature-grid-secondary .glass-card:nth-child(3) {
+  animation-delay: 0.22s;
+}
+
+.home-feature-grid-secondary .glass-card:nth-child(4) {
+  animation-delay: 0.28s;
+}
+
+@keyframes home-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .home-feature-grid--modal {
   flex: none;
 }
@@ -2852,8 +3039,13 @@ button.stepguide-card-ts:active {
   padding: 0.3rem 0.4rem;
   border-radius: var(--radius-card);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  background:
+    linear-gradient(
+      155deg,
+      rgba(255, 255, 255, 0.07) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .home-settings-chip-pill:active {
@@ -2861,8 +3053,14 @@ button.stepguide-card-ts:active {
 }
 
 .home-settings-chip-pill:hover {
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(250, 65, 65, 0.28);
+  background:
+    linear-gradient(
+      155deg,
+      rgba(250, 65, 65, 0.1) 0%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+  box-shadow: 0 0 18px rgba(250, 65, 65, 0.1);
 }
 
 .home-settings-chip-pill-kicker {
@@ -2871,7 +3069,7 @@ button.stepguide-card-ts:active {
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.38);
+  color: rgba(252, 165, 165, 0.75);
 }
 
 .home-settings-chip-pill-value {
@@ -2957,8 +3155,14 @@ button.stepguide-card-ts:active {
   margin-top: 0.875rem;
   padding: 0.875rem 1rem;
   border-radius: var(--radius-card);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(250, 65, 65, 0.14);
+  background:
+    linear-gradient(
+      155deg,
+      rgba(250, 65, 65, 0.07) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .home-pricing-summary-lead {
@@ -4658,13 +4862,16 @@ button.stepguide-card-ts:active {
   align-items: end;
   gap: 0.25rem;
   padding: 0.5rem 0.75rem max(0.75rem, env(safe-area-inset-bottom));
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(8, 8, 8, 0.92);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(to top, rgba(8, 8, 8, 0.98) 55%, rgba(8, 8, 8, 0.88)),
+    radial-gradient(ellipse 50% 80% at 50% 100%, rgba(250, 65, 65, 0.12), transparent 70%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
 .home-sticky-nav-tab {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4677,6 +4884,23 @@ button.stepguide-card-ts:active {
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.38);
   transition: color 0.15s ease;
+}
+
+.home-sticky-nav-tab-indicator {
+  position: absolute;
+  bottom: -0.15rem;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--accent-red);
+  box-shadow: 0 0 14px rgba(250, 65, 65, 0.65);
+  transform: translateX(-50%);
+  transition: width 0.2s ease;
+}
+
+.home-sticky-nav-tab--active .home-sticky-nav-tab-indicator {
+  width: 1.35rem;
 }
 
 .home-sticky-nav-tab:first-child {
@@ -4705,19 +4929,20 @@ button.stepguide-card-ts:active {
   width: 3.25rem;
   height: 3.25rem;
   border-radius: var(--radius-card);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(250, 65, 65, 0.35);
   background:
     linear-gradient(
       145deg,
-      rgba(255, 255, 255, 0.12) 0%,
-      rgba(255, 255, 255, 0.03) 40%,
+      rgba(250, 65, 65, 0.18) 0%,
+      rgba(255, 255, 255, 0.05) 40%,
       rgba(0, 0, 0, 0.55) 100%
     );
   backdrop-filter: blur(20px) saturate(1.2);
   -webkit-backdrop-filter: blur(20px) saturate(1.2);
   box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 8px 28px rgba(250, 65, 65, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  animation: home-record-ring-pulse 2.8s ease-in-out infinite;
 }
 
 .home-sticky-nav-record-dot {
@@ -4725,7 +4950,24 @@ button.stepguide-card-ts:active {
   height: 1.35rem;
   border-radius: var(--radius-card);
   background: #fa4141;
-  box-shadow: 0 0 0 3px rgba(250, 65, 65, 0.28);
+  box-shadow:
+    0 0 0 3px rgba(250, 65, 65, 0.28),
+    0 0 20px rgba(250, 65, 65, 0.45);
+}
+
+@keyframes home-record-ring-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 8px 28px rgba(250, 65, 65, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  }
+  50% {
+    box-shadow:
+      0 8px 36px rgba(250, 65, 65, 0.32),
+      0 0 24px rgba(250, 65, 65, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
 }
 
 .home-sticky-nav-record-label {
@@ -4737,7 +4979,8 @@ button.stepguide-card-ts:active {
 }
 
 .home-sticky-nav-tab--active {
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 0 18px rgba(250, 65, 65, 0.25);
 }
 
 .home-sticky-nav-tab-icon-wrap {

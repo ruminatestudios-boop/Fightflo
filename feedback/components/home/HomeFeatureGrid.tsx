@@ -97,6 +97,8 @@ export function HomeFeatureGrid({
 
   return (
     <div className="home-feature-grid">
+      <p className="home-feature-section-label">Your coaching tools</p>
+
       <div
         className={`home-upload-border ${activeId === "upload" ? "home-upload-border--active" : ""}`}
       >
@@ -129,7 +131,7 @@ export function HomeFeatureGrid({
           <button
             key={block.id}
             type="button"
-            className={`glass-card ${activeId === block.id ? "glass-card--active" : ""} ${block.disabled ? "glass-card--disabled" : ""}`}
+            className={`glass-card glass-card--feature glass-card--${block.id} ${activeId === block.id ? "glass-card--active" : ""} ${block.disabled ? "glass-card--disabled" : ""}`}
             onClick={() => !block.disabled && onSelect(block.id)}
             disabled={block.disabled}
           >

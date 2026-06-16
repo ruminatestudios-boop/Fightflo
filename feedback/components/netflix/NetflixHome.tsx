@@ -327,8 +327,12 @@ export function NetflixHome() {
   return (
     <NetflixShell onLogoClick={handleLogoHome}>
       <div className="glass-home">
-        <div className="glass-orb glass-orb--a" aria-hidden />
-        <div className="glass-orb glass-orb--b" aria-hidden />
+        <div className="glass-home-ambient" aria-hidden>
+          <div className="glass-home-dots" />
+          <div className="glass-orb glass-orb--a" />
+          <div className="glass-orb glass-orb--b" />
+          <div className="glass-orb glass-orb--c" />
+        </div>
 
         {isBusy ? (
           <div className="glass-home-inner glass-home-inner--busy">
@@ -383,7 +387,7 @@ export function NetflixHome() {
         ) : view === "home" ? (
           <div className="glass-home-inner">
             <header className="glass-greeting">
-              <p className="glass-greeting-sub">Ready to improve</p>
+              <p className="glass-greeting-sub glass-greeting-sub--accent">Ready to improve</p>
               <h1 className="glass-greeting-title">
                 {userName
                   ? `How can we help ${userName}'s training today?`
