@@ -17,7 +17,7 @@ import {
   drawSkeleton,
   type WristTrailPoint,
 } from "./SkeletonOverlay";
-import { getInterpolatedLandmarksAtTime, hasUsableStoredLandmarks } from "./landmarkPlayback";
+import { getInterpolatedLandmarksAtTime, hasUsableStoredLandmarks, landmarksAreDrawable } from "./landmarkPlayback";
 import { getAnnotationAt } from "./utils";
 import { getVideoContentRect } from "./videoLayout";
 
@@ -163,7 +163,7 @@ export function drawOverlayFrame(
     }
   }
 
-  if (!frameLandmarks) return;
+  if (!frameLandmarks || !landmarksAreDrawable(frameLandmarks)) return;
 
   const metrics = computeFrameMetrics(frameLandmarks, guardCalibration);
   const guardDropped = shouldShowGuardAlert(

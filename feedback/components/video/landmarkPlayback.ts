@@ -52,15 +52,13 @@ export function getInterpolatedLandmarksAtTime(
 
 /** True when the server saved enough pose samples for stored playback */
 export function hasUsableStoredLandmarks(timeline: LandmarkTimeline): boolean {
-  if (timeline.length < 3) return false;
+  if (timeline.length < 2) return false;
 
-  let withShoulders = 0;
+  let drawable = 0;
   for (const frame of timeline) {
-    const ls = frame.landmarks.left_shoulder;
-    const rs = frame.landmarks.right_shoulder;
-    if ((ls?.visibility ?? 0) > 0.3 && (rs?.visibility ?? 0) > 0.3) {
-      withShoulders++;
-      if (withShoulders >= 3) return true;
+    if (landmarksAreDrawable(frame.landmarks)) {
+      drawable++;
+      if (drawable >= 3) return true;
     }
   }
   return false;

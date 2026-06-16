@@ -69,7 +69,7 @@ function mapPose(
   for (const [idxStr, key] of Object.entries(LANDMARK_MAP)) {
     const idx = Number(idxStr);
     const point = pose[idx];
-    if (point && (point.visibility ?? 1) > 0.25) {
+    if (point && (point.visibility ?? 1) > 0.2) {
       landmarks[key] = {
         x: point.x,
         y: point.y,
@@ -88,7 +88,18 @@ function hasCoreJoints(landmarks: FrameLandmarks): boolean {
     "left_hip",
     "right_hip",
   ];
-  return core.filter((j) => (landmarks[j]?.visibility ?? 0) > 0.4).length >= 3;
+  return core.filter((j) => (landmarks[j]?.visibility ?? 1) > 0.2).length >= 2;
+}
+
+function frameCanvas(video: HTMLVideoElement): HTMLCanvasElement | null {
+  if (video.videoWidth === 0 || video.videoHeight === 0) return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  return canvas;
 }
 
 /**
@@ -125,7 +136,7 @@ export function useLivePoseLandmarks(
       }
 
       const t = video.currentTime;
-      if (Math.abs(t - lastDetectTime.current) < 0.016) {
+      if (Math.abs(t - lastDetectTime.current) < 0.05) {
         rafRef.current = requestAnimationFrame(tick);
         return;
       }
@@ -135,7 +146,13 @@ export function useLivePoseLandmarks(
         const landmarker = await getClientLandmarker();
         if (cancelled) return;
 
-        const result = landmarker.detect(video);
+        const canvas = frameCanvas(video);
+        if (!canvas) {
+          rafRef.current = requestAnimationFrame(tick);
+          return;
+        }
+
+        const result = landmarker.detect(canvas);
         const pose = result.landmarks[0];
         if (pose) {
           const raw = mapPose(pose);

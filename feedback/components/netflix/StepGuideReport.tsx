@@ -18,7 +18,6 @@ import {
   hasUsableStoredLandmarks,
   getInterpolatedLandmarksAtTime,
 } from "@/components/video/landmarkPlayback";
-import { isDemoSession } from "@/lib/demo/isDemoSession";
 import { apiPath, reportPath } from "@/lib/paths";
 import {
   DownloadSessionVideoError,
@@ -125,8 +124,8 @@ export function StepGuideReport({
     () => hasUsableStoredLandmarks(landmarkTimeline),
     [landmarkTimeline]
   );
-  const demoSession = isDemoSession(session);
-  const useLivePose = demoSession && !hasPoseOverlays;
+  /** Live browser tracking when server pose was not saved (common on new uploads). */
+  const useLivePose = !hasPoseOverlays;
   const videoRef = useRef<HTMLVideoElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
@@ -632,7 +631,7 @@ export function StepGuideReport({
           videoRef={videoRef}
           playing={playing}
           videoError={videoError}
-          crossOrigin={hasPoseOverlays || useLivePose ? "anonymous" : undefined}
+          crossOrigin="anonymous"
           onTimeUpdate={setCurrentTime}
           onDuration={setDuration}
           onPlayState={setPlaying}
