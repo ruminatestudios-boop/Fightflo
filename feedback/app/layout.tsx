@@ -40,6 +40,9 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Fightflo",
   },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
   openGraph: {
     title: "Fightflo — AI Coaching",
     description:
