@@ -30,10 +30,10 @@ export function FeedbackIntroScreen({ onGetStarted }: FeedbackIntroScreenProps) 
         <div className="feedback-intro-footer">
           <div className="feedback-intro-footer-gradient" aria-hidden />
           <div className="feedback-intro-footer-copy">
-            <h1 className="text-hero text-balance text-[1.75rem] leading-[1.15] text-white sm:text-[2rem] feedback-intro-headline">
+            <h1 className="text-hero text-balance text-[1.75rem] leading-[1.15] sm:text-[2rem] feedback-intro-headline">
               {INTRO_COPY.headline}
             </h1>
-            <p className="mx-auto mt-4 max-w-[360px] text-[15px] leading-relaxed text-white/70">
+            <p className="mx-auto mt-4 max-w-[360px] text-[15px] leading-relaxed text-[#7e7e7e]">
               {INTRO_COPY.subtitle}
             </p>
           </div>

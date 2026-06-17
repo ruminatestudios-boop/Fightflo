@@ -256,9 +256,31 @@ body {
 }
 
 .feedback-intro-headline {
-  font-family: var(--font-oswald), var(--font-display), system-ui, sans-serif;
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #fefefe 0%, #888 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.feedback-intro-actions .ff-primary-btn {
+  background: #111;
+  color: #fefefe;
+  font-family: var(--font-instrument), system-ui, sans-serif;
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.feedback-intro-actions .ff-primary-btn:hover {
+  background: #1a1a1a;
+}
+
+.feedback-intro-actions .ff-primary-btn:active {
+  background: #222;
 }
 
 .pwa-install-modal {
@@ -488,7 +510,7 @@ body {
   flex-direction: column;
   overflow: hidden;
   max-width: none;
-  background: #080808;
+  background: #0f0f0f;
 }
 
 .netflix-topbar,
@@ -2368,20 +2390,7 @@ button.stepguide-card-ts:active {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse 90% 55% at 50% -8%, rgba(250, 65, 65, 0.09) 0%, transparent 52%),
-    radial-gradient(ellipse 55% 45% at 100% 15%, rgba(120, 160, 255, 0.06) 0%, transparent 50%),
-    linear-gradient(180deg, #0c0c0e 0%, #050505 48%, #030303 100%);
-}
-
-.glass-home::before {
-  content: "";
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  opacity: 0.4;
-  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background: #0f0f0f;
 }
 
 .glass-orb {

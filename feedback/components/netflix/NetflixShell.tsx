@@ -32,7 +32,7 @@ export function NetflixShell({
 
   return (
     <div
-      className={`netflix-viewport relative bg-black text-white ${immersive ? "netflix-viewport--immersive" : ""}`}
+      className={`netflix-viewport relative text-white ${immersive ? "netflix-viewport--immersive" : ""}`}
     >
       <SiteTopBar
         showBack={hasBack}
