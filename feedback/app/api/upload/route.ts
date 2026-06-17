@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { startAnalysisPipeline } from "@/lib/analysis/startPipeline";
+import { scheduleAnalysisPipeline } from "@/lib/analysis/startPipeline";
 import { ensureDevDatabaseReady } from "@/lib/db/devFallback";
 import { storeVideo } from "@/lib/storage/video-upload";
 import {
@@ -8,6 +8,7 @@ import {
   ensureUser,
   recordAnalysisUsed,
 } from "@/lib/storage/sessions";
+import { updateSessionStatus } from "@/lib/db/queries";
 import { validateParentSession } from "@/lib/upload/validateParentSession";
 import type { SkillLevel, SportId } from "@/types";
 
@@ -68,8 +69,13 @@ async function handleCloudinaryComplete(request: NextRequest) {
     parentSessionId: parentSessionId ?? null,
   });
 
+  await updateSessionStatus(session.id, "processing", {
+    step: "extracting_frames",
+    message: "Pulling frames from your video at 12 fps…",
+  });
+
   await recordAnalysisUsed(userId);
-  startAnalysisPipeline(session.id);
+  scheduleAnalysisPipeline(session.id);
 
   return NextResponse.json({
     sessionId: session.id,
@@ -123,8 +129,13 @@ async function handleDirectUpload(request: NextRequest) {
     parentSessionId: parentSessionId ?? null,
   });
 
+  await updateSessionStatus(session.id, "processing", {
+    step: "extracting_frames",
+    message: "Pulling frames from your video at 12 fps…",
+  });
+
   await recordAnalysisUsed(userId);
-  startAnalysisPipeline(session.id);
+  scheduleAnalysisPipeline(session.id);
 
   return NextResponse.json({
     sessionId: session.id,

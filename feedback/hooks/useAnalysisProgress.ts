@@ -61,14 +61,14 @@ function humanizeReportError(message: string): string {
 }
 
 export function useAnalysisProgress(sessionId: string | null) {
-  const initialConfig = ANALYSIS_STEPS.uploading;
-  const initialPhase = userPhaseForStep("uploading");
+  const initialConfig = ANALYSIS_STEPS.extracting_frames;
+  const initialPhase = userPhaseForStep("extracting_frames");
   const [state, setState] = useState<AnalysisProgressState>(() => ({
     report: null,
     session: null,
     loading: !!sessionId,
     error: null,
-    step: "uploading",
+    step: "extracting_frames",
     eyebrow: initialConfig.eyebrow,
     headline: initialConfig.headline,
     message: initialConfig.detail ?? initialConfig.ticks[0],
@@ -82,8 +82,20 @@ export function useAnalysisProgress(sessionId: string | null) {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastStepRef = useRef("uploading");
-  const targetProgressRef = useRef(10);
+  const lastStepRef = useRef("extracting_frames");
+  const targetProgressRef = useRef(22);
+  const kickedPipelineRef = useRef(false);
+
+  const kickAnalysisPipeline = () => {
+    if (!sessionId || kickedPipelineRef.current) return;
+    kickedPipelineRef.current = true;
+    void fetch(apiPath("/api/analyse"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId }),
+      keepalive: true,
+    }).catch(() => undefined);
+  };
 
   const fetchReport = async () => {
     if (!sessionId) return true;
@@ -185,6 +197,8 @@ export function useAnalysisProgress(sessionId: string | null) {
 
   useEffect(() => {
     if (!sessionId) return;
+
+    kickAnalysisPipeline();
 
     const poll = async () => {
       const done = await fetchReport();

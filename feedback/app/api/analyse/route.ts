@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { startAnalysisPipeline } from "@/lib/analysis/startPipeline";
-import { getSessionById } from "@/lib/db/queries";
+import { scheduleAnalysisPipeline } from "@/lib/analysis/startPipeline";
+import { getReportBySessionId, getSessionById } from "@/lib/db/queries";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
+
+function sessionNeedsPipelineKick(session: {
+  status: string;
+  created_at: string;
+  progress_step?: string;
+}): boolean {
+  const step = session.progress_step ?? "";
+  const ageMs = Date.now() - new Date(session.created_at).getTime();
+
+  if (session.status === "uploading") return true;
+  if (session.status === "processing" && step === "uploading") return true;
+  if (session.status === "processing" && step === "extracting_frames" && ageMs > 45_000) {
+    return true;
+  }
+  return false;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,13 +38,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: "complete", sessionId });
     }
 
+    if (session.status === "failed") {
+      return NextResponse.json({ status: "failed", sessionId });
+    }
+
+    const report = await getReportBySessionId(sessionId);
+    if (report) {
+      return NextResponse.json({ status: "complete", sessionId });
+    }
+
+    if (sessionNeedsPipelineKick(session)) {
+      scheduleAnalysisPipeline(sessionId);
+      return NextResponse.json({ status: "processing", sessionId, kicked: true });
+    }
+
     if (session.status === "processing") {
       return NextResponse.json({ status: "processing", sessionId });
     }
 
-    startAnalysisPipeline(sessionId);
-
-    return NextResponse.json({ status: "processing", sessionId });
+    scheduleAnalysisPipeline(sessionId);
+    return NextResponse.json({ status: "processing", sessionId, kicked: true });
   } catch (error) {
     console.error("[analyse]", error);
     return NextResponse.json(

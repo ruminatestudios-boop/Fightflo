@@ -5,7 +5,7 @@ import {
   getReportBySessionId,
   getSessionById,
 } from "@/lib/db/queries";
-import { startAnalysisPipeline } from "@/lib/analysis/startPipeline";
+import { scheduleAnalysisPipeline } from "@/lib/analysis/startPipeline";
 
 export async function GET(request: NextRequest) {
   const sessionId = request.nextUrl.searchParams.get("sessionId");
@@ -30,20 +30,30 @@ export async function GET(request: NextRequest) {
 
       let report = await getReportBySessionId(sessionId);
 
-      // Local dev resilience: if a session is stuck "processing" with no report,
-      // re-kick analysis once.
+      const step = (session as { progress_step?: string }).progress_step ?? "";
+      const message =
+        (session as { progress_message?: string }).progress_message ?? "";
+      const ageMs = Date.now() - new Date(session.created_at).getTime();
+      const stuckEarly =
+        !report &&
+        session.status !== "complete" &&
+        session.status !== "failed" &&
+        (session.status === "uploading" ||
+          step === "uploading" ||
+          (step === "extracting_frames" && ageMs > 45_000));
+
+      if (stuckEarly) {
+        scheduleAnalysisPipeline(sessionId);
+      }
+
+      // Local dev resilience: if a session is stuck on late steps, re-kick once.
       if (
         process.env.NODE_ENV === "development" &&
         !report &&
         session.status === "processing"
       ) {
-        const step = (session as { progress_step?: string }).progress_step ?? "";
-        const message = (session as { progress_message?: string }).progress_message ?? "";
-        const ageMs = Date.now() - new Date(session.created_at).getTime();
-
         if (ageMs > 20_000 && (step === "generating_clips" || message.includes("final touches"))) {
-          startAnalysisPipeline(sessionId);
-          // re-read once after triggering
+          scheduleAnalysisPipeline(sessionId);
           report = await getReportBySessionId(sessionId);
         }
       }
