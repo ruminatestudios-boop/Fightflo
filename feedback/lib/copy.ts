@@ -8,8 +8,8 @@ export const INTRO_COPY = {
 } as const;
 
 export const FEED_COPY = {
-  headline: "How can we help your training today?",
-  body: "FightFlo helps you improve through AI-powered video analysis and coaching.",
+  headline: "Most fighters train hard. Few know what to fix.",
+  body: "Fightflo watches your footage, finds your real faults, and tells you exactly what to work on next.",
   selectPrompt: "Select an option below",
 } as const;
 

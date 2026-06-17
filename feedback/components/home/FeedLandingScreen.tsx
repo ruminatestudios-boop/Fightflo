@@ -43,6 +43,11 @@ export function FeedLandingScreen({ onContinue }: FeedLandingScreenProps) {
         <span className="feed-landing-brand-text">FIGHTFLO</span>
       </header>
 
+      <div className="feed-landing-hero-title" aria-hidden>
+        <p className="feed-landing-hero-title-line feed-landing-hero-title-line--dim">AI coaching for</p>
+        <p className="feed-landing-hero-title-line">combat sports.</p>
+      </div>
+
       <div className="feed-landing-stage" aria-hidden>
         <div className="feed-landing-orbit">
           {FEED_LANDING_ORBIT_IMAGES.map((image, index) => {
@@ -90,7 +95,7 @@ export function FeedLandingScreen({ onContinue }: FeedLandingScreenProps) {
         <h1 className="feed-landing-title">{FEED_LANDING_COPY.headline}</h1>
         <p className="feed-landing-body">{FEED_LANDING_COPY.body}</p>
         <button type="button" className="feed-landing-cta" onClick={onContinue}>
-          {FEED_LANDING_COPY.cta}
+          <span className="feed-landing-cta-text">{FEED_LANDING_COPY.cta}</span>
         </button>
       </div>
     </div>

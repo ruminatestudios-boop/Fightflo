@@ -446,6 +446,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
               variant={homeRoute === "feed" ? "feed" : "default"}
               onUpload={openUpload}
               onRecord={openLiveRecord}
+              onPricing={() => setShowPricingModal(true)}
             />
 
             {error && (
@@ -539,13 +540,16 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
         open={showPricingModal}
         isPro={isPro}
         onClose={() => setShowPricingModal(false)}
-        onSelectPro={() => {
-          setLibraryPaywallMode("pro");
-          setShowPaywall(true);
-        }}
-        onSelectTopUp={() => {
-          setLibraryPaywallMode("topup");
-          setShowPaywall(true);
+        onCheckout={async (plan) => {
+          const userId = localStorage.getItem("feedback_anon_user_id");
+          if (!userId) return;
+          const res = await fetch(apiPath("/api/checkout"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ plan, userId }),
+          });
+          const data = await res.json();
+          if (data.url) window.location.href = data.url;
         }}
       />
 

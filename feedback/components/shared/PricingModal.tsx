@@ -7,8 +7,7 @@ interface PricingModalProps {
   open: boolean;
   isPro?: boolean;
   onClose: () => void;
-  onSelectPro: () => void;
-  onSelectTopUp: () => void;
+  onCheckout: (plan: "pro_monthly" | "topup") => void;
 }
 
 const PRO_FEATURES = [
@@ -20,8 +19,7 @@ export function PricingModal({
   open,
   isPro = false,
   onClose,
-  onSelectPro,
-  onSelectTopUp,
+  onCheckout,
 }: PricingModalProps) {
   return (
     <ModalShell
@@ -33,6 +31,7 @@ export function PricingModal({
       compact
     >
       <div className="pricing-plans">
+        {/* Free */}
         <article className="pricing-plan-card">
           <header className="pricing-plan-card-head">
             <div className="pricing-plan-card-copy">
@@ -44,10 +43,13 @@ export function PricingModal({
             <span className="pricing-plan-card-price">£0</span>
           </header>
           {!isPro ? (
-            <p className="pricing-plan-card-status">Included with signup</p>
+            <p className="pricing-plan-card-status pricing-plan-card-status--active">
+              Your current plan
+            </p>
           ) : null}
         </article>
 
+        {/* Pro */}
         <article className="pricing-plan-card pricing-plan-card--featured">
           <header className="pricing-plan-card-head">
             <div className="pricing-plan-card-copy">
@@ -71,16 +73,14 @@ export function PricingModal({
             <button
               type="button"
               className="pricing-plan-cta"
-              onClick={() => {
-                onClose();
-                onSelectPro();
-              }}
+              onClick={() => { onClose(); onCheckout("pro_monthly"); }}
             >
               Upgrade to Pro
             </button>
           )}
         </article>
 
+        {/* Top-up */}
         <article className="pricing-plan-card">
           <header className="pricing-plan-card-head">
             <div className="pricing-plan-card-copy">
@@ -96,11 +96,7 @@ export function PricingModal({
             type="button"
             className="pricing-plan-cta"
             disabled={!isPro}
-            onClick={() => {
-              if (!isPro) return;
-              onClose();
-              onSelectTopUp();
-            }}
+            onClick={() => { if (!isPro) return; onClose(); onCheckout("topup"); }}
           >
             {isPro ? "Buy scan pack" : "Requires Pro"}
           </button>

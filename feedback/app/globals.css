@@ -2480,12 +2480,15 @@ button.stepguide-card-ts:active {
 .glass-greeting-title {
   margin-top: 0.5rem;
   max-width: 20rem;
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-instrument), system-ui, sans-serif;
   font-size: clamp(1.5rem, 5.5vw, 1.875rem);
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-  color: #fff;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #fefefe 0%, #888 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   text-transform: none;
 }
 
@@ -2507,7 +2510,7 @@ button.stepguide-card-ts:active {
   font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.72);
+  color: #fa4141;
 }
 
 .glass-back {
@@ -3337,7 +3340,7 @@ button.stepguide-card-ts:active {
   padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
 }
 
-/* ─── Feed landing (orbit → hero merge) ─── */
+/* ─── Feed landing (orbit → hero merge) — ssscript.app style ─── */
 
 .feed-landing {
   display: flex;
@@ -3347,8 +3350,9 @@ button.stepguide-card-ts:active {
   justify-content: space-between;
   padding: max(1.25rem, env(safe-area-inset-top)) 1.25rem
     max(1.5rem, env(safe-area-inset-bottom));
-  background: #000;
-  color: #fff;
+  background: #0f0f0f;
+  color: #fefefe;
+  font-family: var(--font-instrument), system-ui, sans-serif;
 }
 
 .feed-landing--boot {
@@ -3365,16 +3369,41 @@ button.stepguide-card-ts:active {
   width: 0.55rem;
   height: 0.55rem;
   border-radius: 9999px;
-  background: #fa4141;
-  box-shadow: 0 0 0 3px rgba(250, 65, 65, 0.25);
+  background: #146ef5;
+  box-shadow: 0 0 0 3px rgba(20, 110, 245, 0.28);
 }
 
 .feed-landing-brand-text {
-  font-family: var(--font-oswald), var(--font-display), system-ui, sans-serif;
-  font-size: 0.95rem;
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: 0.875rem;
   font-weight: 600;
-  letter-spacing: 0.22em;
-  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: 0.18em;
+  color: #fefefe;
+}
+
+.feed-landing-hero-title {
+  width: 100%;
+  padding: 0.25rem 0 0;
+}
+
+.feed-landing-hero-title-line {
+  margin: 0;
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: clamp(2.5rem, 11vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  background: linear-gradient(180deg, #fefefe 0%, #888 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.feed-landing-hero-title-line--dim {
+  background: linear-gradient(180deg, #888 0%, #555 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .feed-landing-stage {
@@ -3400,12 +3429,13 @@ button.stepguide-card-ts:active {
   width: 3.35rem;
   height: 3.35rem;
   margin: -1.675rem 0 0 -1.675rem;
-  border-radius: calc(var(--radius-card) * 1.35);
+  border-radius: 1rem;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: #1e1e1e;
   box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 8px 24px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   transform: rotate(var(--orbit-angle))
     translateY(calc(-1 * var(--orbit-radius)))
     rotate(calc(-1 * var(--orbit-angle)));
@@ -3437,12 +3467,13 @@ button.stepguide-card-ts:active {
   width: 7.75rem;
   height: 7.75rem;
   margin: -3.875rem 0 0 -3.875rem;
-  border-radius: calc(var(--radius-feed-card, 1.25rem) * 1.05);
+  border-radius: 1.2rem;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #1e1e1e;
   box-shadow:
-    0 18px 50px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(255, 255, 255, 0.06);
+    0 20px 50px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
   opacity: 0;
   transform: scale(0.72);
   transition:
@@ -3491,45 +3522,65 @@ button.stepguide-card-ts:active {
 .feed-landing-eyebrow {
   margin: 0;
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.42);
+  color: #7e7e7e;
 }
 
 .feed-landing-title {
   margin: 0.55rem 0 0;
-  font-family: var(--font-inter), system-ui, sans-serif;
-  font-size: clamp(1.45rem, 5.2vw, 1.85rem);
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  color: #fff;
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: clamp(2rem, 8vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  background: linear-gradient(180deg, #fefefe 0%, #888 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .feed-landing-body {
   margin: 0.65rem 0 0;
   font-size: 0.875rem;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.56);
+  line-height: 1.55;
+  color: #b9b9b9;
 }
 
 .feed-landing-cta {
+  overflow: hidden;
   width: 100%;
   margin-top: 1.15rem;
   min-height: 3rem;
-  border: none;
-  border-radius: 9999px;
-  background: #fa4141;
-  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.7rem;
+  background: linear-gradient(165deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 100%);
+  color: #fefefe;
+  font-family: var(--font-instrument), system-ui, sans-serif;
   font-size: 0.9375rem;
   font-weight: 600;
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.feed-landing-cta:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: linear-gradient(165deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 100%);
 }
 
 .feed-landing-cta:active {
-  transform: scale(0.98);
-  background: #e83a3a;
+  transform: scale(0.99);
+}
+
+.feed-landing-cta-text {
+  display: block;
+  text-shadow: 0 1.3em #fefefe;
+  transition: transform 0.3s ease-in-out;
+  pointer-events: none;
+}
+
+.feed-landing-cta:hover .feed-landing-cta-text {
+  transform: translateY(-1.3em);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3561,19 +3612,108 @@ button.stepguide-card-ts:active {
   padding-inline: 0.15rem;
 }
 
+/* ─── Feed action banner cards (upload / live record) ─── */
+
+.feed-action-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  padding-inline: 0.15rem;
+}
+
+.feed-action-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem 1rem 1rem 1.1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: #111;
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.feed-action-card:hover {
+  background: #161616;
+  border-color: rgba(255, 255, 255, 0.11);
+}
+
+.feed-action-card-btns {
+  display: flex;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.feed-action-card-copy {
+  min-width: 0;
+}
+
+.feed-action-card-title {
+  margin: 0;
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fefefe;
+}
+
+.feed-action-card-desc {
+  margin: 0.2rem 0 0;
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: 0.75rem;
+  color: #7e7e7e;
+  line-height: 1.4;
+}
+
+.feed-action-card-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.6rem;
+  border: none;
+  background: #fa4141;
+  color: #fff;
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.feed-action-card-btn:hover {
+  background: #e83a3a;
+}
+
+.feed-action-card-btn svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex-shrink: 0;
+}
+
+.feed-action-card-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 9999px;
+  background: #fff;
+  flex-shrink: 0;
+}
+
 .feed-spotlight-card {
   position: relative;
   overflow: hidden;
-  border-radius: var(--radius-feed-card, 1.25rem);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(
-    165deg,
-    rgba(28, 28, 30, 0.98) 0%,
-    rgba(12, 12, 14, 0.99) 100%
-  );
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(165deg, #222 0%, #1a1a1a 100%);
   box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 0 0 1px rgba(0,0,0,0.18),
+    0 4px 16px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .feed-spotlight-header {
@@ -3588,7 +3728,7 @@ button.stepguide-card-ts:active {
 .feed-spotlight-meta {
   font-size: 0.6875rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.42);
+  color: #7e7e7e;
 }
 
 .feed-spotlight-meta {
@@ -3613,12 +3753,12 @@ button.stepguide-card-ts:active {
 
 .feed-spotlight-title {
   margin: 0;
-  font-family: var(--font-oswald), var(--font-display), system-ui, sans-serif;
-  font-size: 1.2rem;
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: 1.15rem;
   font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: 0.01em;
-  color: rgba(255, 255, 255, 0.96);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: #fefefe;
 }
 
 .feed-spotlight-status {
@@ -3627,7 +3767,7 @@ button.stepguide-card-ts:active {
   gap: 0.4rem;
   margin: 0.35rem 0 0;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.48);
+  color: #7e7e7e;
 }
 
 .feed-spotlight-status-dot {
@@ -3642,8 +3782,8 @@ button.stepguide-card-ts:active {
   margin: 0;
   padding: 0 1.05rem 1rem;
   font-size: 0.8125rem;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.52);
+  line-height: 1.55;
+  color: #b9b9b9;
 }
 
 .feed-spotlight-actions {
@@ -3664,10 +3804,15 @@ button.stepguide-card-ts:active {
   gap: 0.45rem;
   min-height: 2.65rem;
   padding: 0.55rem 0.75rem;
-  border-radius: var(--radius-feed-control, var(--radius-card));
+  border-radius: 0.7rem;
+  font-family: var(--font-instrument), system-ui, sans-serif;
   font-size: 0.8125rem;
   font-weight: 600;
-  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.feed-spotlight-btn:hover {
+  opacity: 0.85;
 }
 
 .feed-spotlight-btn:active {
@@ -3675,19 +3820,15 @@ button.stepguide-card-ts:active {
 }
 
 .feed-spotlight-btn--primary {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(
-    165deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    rgba(255, 255, 255, 0.03) 100%
-  );
-  color: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+  color: #fefefe;
 }
 
 .feed-spotlight-btn--secondary {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(0, 0, 0, 0.22);
-  color: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #000;
+  color: #fefefe;
 }
 
 .feed-spotlight-btn-icon {
@@ -3696,6 +3837,7 @@ button.stepguide-card-ts:active {
   justify-content: center;
   width: 1.35rem;
   height: 1.35rem;
+  color: #fa4141;
 }
 
 .feed-spotlight-btn-icon svg {
@@ -3713,15 +3855,28 @@ button.stepguide-card-ts:active {
 
 .feed-spotlight-footer {
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
   padding: 0.85rem 1rem;
-  background: linear-gradient(90deg, #fa4141 0%, #e83a3a 100%);
+  background: #fa4141;
+  font-family: var(--font-instrument), system-ui, sans-serif;
   font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #0a0a0a;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.feed-spotlight-footer:hover {
+  background: #e83a3a;
+}
+
+.feed-spotlight-footer:active {
+  opacity: 0.85;
 }
 
 .feed-spotlight-footer-icon {
@@ -4027,8 +4182,12 @@ button.stepguide-card-ts:active {
   z-index: 1;
   margin-top: 0.4rem;
   font-size: 0.6875rem;
-  line-height: 1.35;
+  line-height: 1.45;
   color: rgba(255, 255, 255, 0.42);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .home-feature-grid--modal {

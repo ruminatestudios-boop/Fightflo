@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { Barlow_Condensed, Inter, Oswald } from "next/font/google";
+import { Barlow_Condensed, Instrument_Sans, Inter, Oswald } from "next/font/google";
 import { Analytics } from "@/components/shared/Analytics";
 import { NavigationTracker } from "@/components/shared/NavigationTracker";
 import { PWARegister } from "@/components/shared/PWARegister";
@@ -10,6 +10,12 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "/feedback";
 const appOrigin =
   process.env.NEXT_PUBLIC_APP_URL ??
   `http://localhost:3001${basePath === "/" ? "" : basePath}`;
+
+const instrumentSans = Instrument_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-instrument",
+});
 
 const inter = Inter({
   subsets: ["latin"],
@@ -62,7 +68,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${barlow.variable} ${oswald.variable} min-h-dvh antialiased`}
+        className={`${inter.variable} ${barlow.variable} ${oswald.variable} ${instrumentSans.variable} min-h-dvh antialiased`}
       >
         <Suspense fallback={null}>
           <NavigationTracker />

@@ -33,6 +33,7 @@ interface HomeFeatureGridProps {
   variant?: "default" | "feed";
   onUpload?: () => void;
   onRecord?: () => void;
+  onPricing?: () => void;
 }
 
 /** Short subheading on each home card — what the tool does, not session stats. */
@@ -41,24 +42,24 @@ const FEATURE_HINTS: Record<
   { ready: string; locked: string }
 > = {
   guard: {
-    ready: "Scan your last clip for guard drops with timestamps",
-    locked: "Tap to upload a clip to unlock",
+    ready: "AI scans your clip and flags every guard drop with exact timestamps.",
+    locked: "Upload a clip to activate guard-drop detection.",
   },
   shadow: {
-    ready: "Timed live-camera round with combo and guard feedback",
-    locked: "No clip needed — start anytime",
+    ready: "Hit record — AI coaches your guard and combos live as you move.",
+    locked: "No clip needed. Tap to start a live coaching round.",
   },
   weekly: {
-    ready: "One priority drill and journal for this week",
-    locked: "Tap to upload a clip to unlock",
+    ready: "Get one focused drill to fix your biggest fault this week.",
+    locked: "Upload a clip to generate your weekly focus drill.",
   },
   reupload: {
-    ready: "Upload again to see if your main fault improved",
-    locked: "Tap to upload a clip to unlock",
+    ready: "Upload a new clip to see if your last fault has improved.",
+    locked: "Upload a clip to start tracking your improvement.",
   },
   progress: {
-    ready: "Track strengths and faults across your sessions",
-    locked: "Tap to upload a clip to unlock",
+    ready: "See how your guard, combos, and faults trend over time.",
+    locked: "Upload a clip to start building your progress report.",
   },
 };
 
@@ -108,6 +109,7 @@ export function HomeFeatureGrid({
   variant = "default",
   onUpload,
   onRecord,
+  onPricing,
 }: HomeFeatureGridProps) {
   const isFeed = variant === "feed";
   const feedUploadUsesPhoto = false;
@@ -230,7 +232,7 @@ export function HomeFeatureGrid({
               onSelect={onSelect}
               variant="fullscreen"
             />
-            <FeedAppInfoCards onUpload={onUpload} onRecord={onRecord} />
+            <FeedAppInfoCards onUpload={onUpload} onRecord={onRecord} onPricing={onPricing} />
           </>
         ) : (
           <div className="home-feature-grid-secondary-cards">
