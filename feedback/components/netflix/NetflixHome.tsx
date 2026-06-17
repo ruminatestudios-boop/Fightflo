@@ -74,6 +74,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
   const [showPaywall, setShowPaywall] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [isPro, setIsPro] = useState(isClientProUnlocked());
+  const [isActuallyPro, setIsActuallyPro] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [nameDraft, setNameDraft] = useState("");
@@ -260,6 +261,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
     void fetch(apiPath(`/api/user/status?userId=${userId}`))
       .then((res) => res.json())
       .then((data: { isPro?: boolean; email?: string | null }) => {
+        if (data.isPro) setIsActuallyPro(true);
         if (data.isPro || isClientProUnlocked()) setIsPro(true);
         if (data.email) setUserEmail(data.email);
         if (!getStoredUserName()) {
@@ -359,7 +361,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
                     </span>
                     {uploadStatus.elapsedSec >= 60
                       ? ` — ${Math.floor(uploadStatus.elapsedSec / 60)}m ${uploadStatus.elapsedSec % 60}s elapsed, keep this screen open`
-                      : ` — ${busyUserPhase.detail}. Usually 2–5 minutes total.`}
+                      : ` — ${busyUserPhase.detail}`}
                   </span>
                   {phase === "uploading" ? (
                     <button
@@ -539,7 +541,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
 
       <PricingModal
         open={showPricingModal}
-        isPro={isPro}
+        isPro={isActuallyPro}
         onClose={() => setShowPricingModal(false)}
         onCheckout={async (plan) => {
           try {

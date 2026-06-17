@@ -130,7 +130,7 @@ export function ReportPageClient({
 
   if (loading) {
     return (
-      <GlassPage showBack innerClassName="glass-home-inner glass-home-inner--busy">
+      <GlassPage innerClassName="glass-home-inner glass-home-inner--busy">
         <AnalysisProgressView
           eyebrow={polled.eyebrow}
           headline={polled.headline}
@@ -144,7 +144,7 @@ export function ReportPageClient({
 
   if (polled.error && !report) {
     return (
-      <GlassPage showBack innerClassName="glass-home-inner glass-home-inner--busy">
+      <GlassPage innerClassName="glass-home-inner glass-home-inner--busy">
         <GlassStatusCard
           kicker="Error"
           title="Couldn't load report"
@@ -157,7 +157,7 @@ export function ReportPageClient({
 
   if (!report || !session) {
     return (
-      <GlassPage showBack innerClassName="glass-home-inner glass-home-inner--busy">
+      <GlassPage innerClassName="glass-home-inner glass-home-inner--busy">
         <GlassStatusCard
           kicker="Not found"
           title="Report unavailable"

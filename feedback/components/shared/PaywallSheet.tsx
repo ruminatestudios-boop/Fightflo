@@ -28,6 +28,7 @@ export function PaywallSheet({
       onClose={onClose}
       title={isTopUp ? "Need more scans?" : "Go Pro"}
       accent="red"
+      compact
       footer={
         <>
           <button

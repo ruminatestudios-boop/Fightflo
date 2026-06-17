@@ -1,17 +1,10 @@
 /** Matches `basePath` in next.config — used for fetch() and public asset URLs. */
 export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
+// NEXT_PUBLIC_BASE_PATH is always injected by next.config.mjs (even as "" in dev),
+// so we can trust it directly — no URL sniffing needed.
 function runtimeBasePath(): string {
-  if (BASE_PATH) return BASE_PATH;
-  if (typeof window === "undefined") return "";
-  const { pathname } = window.location;
-  if (pathname === "/feedback" || pathname.startsWith("/feedback/")) {
-    return "/feedback";
-  }
-  if (pathname === "/report" || pathname.startsWith("/report/")) {
-    return "/feedback";
-  }
-  return "";
+  return BASE_PATH;
 }
 
 export function withBasePath(path: string): string {
