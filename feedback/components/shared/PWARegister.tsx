@@ -19,7 +19,9 @@ export function PWARegister() {
       return;
     }
 
-    navigator.serviceWorker.register(withBasePath("/sw.js")).catch(() => {
+    navigator.serviceWorker.register(withBasePath("/sw.js")).then((registration) => {
+      void registration.update();
+    }).catch(() => {
       /* optional */
     });
   }, []);
