@@ -152,6 +152,7 @@ export interface Report {
   sport: SportId;
   positives: PositiveFinding[];
   main_weakness: MainWeakness;
+  secondary_weaknesses?: MainWeakness[];
   pattern_insight: string;
   drill: DrillRecommendation;
   coach_summary: string;
@@ -275,6 +276,7 @@ export interface AnalysisProgress {
 export interface CoachingFeedback {
   positives: PositiveFinding[];
   main_weakness: MainWeakness;
+  secondary_weaknesses?: MainWeakness[];
   pattern_insight: string;
   drill: DrillRecommendation;
   coach_summary: string;

@@ -96,3 +96,4 @@ CREATE INDEX IF NOT EXISTS idx_clips_report_id ON clips(report_id);
 -- ALTER TABLE sessions ADD COLUMN IF NOT EXISTS parent_session_id UUID REFERENCES sessions(id) ON DELETE SET NULL;
 -- ALTER TABLE reports ADD COLUMN IF NOT EXISTS follow_up_comparison JSONB;
 -- ALTER TABLE reports ADD COLUMN IF NOT EXISTS export_video_url TEXT;
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS secondary_weaknesses JSONB NOT NULL DEFAULT '[]';

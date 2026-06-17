@@ -42,6 +42,7 @@ export function ReportPageClient({
   const [hasEmail, setHasEmail] = useState<boolean | null>(null);
   const [showEmailCapture, setShowEmailCapture] = useState(true);
   const [storedEmail, setStoredEmail] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const userId = session?.user_id ?? null;
   const emailCapture = useReportEmailCapture(userId, sport);
@@ -92,7 +93,8 @@ export function ReportPageClient({
       await navigator.share({ title: "Fightflo AI Coaching", text });
     } else {
       await navigator.clipboard.writeText(text);
-      alert("Caption copied to clipboard");
+      setNotice("Caption copied to clipboard");
+      setTimeout(() => setNotice(null), 2500);
     }
   }, [report, sport]);
 
@@ -201,6 +203,26 @@ export function ReportPageClient({
         onClose={() => setShowPaywall(false)}
         onCheckout={handlePaywallCheckout}
       />
+
+      {notice && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "5rem",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(0,0,0,0.8)",
+            color: "#fff",
+            padding: "0.6rem 1.2rem",
+            borderRadius: "999px",
+            fontSize: "0.85rem",
+            zIndex: 9999,
+            pointerEvents: "none",
+          }}
+        >
+          {notice}
+        </div>
+      )}
     </>
   );
 }

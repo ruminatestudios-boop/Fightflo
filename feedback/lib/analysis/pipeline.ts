@@ -285,6 +285,7 @@ async function generateClips(
   sessionId: string,
   feedback: {
     main_weakness: { timestamp: string; title: string };
+    secondary_weaknesses?: { timestamp: string; title: string }[];
     positives: { timestamp: string; title: string }[];
   },
   onProgress?: (
@@ -300,6 +301,12 @@ async function generateClips(
       description: feedback.main_weakness.title,
       label: "weakness",
     },
+    ...(feedback.secondary_weaknesses ?? []).map((w, i) => ({
+      ts: w.timestamp,
+      type: "weakness" as const,
+      description: w.title,
+      label: `weakness_${i + 2}`,
+    })),
     ...feedback.positives.map((p, i) => ({
       ts: p.timestamp,
       type: "positive" as const,

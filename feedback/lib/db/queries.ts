@@ -451,6 +451,7 @@ export async function saveReport(input: {
     confirmed_events: input.confirmedEvents ?? [],
     landmark_summary: input.landmarkSummary ?? null,
     follow_up_comparison: input.followUpComparison ?? null,
+    secondary_weaknesses: input.feedback.secondary_weaknesses ?? [],
   };
 
   let { data, error } = await supabase

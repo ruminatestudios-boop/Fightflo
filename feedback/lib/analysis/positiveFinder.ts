@@ -54,6 +54,10 @@ export function findObservedStrengths(
     }
   }
 
+  // Track consecutive frames for sustained posture — avoid flagging single-frame flukes
+  let chinGuardStreak = 0;
+  let chinGuardStreakStart: { ts: string; timeSeconds: number } | null = null;
+
   for (const analysis of frames) {
     const m = analysis.metrics;
     if (!m.metrics_reliable) continue;
@@ -61,43 +65,59 @@ export function findObservedStrengths(
     const ts = analysis.timestamp;
     const timeSeconds = analysis.timeSeconds;
 
+    // Clean extension: must be post-punch (postRearExtension) AND guard held AND full extension
+    // High bar: 165°+ (near-full lockout) — not just "extended"
     if (
       !m.guard_dropped &&
       m.right_elbow_angle !== null &&
-      m.right_elbow_angle >= 158 &&
+      m.right_elbow_angle >= 165 &&
+      m.guard_confidence >= 0.6 &&
       analysis.postRearExtension
     ) {
       candidates.push({
         timestamp: ts,
         timeSeconds,
-        title: "Clean extension with guard held",
-        detail: `Right elbow at ${Math.round(m.right_elbow_angle)}° with wrists above guard line.`,
+        title: "Full extension with guard held",
+        detail: `Right elbow at ${Math.round(m.right_elbow_angle)}° at extension with wrists above guard line — both hands returned.`,
       });
     }
 
+    // Hip rotation: only flag genuine rotation (≥35°), not just any hip movement
+    // Must also have guard maintained (not a coincidence of guard being up while rotating)
     if (
       !m.guard_dropped &&
       m.hip_rotation_deg !== null &&
-      m.hip_rotation_deg >= 30 &&
-      m.hip_rotation_deg <= 55
+      m.hip_rotation_deg >= 35 &&
+      m.hip_rotation_deg <= 55 &&
+      m.guard_confidence >= 0.6
     ) {
       candidates.push({
         timestamp: ts,
         timeSeconds,
-        title: "Hip-shoulder rotation synced",
-        detail: `Hip rotation ${Math.round(m.hip_rotation_deg)}° with guard maintained.`,
+        title: "Hip-shoulder rotation",
+        detail: `Hip rotation ${Math.round(m.hip_rotation_deg)}° while guard held — power generated from the base.`,
       });
     }
 
-    if (!m.chin_elevated && !m.guard_dropped && m.guard_confidence >= 0.55) {
-      candidates.push({
-        timestamp: ts,
-        timeSeconds,
-        title: "Stable chin and guard posture",
-        detail: "Chin tucked with hands at guard height.",
-      });
+    // Chin and guard: only flag if sustained for 6+ consecutive reliable frames (~0.5s at 12fps)
+    // A single clean frame is baseline, not a positive
+    if (!m.chin_elevated && !m.guard_dropped && m.guard_confidence >= 0.65) {
+      if (!chinGuardStreakStart) chinGuardStreakStart = { ts, timeSeconds };
+      chinGuardStreak++;
+      if (chinGuardStreak === 6) {
+        // Confirmed sustained — add the start of the streak
+        candidates.push({
+          timestamp: chinGuardStreakStart.ts,
+          timeSeconds: chinGuardStreakStart.timeSeconds,
+          title: "Consistent defensive posture",
+          detail: `Chin tucked and guard maintained across ${chinGuardStreak}+ consecutive frames — no exposure during this sequence.`,
+        });
+      }
+    } else {
+      chinGuardStreak = 0;
+      chinGuardStreakStart = null;
     }
   }
 
-  return pickSpread(candidates, 3);
+  return pickSpread(candidates, 5);
 }

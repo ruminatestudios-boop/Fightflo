@@ -59,6 +59,15 @@ Fighter/athlete data from this session:
 Landmark data showing exact body positions frame by frame:
 {landmarkData}
 
+CRITICAL RULE — Honesty and calibration:
+- Only report what the data supports. Never fill slots to meet a count.
+- If observed_strengths is empty or sparse, report only the positives you can clearly see. Do not fabricate extras to reach a number.
+- If all_detected_weaknesses has only 1 entry, leave secondary_weaknesses as an empty array. Do not invent a second issue.
+- Do not over-praise. Baseline posture (chin tucked, guard up in a single frame) is expected, not remarkable. Only call out something visibly above expectation for this athlete's level.
+- Do not catastrophise. A weakness is a pattern, not a disaster. Tone should be direct, factual, and constructive — like a coach who has seen worse and knows how to fix it.
+- Be calibrated to the athlete's level. Beginner feedback focuses on fundamentals. Advanced feedback demands precision.
+- coach_voice_summary must reflect the actual balance of the session — if it was mostly solid with one issue, say so. If it was mostly rough, say that.
+
 CRITICAL RULE — Grounding in THIS video:
 - You are given actual JPEG frames from the athlete's uploaded clip. Describe what you SEE.
 - confirmed_pose_events and observed_strengths are from computer vision on this footage — treat them as facts.
@@ -115,7 +124,19 @@ Return JSON only:
     "mechanical_fix": "...",
     "elite_reference": "..."
   },
-  "pattern_insight": "Mechanical chain explanation",
+  "secondary_weaknesses": [
+    {
+      "timestamp": "0:08",
+      "title": "Second most important issue",
+      "what_is_happening": "...",
+      "root_cause": "...",
+      "fight_consequence": "...",
+      "frequency": "pattern count",
+      "mechanical_fix": "...",
+      "elite_reference": "..."
+    }
+  ],
+  "pattern_insight": "Mechanical chain explanation — how weaknesses compound each other",
   "drill_for_next_session": {
     "name": "Drill name",
     "description": "Specific reps and focus",
@@ -124,7 +145,7 @@ Return JSON only:
   "coach_voice_summary": "30 word max. Direct. Technical."
 }
 
-Exactly 3 positives. One main weakness. Never generic boxing jargon unless sport is boxing.`,
+Positives: only include what is genuinely visible and above baseline — 0 to 5, never padded. Secondary weaknesses: only if clearly evidenced in all_detected_weaknesses — omit rather than guess. Never generic boxing jargon unless sport is boxing.`,
 };
 
 export function getSportPrompts(sport: SportId) {

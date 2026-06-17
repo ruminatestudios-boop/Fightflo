@@ -374,6 +374,20 @@ export function StepGuideReport({
       weakness: report.main_weakness,
     });
 
+    (report.secondary_weaknesses ?? []).forEach((w, i) => {
+      list.push({
+        id: `weakness-${i + 2}`,
+        eyebrow: `Also needs work`,
+        title: w.title,
+        body: w.what_is_happening,
+        accent: "red" as const,
+        timestamp: hasSeekTimestamp(w.timestamp) ? w.timestamp : undefined,
+        seekTime: hasSeekTimestamp(w.timestamp) ? parseTimestamp(w.timestamp) : undefined,
+        detailType: "weakness" as const,
+        weakness: w,
+      });
+    });
+
     list.push({
       id: "drill",
       eyebrow: "Next session",
@@ -653,6 +667,18 @@ export function StepGuideReport({
         </ImmersiveVideoStage>
 
         <div className={`stepguide-ui ${notesVisible ? "" : "stepguide-ui--cinema"}`}>
+          <div className={`stepguide-rail stepguide-rail--left ${notesVisible ? "" : "stepguide-rail--cinema"}`}>
+            <button
+              type="button"
+              onClick={router.back.bind(router)}
+              className="stepguide-rail-btn"
+              aria-label="Go back"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          </div>
           <div className={`stepguide-rail ${notesVisible ? "" : "stepguide-rail--cinema"}`}>
             <button
               type="button"
@@ -861,6 +887,7 @@ export function StepGuideReport({
         title={step.title}
         subtitle={step.eyebrow}
         accent={step.accent}
+        compact
       >
         {renderSheetContent()}
       </AnalysisSheet>

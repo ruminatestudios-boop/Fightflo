@@ -106,7 +106,7 @@ export async function recordAnalysisUsed(userId: string): Promise<void> {
   }
 
   const used = await getMonthlySessionCount(userId);
-  if (used > PRO_MONTHLY_ANALYSIS_LIMIT) {
+  if (used >= PRO_MONTHLY_ANALYSIS_LIMIT) {
     await decrementBonusScans(userId);
   }
 }

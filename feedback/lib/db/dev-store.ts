@@ -295,6 +295,7 @@ export async function saveReport(input: {
     sport: input.sport,
     positives: input.feedback.positives,
     main_weakness: input.feedback.main_weakness,
+    secondary_weaknesses: input.feedback.secondary_weaknesses ?? [],
     pattern_insight: input.feedback.pattern_insight,
     drill: input.feedback.drill,
     coach_summary: input.feedback.coach_summary,

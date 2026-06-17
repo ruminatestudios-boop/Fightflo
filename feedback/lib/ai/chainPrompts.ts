@@ -20,6 +20,7 @@ import type { ObservedStrength } from "@/lib/analysis/positiveFinder";
 interface RawCoachingFeedback {
   positives: CoachingFeedback["positives"];
   main_weakness: CoachingFeedback["main_weakness"];
+  secondary_weaknesses?: CoachingFeedback["secondary_weaknesses"];
   pattern_insight: string;
   drill?: DrillRecommendation;
   drill_for_next_session?: DrillRecommendation;
@@ -31,6 +32,7 @@ function normalizeFeedback(raw: RawCoachingFeedback): CoachingFeedback {
   return {
     positives: raw.positives,
     main_weakness: raw.main_weakness,
+    secondary_weaknesses: raw.secondary_weaknesses ?? [],
     pattern_insight: raw.pattern_insight,
     drill: raw.drill ?? raw.drill_for_next_session ?? {
       name: "Technical correction drill",
@@ -91,11 +93,23 @@ export async function runPromptChain(input: {
     events: input.patternData.events.slice(0, 12),
   };
 
+  // Build ranked list of ALL detected weaknesses for Gemini — primary + secondary
+  const weaknessCounts = (input.patternData.pattern_data?.weaknessCounts ?? {}) as Record<string, number>;
+  const allDetectedWeaknesses = Object.entries(weaknessCounts)
+    .sort(([, a], [, b]) => b - a)
+    .map(([type, count]) => ({
+      weakness_type: type,
+      human_label: humanLabelForWeakness(type),
+      count,
+      confirmed_events: confirmedEvents.filter(e => e.weakness_type === type),
+    }));
+
   const sessionData = {
     sport: input.sport,
     sport_name: sportConfig.name,
     level: input.level,
     verified_pattern: verifiedPattern,
+    all_detected_weaknesses: allDetectedWeaknesses,
     root_cause_from_pose: rootCause,
     confirmed_pose_events: confirmedEvents,
     observed_strengths: input.observedStrengths ?? [],
@@ -194,17 +208,28 @@ export async function runPromptChain(input: {
   }
 
   if (input.observedStrengths?.length && feedback.positives.length > 0) {
+    // Ground Gemini's positives with pose-verified timestamps and details.
+    // Only override fields where Gemini was vague — keep Gemini's richer language
+    // when it's more specific than the template text from positiveFinder.
     feedback.positives = feedback.positives.map((positive, i) => {
       const observed = input.observedStrengths?.[i];
       if (!observed) return positive;
       return {
         ...positive,
-        timestamp: positive.timestamp || observed.timestamp,
-        title: positive.title || observed.title,
-        technical_detail:
-          positive.technical_detail || observed.detail,
+        // Use observed timestamp only if Gemini's is a placeholder or missing
+        timestamp: positive.timestamp && positive.timestamp !== "0:00" ? positive.timestamp : observed.timestamp,
+        // Keep Gemini's title if it's more specific than the generic template
+        title: positive.title.length > observed.title.length ? positive.title : observed.title,
+        // Prefer Gemini's detail if longer/richer, else use observed measurement
+        technical_detail: positive.technical_detail.length >= 40
+          ? positive.technical_detail
+          : observed.detail,
       };
-    });
+    }).slice(0, 5);
+  } else if (!input.observedStrengths?.length) {
+    // No pose-verified strengths — trim Gemini positives to what's actually confirmed
+    // Keep at most 2 without pose verification to avoid fabrication
+    feedback.positives = feedback.positives.slice(0, 2);
   }
 
   if (!feedback.pattern_insight) {

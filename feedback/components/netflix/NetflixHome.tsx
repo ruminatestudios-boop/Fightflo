@@ -74,6 +74,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
   const [showPaywall, setShowPaywall] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [isPro, setIsPro] = useState(isClientProUnlocked());
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [nameDraft, setNameDraft] = useState("");
   const [settingsModal, setSettingsModal] = useState<HomeSettingsModal>(null);
@@ -256,6 +257,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
       .then((res) => res.json())
       .then((data: { isPro?: boolean; email?: string | null }) => {
         if (data.isPro || isClientProUnlocked()) setIsPro(true);
+        if (data.email) setUserEmail(data.email);
         if (!getStoredUserName()) {
           const name = displayNameFromEmail(data.email);
           if (name) setUserName(name);
@@ -276,6 +278,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
       body: JSON.stringify({
         plan: activePaywallMode === "topup" ? "topup" : "pro_monthly",
         userId,
+        email: userEmail ?? undefined,
       }),
     });
     const data = await res.json();
@@ -426,12 +429,6 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
               )}
             </header>
 
-            {followUpParentId && insights?.reupload ? (
-              <p className="glass-followup-banner" role="status">
-                Follow-up clip — comparing to {insights.reupload.title} (
-                {insights.reupload.weaknessTitle})
-              </p>
-            ) : null}
 
             {lockedNotice ? (
               <p className="glass-followup-banner" role="status">
@@ -559,16 +556,16 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
             const res = await fetch(apiPath("/api/checkout"), {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ plan, userId: resolvedId }),
+              body: JSON.stringify({ plan, userId: resolvedId, email: userEmail ?? undefined }),
             });
             const data = await res.json() as { url?: string; error?: string };
             if (data.url) {
               window.location.href = data.url;
             } else {
-              alert(data.error ?? "Checkout failed. Please try again.");
+              setLockedNotice(data.error ?? "Checkout failed. Please try again.");
             }
           } catch (err) {
-            alert(err instanceof Error ? err.message : "Checkout failed. Please check your connection and try again.");
+            setLockedNotice(err instanceof Error ? err.message : "Checkout failed. Please check your connection.");
           }
         }}
       />
