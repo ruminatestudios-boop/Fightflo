@@ -116,27 +116,33 @@ export function HomeFeatureGrid({
           className={`glass-card glass-card--hero home-upload-card ${activeId === "upload" ? "glass-card--active" : ""}`}
           onClick={() => onSelect("upload")}
         >
-          <span className="home-upload-kicker">Get started</span>
-
           <div className="home-upload-card-body">
             <span className="home-upload-headline">
               Upload a clip — get timestamped coaching
             </span>
 
-            <span className="home-upload-icon-btn" aria-hidden>
-              <span className="home-upload-icon-glow" aria-hidden />
-              <svg className="home-upload-hero-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <g className="home-upload-hero-arrow">
-                  <path d="M12 15V3" />
-                  <path d="M8 7l4-4 4 4" />
-                </g>
-                <path className="home-upload-hero-tray" d="M4 21h16" />
+            <span className="home-upload-dropzone" aria-hidden>
+              <span className="home-upload-dropzone-glow" aria-hidden />
+              <svg
+                className="home-upload-dropzone-icon"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.75}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 14.5V19a2 2 0 002 2h12a2 2 0 002-2v-4.5" />
+                <path className="home-upload-dropzone-arrow" d="M12 15V5" />
+                <path className="home-upload-dropzone-arrow" d="M8.5 8.5L12 5l3.5 3.5" />
               </svg>
+              <span className="home-upload-dropzone-label">Tap to upload</span>
+              <span className="home-upload-dropzone-formats">MP4 · MOV · WEBM</span>
             </span>
           </div>
 
           <span className="home-upload-footnote">
-            Film bag work, pads, or shadowboxing — tap to upload
+            Film bag work, pads, or shadowboxing
           </span>
         </button>
       </div>
