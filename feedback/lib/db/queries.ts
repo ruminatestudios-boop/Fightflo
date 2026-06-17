@@ -276,7 +276,14 @@ export async function getSessionById(sessionId: string): Promise<Session | null>
   if (error) {
     return withDevFallback(error, () => devStore.getSessionById(sessionId));
   }
-  return data as Session | null;
+  if (data) return data as Session;
+
+  if (process.env.NODE_ENV === "development") {
+    devStore.hydrateDevStore();
+    const local = await devStore.getSessionById(sessionId);
+    if (local) return local;
+  }
+  return null;
 }
 
 export async function updateSessionStatus(
@@ -322,12 +329,21 @@ export async function getReportBySessionId(
     .from("reports")
     .select()
     .eq("session_id", sessionId)
-    .maybeSingle();
+    .order("created_at", { ascending: false })
+    .limit(1);
 
   if (error) {
     return withDevFallback(error, () => devStore.getReportBySessionId(sessionId));
   }
-  return data as Report | null;
+  const report = (data?.[0] ?? null) as Report | null;
+  if (report) return report;
+
+  if (process.env.NODE_ENV === "development") {
+    devStore.hydrateDevStore();
+    const local = await devStore.getReportBySessionId(sessionId);
+    if (local) return local;
+  }
+  return null;
 }
 
 export async function updateReportExportUrl(

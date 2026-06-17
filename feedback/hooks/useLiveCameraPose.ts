@@ -158,9 +158,9 @@ export function useLiveCameraPose(
                 const b = raw[key];
                 if (a && b) {
                   blended[key] = {
-                    x: a.x * 0.35 + b.x * 0.65,
-                    y: a.y * 0.35 + b.y * 0.65,
-                    z: (a.z ?? 0) * 0.35 + (b.z ?? 0) * 0.65,
+                    x: a.x * 0.15 + b.x * 0.85,
+                    y: a.y * 0.15 + b.y * 0.85,
+                    z: (a.z ?? 0) * 0.15 + (b.z ?? 0) * 0.85,
                     visibility: Math.max(a.visibility ?? 0, b.visibility ?? 0),
                   };
                 } else {

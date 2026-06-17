@@ -48,6 +48,9 @@ function humanizeReportError(message: string): string {
   if (lower.includes("session not found")) {
     return "This session expired after a server restart. Upload again or use Preview sample report.";
   }
+  if (lower.includes("multiple (or no) rows")) {
+    return "This session expired after a server restart. Upload again or use Preview sample report.";
+  }
   return message;
 }
 

@@ -8,6 +8,7 @@ export type HomeFeatureId =
   | "weekly"
   | "reupload"
   | "guard"
+  | "shadow"
   | "progress";
 
 interface FeatureBlock {
@@ -57,6 +58,16 @@ export function HomeFeatureGrid({
       ),
     },
     {
+      id: "shadow",
+      label: "Shadow round",
+      hint: "Live issues & good moments",
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+        </svg>
+      ),
+    },
+    {
       id: "weekly",
       label: "This week's focus",
       hint: complete > 0 ? insights?.weeklyFocus?.drillName ?? "Your drill" : "Needs 1 analysed clip",
@@ -97,41 +108,47 @@ export function HomeFeatureGrid({
 
   return (
     <div className="home-feature-grid">
-      <p className="home-feature-section-label">Your coaching tools</p>
-
       <div
         className={`home-upload-border ${activeId === "upload" ? "home-upload-border--active" : ""}`}
       >
         <button
           type="button"
-          className={`glass-card glass-card--hero ${activeId === "upload" ? "glass-card--active" : ""}`}
+          className={`glass-card glass-card--hero home-upload-card ${activeId === "upload" ? "glass-card--active" : ""}`}
           onClick={() => onSelect("upload")}
         >
-          <span className="glass-card-label glass-card-label--hero">
-            Upload a clip and get timestamped coaching
-          </span>
-          <span className="glass-card-icon glass-card-icon--hero" aria-hidden>
-            <svg className="home-upload-hero-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <g className="home-upload-hero-arrow">
-                <path d="M12 15V3" />
-                <path d="M8 7l4-4 4 4" />
-              </g>
-              <path className="home-upload-hero-tray" d="M4 21h16" />
-            </svg>
-          </span>
-          <span className="home-feature-hint home-feature-hint--hero">
-            Film bag work, pads, or shadowboxing — tap to upload, then get faults,
-            timestamps, and drills to work on
+          <span className="home-upload-kicker">Get started</span>
+
+          <div className="home-upload-card-body">
+            <span className="home-upload-headline">
+              Upload a clip — get timestamped coaching
+            </span>
+
+            <span className="home-upload-icon-btn" aria-hidden>
+              <span className="home-upload-icon-glow" aria-hidden />
+              <svg className="home-upload-hero-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <g className="home-upload-hero-arrow">
+                  <path d="M12 15V3" />
+                  <path d="M8 7l4-4 4 4" />
+                </g>
+                <path className="home-upload-hero-tray" d="M4 21h16" />
+              </svg>
+            </span>
+          </div>
+
+          <span className="home-upload-footnote">
+            Film bag work, pads, or shadowboxing — tap to upload
           </span>
         </button>
       </div>
 
       <div className="home-feature-grid-secondary">
+        <p className="home-feature-section-label">Training tools</p>
+        <div className="home-feature-grid-secondary-cards">
         {secondary.map((block) => (
           <button
             key={block.id}
             type="button"
-            className={`glass-card glass-card--feature glass-card--${block.id} ${activeId === block.id ? "glass-card--active" : ""} ${block.disabled ? "glass-card--disabled" : ""}`}
+            className={`glass-card ${activeId === block.id ? "glass-card--active" : ""} ${block.disabled ? "glass-card--disabled" : ""}`}
             onClick={() => !block.disabled && onSelect(block.id)}
             disabled={block.disabled}
           >
@@ -140,6 +157,7 @@ export function HomeFeatureGrid({
             <span className="home-feature-hint">{block.hint}</span>
           </button>
         ))}
+        </div>
       </div>
     </div>
   );

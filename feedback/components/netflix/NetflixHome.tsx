@@ -11,6 +11,7 @@ import {
 import { GuardDropFlow } from "@/components/home/flows/GuardDropFlow";
 import { ProgressFlow } from "@/components/home/flows/ProgressFlow";
 import { ReuploadFlow } from "@/components/home/flows/ReuploadFlow";
+import { ShadowRoundFlow } from "@/components/home/flows/ShadowRoundFlow";
 import { WeeklyFocusFlow } from "@/components/home/flows/WeeklyFocusFlow";
 import { BackButton } from "@/components/shared/BackButton";
 import { DevModeBanner } from "@/components/shared/DevModeBanner";
@@ -19,6 +20,7 @@ import { PaywallSheet } from "@/components/shared/PaywallSheet";
 import { PricingModal } from "@/components/shared/PricingModal";
 import { HomeStickyNav } from "@/components/netflix/HomeStickyNav";
 import { LiveRecordScreen } from "@/components/live/LiveRecordScreen";
+import { ShadowRoundScreen } from "@/components/shadow/ShadowRoundScreen";
 import { NetflixShell } from "@/components/netflix/NetflixShell";
 import { SessionLibrary } from "@/components/netflix/SessionLibrary";
 import { AnalysisProgressView } from "@/components/shared/AnalysisProgressView";
@@ -41,10 +43,12 @@ import {
   storeUserId,
 } from "@/lib/storage/client";
 import type { SkillLevel, SportId } from "@/types";
+import type { ShadowRoundLength } from "@/lib/shadow/types";
 
 type HomeView =
   | "home"
   | "guard"
+  | "shadow"
   | "reupload"
   | "progress"
   | "weekly";
@@ -72,6 +76,9 @@ export function NetflixHome() {
   );
   const [followUpParentId, setFollowUpParentId] = useState<string | null>(null);
   const [liveRecordOpen, setLiveRecordOpen] = useState(false);
+  const [shadowRoundSeconds, setShadowRoundSeconds] = useState<ShadowRoundLength | null>(
+    null
+  );
   const { phase, progress, message, error, paywallMode, upload, reset } =
     useUpload();
   const isBusy = phase === "uploading" || phase === "processing" || demoLoading;
@@ -294,6 +301,13 @@ export function NetflixHome() {
             onBack={handleShellBack}
           />
         );
+      case "shadow":
+        return (
+          <ShadowRoundFlow
+            onBack={handleShellBack}
+            onStartRound={(seconds) => setShadowRoundSeconds(seconds)}
+          />
+        );
       case "reupload":
         return (
           <ReuploadFlow
@@ -327,12 +341,9 @@ export function NetflixHome() {
   return (
     <NetflixShell onLogoClick={handleLogoHome}>
       <div className="glass-home">
-        <div className="glass-home-ambient" aria-hidden>
-          <div className="glass-home-dots" />
-          <div className="glass-orb glass-orb--a" />
-          <div className="glass-orb glass-orb--b" />
-          <div className="glass-orb glass-orb--c" />
-        </div>
+        <div className="glass-orb glass-orb--a" aria-hidden />
+        <div className="glass-orb glass-orb--b" aria-hidden />
+        <div className="glass-orb glass-orb--c" aria-hidden />
 
         {isBusy ? (
           <div className="glass-home-inner glass-home-inner--busy">
@@ -387,7 +398,10 @@ export function NetflixHome() {
         ) : view === "home" ? (
           <div className="glass-home-inner">
             <header className="glass-greeting">
-              <p className="glass-greeting-sub glass-greeting-sub--accent">Ready to improve</p>
+              <p className="glass-greeting-sub">
+                <span className="glass-greeting-dot" aria-hidden />
+                Ready to improve
+              </p>
               <h1 className="glass-greeting-title">
                 {userName
                   ? `How can we help ${userName}'s training today?`
@@ -446,7 +460,7 @@ export function NetflixHome() {
 
         <UploadZone ref={uploadRef} hidden onFileSelect={handleFile} />
 
-        {!isBusy && !liveRecordOpen && (
+        {!isBusy && !liveRecordOpen && !shadowRoundSeconds && (
           <HomeStickyNav
             activeTab={mainTab}
             onTabChange={(tab) => (tab === "library" ? goToLibrary() : goToHome())}
@@ -459,6 +473,21 @@ export function NetflixHome() {
           <LiveRecordScreen
             onClose={() => setLiveRecordOpen(false)}
             onRecordingComplete={(file) => void handleLiveRecordingComplete(file)}
+          />
+        )}
+
+        {shadowRoundSeconds && (
+          <ShadowRoundScreen
+            roundSeconds={shadowRoundSeconds}
+            onClose={() => setShadowRoundSeconds(null)}
+            onAnalyseRecording={(file) => {
+              setShadowRoundSeconds(null);
+              setView("home");
+              setActiveCard("upload");
+              writeHomeUrlState("home", "home");
+              void handleFile(file);
+            }}
+            onDone={() => setShadowRoundSeconds(null)}
           />
         )}
 

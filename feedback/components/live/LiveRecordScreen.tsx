@@ -203,6 +203,8 @@ export function LiveRecordScreen({
           externalLiveLandmarks={liveLandmarks}
           guardFocusMode
           suppressAnnotationLabel
+          videoFit="cover"
+          mirrorLandmarks={facing === "user"}
         />
       )}
 

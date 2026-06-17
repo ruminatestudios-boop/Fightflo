@@ -4,7 +4,8 @@ import { apiPath } from "@/lib/paths";
 import { computeFrameMetrics } from "@/lib/analysis/poseMetrics";
 
 /** Parse M:SS or H:MM:SS timestamp strings to seconds */
-export function parseTimestamp(timestamp: string): number {
+export function parseTimestamp(timestamp: string | null | undefined): number {
+  if (!timestamp) return 0;
   const parts = timestamp.trim().split(":").map(Number);
   if (parts.some((p) => Number.isNaN(p))) return 0;
   if (parts.length === 2) return parts[0] * 60 + parts[1];

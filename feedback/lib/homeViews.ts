@@ -1,6 +1,6 @@
 import { withBasePath } from "@/lib/paths";
 
-export const HOME_FLOW_VIEWS = ["guard", "weekly", "reupload", "progress"] as const;
+export const HOME_FLOW_VIEWS = ["guard", "shadow", "weekly", "reupload", "progress"] as const;
 export type HomeFlowView = (typeof HOME_FLOW_VIEWS)[number];
 
 export function isHomeFlowView(

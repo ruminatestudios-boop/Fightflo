@@ -71,7 +71,8 @@ interface ReportStep {
   drill?: DrillRecommendation;
 }
 
-function hasSeekTimestamp(timestamp: string): boolean {
+function hasSeekTimestamp(timestamp: string | null | undefined): boolean {
+  if (!timestamp) return false;
   return /^\d/.test(timestamp.trim());
 }
 

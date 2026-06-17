@@ -13,13 +13,15 @@ import {
   drawGuardHandsOverlay,
   drawGuardLine,
   drawGuardWarning,
+  drawJointHighlight,
   drawMotionTrails,
+  drawShadowCoachingOverlay,
   drawSkeleton,
   type WristTrailPoint,
 } from "./SkeletonOverlay";
 import { getInterpolatedLandmarksAtTime, hasUsableStoredLandmarks, landmarksAreDrawable } from "./landmarkPlayback";
 import { getAnnotationAt } from "./utils";
-import { getVideoContentRect } from "./videoLayout";
+import { getVideoContentRect, mapLandmarkToCanvas, type VideoLayoutOptions } from "./videoLayout";
 
 interface OverlayCanvasProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
@@ -33,11 +35,20 @@ interface OverlayCanvasProps {
   suppressAnnotationLabel?: boolean;
   /** Always flag guard drops from pose — guard-only report mode */
   guardFocusMode?: boolean;
+  /** Rich shadowboxing overlay — torso frame, chin/hip cues, no skeleton */
+  shadowFocusMode?: boolean;
   /** Server-calibrated guard line — matches analysis pipeline */
   guardCalibration?: GuardCalibration | null;
   /** Parent-supplied live pose (e.g. camera VIDEO mode) — skips internal hook */
   externalLivePose?: boolean;
   externalLiveLandmarks?: FrameLandmarks | null;
+  /** Live joint callout — shadow round cinema pill */
+  highlightJoint?: keyof FrameLandmarks | null;
+  highlightKind?: "issue" | "positive";
+  /** Match video object-fit — live camera uses cover */
+  videoFit?: VideoLayoutOptions["fit"];
+  /** Flip overlay x when video has scaleX(-1) */
+  mirrorLandmarks?: boolean;
 }
 
 function resolveLivePoseEnabled(
@@ -120,12 +131,16 @@ export function drawOverlayFrame(
   wristTrails: { left: WristTrailPoint[]; right: WristTrailPoint[] },
   suppressAnnotationLabel = false,
   guardFocusMode = false,
+  shadowFocusMode = false,
   guardCalibration: GuardCalibration | null = null,
-  usingLivePose = false
+  usingLivePose = false,
+  highlightJoint: keyof FrameLandmarks | null = null,
+  highlightKind: "issue" | "positive" = "issue",
+  videoLayout: VideoLayoutOptions = {}
 ) {
   ctx.clearRect(0, 0, width, height);
 
-  const layout = getVideoContentRect(video, width, height);
+  const layout = getVideoContentRect(video, width, height, videoLayout);
   const lookupTime = currentTime + landmarkTimeOffset;
 
   drawVideoWatermark(ctx, layout);
@@ -141,24 +156,16 @@ export function drawOverlayFrame(
       : interpolated;
 
   if (frameLandmarks) {
-    if (!guardFocusMode) {
+    if (!guardFocusMode || shadowFocusMode) {
       const lw = frameLandmarks.left_wrist;
       const rw = frameLandmarks.right_wrist;
       if (lw) {
-        const p = {
-          x: layout.offsetX + lw.x * layout.drawWidth,
-          y: layout.offsetY + lw.y * layout.drawHeight,
-          age: 0,
-        };
-        wristTrails.left = [p, ...wristTrails.left.map((t) => ({ ...t, age: t.age + 1 }))].slice(0, 14);
+        const p = mapLandmarkToCanvas(lw, layout);
+        wristTrails.left = [{ x: p.x, y: p.y, age: 0 }, ...wristTrails.left.map((t) => ({ ...t, age: t.age + 1 }))].slice(0, 14);
       }
       if (rw) {
-        const p = {
-          x: layout.offsetX + rw.x * layout.drawWidth,
-          y: layout.offsetY + rw.y * layout.drawHeight,
-          age: 0,
-        };
-        wristTrails.right = [p, ...wristTrails.right.map((t) => ({ ...t, age: t.age + 1 }))].slice(0, 14);
+        const p = mapLandmarkToCanvas(rw, layout);
+        wristTrails.right = [{ x: p.x, y: p.y, age: 0 }, ...wristTrails.right.map((t) => ({ ...t, age: t.age + 1 }))].slice(0, 14);
       }
     }
   }
@@ -171,11 +178,27 @@ export function drawOverlayFrame(
     lookupTime,
     confirmedEvents,
     usingLivePose,
-    guardFocusMode
+    guardFocusMode || shadowFocusMode
   );
   const annotation = getAnnotationAt(annotations, lookupTime);
 
-  if (guardFocusMode) {
+  if (guardFocusMode || shadowFocusMode) {
+    if (shadowFocusMode) {
+      drawShadowCoachingOverlay(ctx, frameLandmarks, {
+        width,
+        height,
+        layout,
+        guardDropped,
+        pulsePhase,
+        guardCalibration,
+        metrics,
+        highlightJoint,
+        highlightKind,
+        wristTrails,
+      });
+      return;
+    }
+
     drawGuardLine(ctx, frameLandmarks, {
       width,
       height,
@@ -193,6 +216,16 @@ export function drawOverlayFrame(
       pulsePhase,
       guardCalibration,
     });
+    if (highlightJoint) {
+      drawJointHighlight(ctx, frameLandmarks, {
+        width,
+        height,
+        layout,
+        highlightedJoint: highlightJoint,
+        pulsePhase,
+        kind: highlightKind,
+      });
+    }
     return;
   }
 
@@ -287,10 +320,19 @@ export function OverlayCanvas({
   confirmedEvents = [],
   suppressAnnotationLabel = false,
   guardFocusMode = false,
+  shadowFocusMode = false,
   guardCalibration = null,
   externalLivePose = false,
   externalLiveLandmarks = null,
+  highlightJoint = null,
+  highlightKind = "issue",
+  videoFit = "contain",
+  mirrorLandmarks = false,
 }: OverlayCanvasProps) {
+  const videoLayout = useMemo(
+    () => ({ fit: videoFit, mirror: mirrorLandmarks }),
+    [videoFit, mirrorLandmarks]
+  );
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const pulseRef = useRef(0);
@@ -363,8 +405,12 @@ export function OverlayCanvas({
           trailsRef.current,
           suppressAnnotationLabel,
           guardFocusMode,
+          shadowFocusMode,
           guardCalibration,
-          usingLivePose
+          usingLivePose,
+          highlightJoint,
+          highlightKind,
+          videoLayout
         );
       }
 
@@ -392,11 +438,15 @@ export function OverlayCanvas({
     confirmedEvents,
     suppressAnnotationLabel,
     guardFocusMode,
+    shadowFocusMode,
     guardCalibration,
     liveEnabled,
     externalLivePose,
     externalLiveLandmarks,
     usingLivePose,
+    highlightJoint,
+    highlightKind,
+    videoLayout,
   ]);
 
   return (

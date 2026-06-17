@@ -18,9 +18,12 @@ export {
   drawMotionTrails,
   drawBiomechanics,
   drawGuardWarning,
+  drawJointHighlight,
   POSE_CONNECTIONS,
   type WristTrailPoint,
 } from "@/lib/video/poseOverlayDraw";
+
+export { drawShadowCoachingOverlay } from "@/lib/video/shadowOverlayDraw";
 
 interface SkeletonOverlayProps {
   canvasRef: RefObject<HTMLCanvasElement | null>;

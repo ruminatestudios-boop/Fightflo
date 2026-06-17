@@ -191,6 +191,51 @@ export function drawMotionTrails(
 }
 
 /** Guard-only overlay — hands and guard line, no full skeleton */
+/** Pulsing ring on a single joint — live shadow / cinema callouts */
+export function drawJointHighlight(
+  ctx: CanvasRenderingContext2D,
+  landmarks: FrameLandmarks,
+  options: SkeletonDrawOptions & { kind?: "issue" | "positive" }
+) {
+  const { layout, highlightedJoint, pulsePhase = 0, kind = "issue", minVisibility = 0.25 } =
+    options;
+  if (!layout || !highlightedJoint) return;
+
+  const point = getLandmarkPoint(landmarks, highlightedJoint);
+  if (!point || (point.visibility ?? 1) < minVisibility) return;
+
+  const { x, y } = toCanvasPoint(point, layout);
+  const pulse = 0.85 + Math.sin(pulsePhase * 4) * 0.15;
+  const ringColor =
+    kind === "positive"
+      ? `rgba(34, 197, 94, ${0.95 * pulse})`
+      : `rgba(250, 204, 21, ${0.95 * pulse})`;
+  const glowColor =
+    kind === "positive"
+      ? `rgba(34, 197, 94, ${0.35 * pulse})`
+      : `rgba(250, 65, 65, ${0.4 * pulse})`;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, 18 + Math.sin(pulsePhase * 3) * 2, 0, Math.PI * 2);
+  ctx.strokeStyle = glowColor;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(x, y, 12, 0, Math.PI * 2);
+  ctx.strokeStyle = ringColor;
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(x, y, 5, 0, Math.PI * 2);
+  ctx.fillStyle =
+    kind === "positive" ? "rgba(34, 197, 94, 0.95)" : "rgba(250, 204, 21, 0.95)";
+  ctx.fill();
+  ctx.restore();
+}
+
 export function drawGuardHandsOverlay(
   ctx: CanvasRenderingContext2D,
   landmarks: FrameLandmarks,

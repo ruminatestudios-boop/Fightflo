@@ -1,6 +1,6 @@
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { hydrateDevStore } from "@/lib/db/dev-store";
-import { formatSupabaseError } from "@/lib/db/supabaseErrors";
+import { formatSupabaseError, isPostgrestRowCountError } from "@/lib/db/supabaseErrors";
 
 let devFallbackActive = !isSupabaseConfigured();
 
@@ -47,6 +47,13 @@ export async function withDevFallback<T>(
 ): Promise<T> {
   if (isConnectionError(error)) {
     activateDevFallback(error);
+    return devRetry();
+  }
+  if (
+    process.env.NODE_ENV === "development" &&
+    isPostgrestRowCountError(error)
+  ) {
+    hydrateDevStore();
     return devRetry();
   }
   throw error instanceof Error ? error : new Error(formatSupabaseError(error));
