@@ -7517,7 +7517,7 @@ button.stepguide-card-ts:active {
   border-radius: var(--radius-card);
   border: none;
   background: transparent;
-  padding: 0.875rem 0.5rem 0.875rem 0.875rem;
+  padding: 0.875rem 0.5rem 0.875rem 0.625rem;
   text-decoration: none;
 }
 
@@ -7575,8 +7575,10 @@ button.stepguide-card-ts:active {
 .session-library-thumb-btn {
   position: relative;
   flex-shrink: 0;
+  align-self: center;
   height: 3.75rem;
   width: 3.75rem;
+  margin-left: 0.875rem;
   border-radius: 0.625rem;
   border: none;
   padding: 0;

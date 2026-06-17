@@ -221,12 +221,12 @@ export function SessionLibraryRow({
 
   return (
     <li className="session-library-card">
+      <SessionThumbnail
+        session={session}
+        localThumb={localThumb}
+        onUpload={(f) => void handleThumbnailUpload(f)}
+      />
       <Link href={`/report/${session.id}`} className="session-library-item">
-        <SessionThumbnail
-          session={session}
-          localThumb={localThumb}
-          onUpload={(f) => void handleThumbnailUpload(f)}
-        />
         <span className="session-library-body">
           <span className="session-library-row">
             {editingName ? (
