@@ -186,7 +186,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
   const handleFeatureSelect = useCallback(
     (id: HomeFeatureId) => {
       const hasClip = (insights?.completeCount ?? 0) > 0;
-      const requiresClip = id === "guard" || id === "reupload" || id === "progress" || id === "weekly";
+      const requiresClip = id === "reupload" || id === "progress" || id === "weekly";
       if (requiresClip && !hasClip) {
         setLockedNotice("Upload a clip to unlock this tool.");
         openUpload();
@@ -196,6 +196,10 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
       setActiveCard(id);
       if (id === "upload") {
         openUpload();
+        return;
+      }
+      if (id === "guard") {
+        openLiveRecord();
         return;
       }
       setView(id);

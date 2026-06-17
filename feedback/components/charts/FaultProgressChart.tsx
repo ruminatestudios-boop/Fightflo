@@ -91,8 +91,8 @@ export function FaultProgressChart({
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={chartPoints}
-          margin={{ top: 12, right: 12, left: 4, bottom: 8 }}
-          barCategoryGap="28%"
+          margin={{ top: 8, right: 8, left: -2, bottom: 4 }}
+          barCategoryGap="32%"
         >
           <CartesianGrid
             vertical={false}
@@ -110,18 +110,10 @@ export function FaultProgressChart({
           <YAxis
             allowDecimals={false}
             domain={[0, yMax]}
-            tick={{ fill: "rgba(255,255,255,0.38)", fontSize: 10 }}
+            tick={{ fill: "rgba(255,255,255,0.32)", fontSize: 10 }}
             axisLine={false}
             tickLine={false}
-            width={28}
-            label={{
-              value: unit,
-              angle: -90,
-              position: "insideLeft",
-              offset: 8,
-              fill: "rgba(255,255,255,0.28)",
-              fontSize: 10,
-            }}
+            width={22}
           />
           <Tooltip
             cursor={false}

@@ -259,10 +259,7 @@ body {
   font-family: var(--font-instrument), system-ui, sans-serif;
   font-weight: 700;
   letter-spacing: -0.025em;
-  background: linear-gradient(180deg, #fefefe 0%, #888 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #fff;
 }
 
 .feedback-intro-actions .ff-primary-btn {
@@ -2529,10 +2526,7 @@ button.stepguide-card-ts:active {
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.025em;
-  background: linear-gradient(180deg, #fefefe 0%, #888 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #fff;
   text-transform: none;
 }
 
@@ -3437,10 +3431,7 @@ button.stepguide-card-ts:active {
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.035em;
-  background: linear-gradient(180deg, #fefefe 0%, #888 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #fff;
 }
 
 .feed-landing-hero-title-line--dim {
@@ -3579,10 +3570,7 @@ button.stepguide-card-ts:active {
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.03em;
-  background: linear-gradient(180deg, #fefefe 0%, #888 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #fff;
 }
 
 .feed-landing-body {
@@ -4878,6 +4866,43 @@ button.stepguide-card-ts:active {
   margin-top: 0.5rem;
 }
 
+.progress-simple-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.progress-simple-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.progress-simple-row:first-of-type {
+  padding-top: 0.5rem;
+}
+
+.progress-simple-row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.progress-simple-row-label {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.progress-simple-row-detail {
+  margin: 0.2rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.48);
+}
+
 .progress-headline {
   margin: 0;
   font-family: var(--font-inter), system-ui, sans-serif;
@@ -4935,7 +4960,9 @@ button.stepguide-card-ts:active {
   gap: 0.3rem;
   border-radius: var(--radius-card);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(0, 0, 0, 0.22);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   padding: 0.75rem 0.8rem;
 }
 
@@ -4968,7 +4995,9 @@ button.stepguide-card-ts:active {
   margin-top: 0.875rem;
   border-radius: var(--radius-card);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   padding: 0.875rem 0.9rem;
 }
 
@@ -5024,17 +5053,19 @@ button.stepguide-card-ts:active {
 }
 
 .progress-section-title {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.88);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .progress-section--strength .progress-section-title {
-  color: #6ee7b7;
+  color: rgba(110, 231, 183, 0.7);
 }
 
 .progress-section--focus .progress-section-title {
-  color: rgba(252, 165, 165, 0.85);
+  color: rgba(252, 165, 165, 0.6);
 }
 
 .progress-section-hint {
@@ -5060,9 +5091,11 @@ button.stepguide-card-ts:active {
 
 .progress-metric-card {
   overflow: hidden;
-  border-radius: 1rem;
+  border-radius: var(--radius-card);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   transition:
     border-color 0.15s ease,
     background 0.15s ease;
@@ -5070,12 +5103,12 @@ button.stepguide-card-ts:active {
 
 .progress-metric-card--open {
   border-color: rgba(250, 65, 65, 0.28);
-  background: rgba(250, 65, 65, 0.05);
+  background: linear-gradient(145deg, rgba(250, 65, 65, 0.08) 0%, rgba(250, 65, 65, 0.03) 100%);
 }
 
 .progress-metric-card--strength.progress-metric-card--open {
   border-color: rgba(52, 211, 153, 0.28);
-  background: rgba(52, 211, 153, 0.06);
+  background: linear-gradient(145deg, rgba(52, 211, 153, 0.08) 0%, rgba(52, 211, 153, 0.03) 100%);
 }
 
 .progress-metric-card-head {
@@ -5435,16 +5468,12 @@ button.stepguide-card-ts:active {
 
 .home-flow-chart {
   position: relative;
-  margin-top: 1rem;
-  height: 240px;
+  margin-top: 0.75rem;
   border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.03) 0%,
-    rgba(0, 0, 0, 0.45) 100%
-  );
-  padding: 0.75rem 0.5rem 1.75rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.5) 100%);
+  padding: 1rem 0.25rem 2rem;
+  overflow: hidden;
 }
 
 .home-flow-chart--embedded {
@@ -5455,15 +5484,15 @@ button.stepguide-card-ts:active {
 
 .home-chart-caption {
   position: absolute;
-  bottom: 0.5rem;
+  bottom: 0.6rem;
   left: 0;
   right: 0;
   margin: 0;
   text-align: center;
-  font-size: 0.625rem;
-  letter-spacing: 0.06em;
+  font-size: 0.6rem;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.22);
 }
 
 .home-chart-tooltip {
@@ -6421,11 +6450,25 @@ button.stepguide-card-ts:active {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 3.35rem;
-  height: 3.35rem;
   border-radius: 1rem;
   margin-top: -1.05rem;
   color: rgba(255, 255, 255, 0.92);
+}
+
+.feed-sticky-nav-main-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.feed-sticky-nav-main-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  line-height: 1;
 }
 
 .feed-sticky-nav-main-ring {
@@ -6598,6 +6641,79 @@ button.stepguide-card-ts:active {
   background: #000;
   display: flex;
   flex-direction: column;
+}
+
+.live-record-intro {
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 8, 10, 0.97);
+  padding: 2rem 1.5rem;
+}
+
+.live-record-intro-close {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
+
+.live-record-intro-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 22rem;
+  text-align: center;
+}
+
+.live-record-intro-icon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  border: 2px solid rgba(250, 65, 65, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.live-record-intro-dot {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background: #fa4141;
+  box-shadow: 0 0 0 6px rgba(250, 65, 65, 0.18);
+}
+
+.live-record-intro-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.live-record-intro-body {
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.live-record-intro-btn {
+  margin-top: 0.5rem;
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  border-radius: 0.75rem;
+  background: #fa4141;
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: opacity 0.15s ease;
+}
+
+.live-record-intro-btn:active {
+  opacity: 0.85;
 }
 
 .live-record-video {
@@ -7291,10 +7407,7 @@ button.stepguide-card-ts:active {
   flex-direction: column;
   align-items: stretch;
   gap: 0.35rem;
-  padding: 1rem;
-  border-radius: var(--radius-card);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  padding: 0.25rem 0 0;
 }
 
 .shadow-flow-timer-display {

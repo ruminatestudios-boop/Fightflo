@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FlowAction, FlowPanel, FlowShell } from "../FlowShell";
+import { InsightCard } from "@/components/home/InsightCard";
 import { getLastShadowRound } from "@/lib/shadow/shadowStorage";
 import {
   SHADOW_ROUND_MAX_SECONDS,
@@ -61,86 +62,68 @@ export function ShadowRoundFlow({
   return (
     <FlowShell
       title="Shadowboxing round"
-      subtitle="Live shadowboxing coach"
+      subtitle="Live coaching"
       onBack={onBack}
     >
+      <InsightCard
+        kicker="What we track live"
+        title="Real-time movement analysis"
+        summary="Shadow a round while AI watches your guard, combos, and mechanics — then gives you a full report."
+      />
+
       <FlowPanel>
-        <p className="home-flow-lead">
-          A live shadowboxing coach — not clip replay. We detect your combos,
-          flag exact moments with timestamps, and tell you what to throw more of
-          next round.
-        </p>
-
-        <div className="shadow-flow-tips">
-          <p className="shadow-flow-tips-label">What we track (live)</p>
-          <ul className="shadow-flow-tips-list">
-            {TRACK_ITEMS.map((item) => (
-              <li key={item}>{item}</li>
+        <p className="home-flow-label">Round length</p>
+        <div className="shadow-flow-timer">
+          <p className="shadow-flow-timer-display" aria-live="polite">
+            {formatTimer(roundSeconds)}
+          </p>
+          <p className="shadow-flow-timer-caption">
+            {formatRoundLengthLabel(roundSeconds)}
+          </p>
+          <input
+            type="range"
+            className="shadow-flow-timer-slider"
+            min={SHADOW_ROUND_MIN_SECONDS}
+            max={SHADOW_ROUND_MAX_SECONDS}
+            step={SHADOW_ROUND_STEP_SECONDS}
+            value={roundSeconds}
+            onChange={(e) =>
+              setRoundSeconds(clampShadowRoundLength(Number(e.target.value)))
+            }
+            aria-label="Round length"
+            aria-valuemin={SHADOW_ROUND_MIN_SECONDS}
+            aria-valuemax={SHADOW_ROUND_MAX_SECONDS}
+            aria-valuenow={roundSeconds}
+            aria-valuetext={formatRoundLengthLabel(roundSeconds)}
+          />
+          <div className="shadow-flow-timer-ticks" aria-hidden>
+            {SHADOW_ROUND_TICK_MARKS.map((len) => (
+              <span
+                key={len}
+                className={
+                  roundSeconds === len ? "shadow-flow-timer-tick--active" : ""
+                }
+              >
+                {formatTickLabel(len)}
+              </span>
             ))}
-          </ul>
-        </div>
-
-        <div className="shadow-flow-length">
-          <p className="shadow-flow-length-label">Round length</p>
-          <div className="shadow-flow-timer">
-            <p className="shadow-flow-timer-display" aria-live="polite">
-              {formatTimer(roundSeconds)}
-            </p>
-            <p className="shadow-flow-timer-caption">
-              {formatRoundLengthLabel(roundSeconds)}
-            </p>
-            <input
-              type="range"
-              className="shadow-flow-timer-slider"
-              min={SHADOW_ROUND_MIN_SECONDS}
-              max={SHADOW_ROUND_MAX_SECONDS}
-              step={SHADOW_ROUND_STEP_SECONDS}
-              value={roundSeconds}
-              onChange={(e) =>
-                setRoundSeconds(clampShadowRoundLength(Number(e.target.value)))
-              }
-              aria-label="Round length"
-              aria-valuemin={SHADOW_ROUND_MIN_SECONDS}
-              aria-valuemax={SHADOW_ROUND_MAX_SECONDS}
-              aria-valuenow={roundSeconds}
-              aria-valuetext={formatRoundLengthLabel(roundSeconds)}
-            />
-            <div className="shadow-flow-timer-ticks" aria-hidden>
-              {SHADOW_ROUND_TICK_MARKS.map((len) => (
-                <span
-                  key={len}
-                  className={
-                    roundSeconds === len ? "shadow-flow-timer-tick--active" : ""
-                  }
-                >
-                  {formatTickLabel(len)}
-                </span>
-              ))}
-            </div>
           </div>
         </div>
-
-        {lastRound ? (
-          <div className="shadow-flow-last">
-            <p className="shadow-flow-last-label">Last round</p>
-            <p className="shadow-flow-last-stat">
-              <strong>{lastRound.issueCount ?? lastRound.dropCount}</strong>{" "}
-              {lastRound.issueCount === 1 ? "issue" : "issues"} ·{" "}
-              <strong>{lastRound.positiveCount ?? 0}</strong> good moment
-              {(lastRound.positiveCount ?? 0) === 1 ? "" : "s"}
-            </p>
-            <p className="shadow-flow-last-hint">{lastRound.summary}</p>
-            {lastRound.recommendMore?.[0] ? (
-              <p className="shadow-flow-last-combo">
-                Do more: <strong>{lastRound.recommendMore[0].label}</strong>
-              </p>
-            ) : null}
-          </div>
-        ) : null}
       </FlowPanel>
 
+      {lastRound ? (
+        <InsightCard
+          kicker="Last round"
+          title={`${lastRound.issueCount ?? lastRound.dropCount} issue${(lastRound.issueCount ?? lastRound.dropCount) === 1 ? "" : "s"} · ${lastRound.positiveCount ?? 0} good moment${(lastRound.positiveCount ?? 0) === 1 ? "" : "s"}`}
+          titleVariant="body"
+          summary={lastRound.summary}
+          highlight={lastRound.recommendMore?.[0]?.label}
+          highlightLabel="Do more of"
+        />
+      ) : null}
+
       <FlowAction onClick={() => onStartRound(roundSeconds)}>
-        Start shadowboxing round
+        Start round
       </FlowAction>
     </FlowShell>
   );

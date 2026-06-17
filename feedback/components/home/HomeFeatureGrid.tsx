@@ -42,8 +42,8 @@ const FEATURE_HINTS: Record<
   { ready: string; locked: string }
 > = {
   guard: {
-    ready: "AI scans your clip and flags every guard drop with exact timestamps.",
-    locked: "Upload a clip to activate guard-drop detection.",
+    ready: "Record yourself live — AI alerts you the moment your guard drops.",
+    locked: "Record yourself live — AI alerts you the moment your guard drops.",
   },
   shadow: {
     ready: "Hit record — AI coaches your guard and combos live as you move.",
@@ -119,7 +119,7 @@ export function HomeFeatureGrid({
   const secondary: FeatureBlock[] = [
     {
       id: "guard",
-      label: "Track your guard",
+      label: "Live guard coaching",
       hint: featureHint("guard", hasClip),
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>

@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import type { ProgressInsight } from "@/lib/insights/types";
+import { InsightCard } from "@/components/home/InsightCard";
 import { FaultProgressChart } from "@/components/charts/FaultProgressChart";
-import type { ProgressInsight, ProgressMetric, ProgressMetricId } from "@/lib/insights/types";
-import type { WeaknessTrend } from "@/types";
 import { FlowEmpty, FlowPanel, FlowShell } from "../FlowShell";
 
 interface ProgressFlowProps {
@@ -11,199 +10,7 @@ interface ProgressFlowProps {
   onBack: () => void;
 }
 
-const TREND_LABEL: Record<WeaknessTrend, string> = {
-  improving: "Improving",
-  stable: "Stable",
-  worse: "Needs work",
-};
-
-function formatDelta(metric: ProgressMetric): string {
-  const { firstValue, lastValue, points, unit, trend, lowerIsBetter } = metric;
-
-  if (points.length === 1) {
-    return `First reading — ${lastValue} ${unit}`;
-  }
-
-  const delta = lastValue - firstValue;
-  const absDelta = Math.abs(delta);
-
-  if (trend === "stable" || absDelta === 0) {
-    return `Same as session #${points[0].session}`;
-  }
-
-  if (lowerIsBetter) {
-    const direction = delta > 0 ? "Up" : "Down";
-    return `${direction} ${absDelta} ${unit} since session #${points[0].session}`;
-  }
-
-  const direction = delta > 0 ? "Up" : "Down";
-  const suffix = trend === "improving" ? " — nice" : "";
-  return `${direction} ${absDelta} ${unit} since session #${points[0].session}${suffix}`;
-}
-
-function formatMetricValue(metric: ProgressMetric): string {
-  if (metric.unit) {
-    return `${metric.lastValue} ${metric.unit}`;
-  }
-  return String(metric.lastValue);
-}
-
-function ProgressSparkline({
-  points,
-  trend,
-  group,
-}: {
-  points: ProgressMetric["points"];
-  trend: WeaknessTrend;
-  group: ProgressMetric["group"];
-}) {
-  const max = Math.max(...points.map((point) => point.count), 1);
-  const recent = points.slice(-12);
-  const tone = group === "strength" ? "strength" : trend;
-
-  return (
-    <div className="progress-sparkline" aria-hidden>
-      {recent.map((point) => (
-        <span
-          key={point.session}
-          className={`progress-sparkline-bar progress-sparkline-bar--${tone}`}
-          style={{ height: `${Math.max(12, (point.count / max) * 100)}%` }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function ProgressMetricCard({
-  metric,
-  expanded,
-  onToggle,
-}: {
-  metric: ProgressMetric;
-  expanded: boolean;
-  onToggle: () => void;
-}) {
-  const latestSession = metric.points[metric.points.length - 1];
-
-  return (
-    <article
-      className={`progress-metric-card progress-metric-card--${metric.group} ${expanded ? "progress-metric-card--open" : ""}`}
-    >
-      <button
-        type="button"
-        className="progress-metric-card-head"
-        aria-expanded={expanded}
-        onClick={onToggle}
-      >
-        <div className="progress-metric-card-main">
-          <div className="progress-metric-card-top">
-            <p className="progress-metric-card-label">{metric.label}</p>
-            <span className={`progress-metric-badge progress-metric-badge--${metric.trend}`}>
-              {TREND_LABEL[metric.trend]}
-            </span>
-          </div>
-
-          <div className="progress-metric-card-value-row">
-            <span
-              className={`progress-metric-value-pill progress-metric-value-pill--${metric.group}`}
-            >
-              {formatMetricValue(metric)}
-            </span>
-          </div>
-
-          <p className="progress-metric-card-delta">{formatDelta(metric)}</p>
-        </div>
-
-        <div className="progress-metric-card-side">
-          <ProgressSparkline points={metric.points} trend={metric.trend} group={metric.group} />
-          {latestSession ? (
-            <p className="progress-metric-card-session">
-              Session #{latestSession.session}
-              {latestSession.date ? ` · ${latestSession.date}` : ""}
-            </p>
-          ) : null}
-        </div>
-      </button>
-
-      {expanded ? (
-        <div className="progress-metric-card-body">
-          <p className="progress-metric-card-explain">{metric.explanation}</p>
-          <p className="progress-metric-card-summary">{metric.summary}</p>
-          <FaultProgressChart
-            points={metric.points}
-            trend={metric.trend}
-            metricLabel={metric.label}
-            unit={metric.unit}
-            lowerIsBetter={metric.lowerIsBetter}
-            maxSessions={10}
-          />
-        </div>
-      ) : null}
-    </article>
-  );
-}
-
-function ProgressSection({
-  title,
-  hint,
-  tone,
-  metrics,
-  openMetricId,
-  onToggle,
-}: {
-  title: string;
-  hint: string;
-  tone: "strength" | "focus";
-  metrics: ProgressMetric[];
-  openMetricId: ProgressMetricId | null;
-  onToggle: (id: ProgressMetricId) => void;
-}) {
-  if (metrics.length === 0) return null;
-
-  return (
-    <section className={`progress-section progress-section--${tone}`}>
-      <div className="progress-section-head">
-        <h2 className="progress-section-title">{title}</h2>
-        <p className="progress-section-hint">{hint}</p>
-      </div>
-      <div className="progress-metric-list">
-        {metrics.map((metric) => (
-          <ProgressMetricCard
-            key={metric.id}
-            metric={metric}
-            expanded={openMetricId === metric.id}
-            onToggle={() => onToggle(metric.id)}
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
 export function ProgressFlow({ insight, onBack }: ProgressFlowProps) {
-  const [openMetricId, setOpenMetricId] = useState<ProgressMetricId | null>(null);
-  const initialized = useRef(false);
-
-  useEffect(() => {
-    if (insight && !initialized.current) {
-      initialized.current = true;
-      setOpenMetricId(insight.defaultMetricId);
-    }
-  }, [insight]);
-
-  const strengthMetrics = useMemo(
-    () => insight?.metrics.filter((metric) => metric.group === "strength") ?? [],
-    [insight]
-  );
-  const focusMetrics = useMemo(
-    () => insight?.metrics.filter((metric) => metric.group === "focus") ?? [],
-    [insight]
-  );
-  const strengthsImproving = useMemo(
-    () => strengthMetrics.filter((metric) => metric.trend === "improving").length,
-    [strengthMetrics]
-  );
-
   if (!insight) {
     return (
       <FlowShell title="Your progress" subtitle="Session metrics" onBack={onBack}>
@@ -212,89 +19,90 @@ export function ProgressFlow({ insight, onBack }: ProgressFlowProps) {
     );
   }
 
-  const hasStrengthInsight =
-    insight.latestPositives.length > 0 || insight.latestStrengthTitle;
-  const hasFaultInsight = Boolean(insight.latestMainFault);
-  const showCoachingEmpty = !hasStrengthInsight && !hasFaultInsight;
+  const strengthMetrics = insight.metrics.filter((m) => m.group === "strength");
+  const focusMetrics = insight.metrics.filter((m) => m.group === "focus");
+  const primaryFault = focusMetrics[0] ?? null;
 
   return (
     <FlowShell title="Your progress" subtitle="Strengths & areas to sharpen" onBack={onBack}>
-      <FlowPanel className="progress-overview">
-        <h2 className="progress-headline">{insight.headline}</h2>
-        <p className="progress-overview-detail">{insight.headlineDetail}</p>
-
-        <div className="progress-stat-row">
-          <span className="progress-stat-pill">
-            {insight.sessionCount} session{insight.sessionCount === 1 ? "" : "s"}
-          </span>
-          <span className="progress-stat-pill progress-stat-pill--strength">
-            {insight.latestPositives.length} latest strength
-            {insight.latestPositives.length === 1 ? "" : "s"}
-          </span>
-        </div>
-
-        {showCoachingEmpty ? (
-          <div className="progress-empty-card">
-            <p className="progress-empty-title">Not enough coaching data yet</p>
-            <p className="progress-empty-body">
-              Upload a clear, full-body clip so we can flag real strengths and faults to track
-              here.
-            </p>
-          </div>
-        ) : (
-          <div className="progress-summary-grid">
-            <div className="progress-summary-card progress-summary-card--strength">
-              <p className="progress-summary-label">Top strength</p>
-              <p className="progress-summary-value">
-                {insight.latestStrengthTitle ?? "None flagged yet"}
-              </p>
-            </div>
-            <div className="progress-summary-card progress-summary-card--focus">
-              <p className="progress-summary-label">Main fault</p>
-              <p className="progress-summary-value">
-                {insight.latestMainFault ?? "None flagged yet"}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {insight.latestPositives.length > 0 ? (
-          <ul className="progress-highlight-list">
-            {insight.latestPositives.slice(0, 3).map((positive) => (
-              <li key={positive.title} className="progress-highlight-item">
-                <p className="progress-highlight-title">{positive.title}</p>
-                {positive.detail ? (
-                  <p className="progress-highlight-detail">{positive.detail}</p>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        ) : null}
-
-        <p className="progress-overview-hint">
-          {strengthsImproving > 0
-            ? `${strengthsImproving} strength metric${strengthsImproving === 1 ? "" : "s"} trending up. Tap any card for the session chart.`
-            : "Tap a metric to see its chart — we track both what's working and what to sharpen."}
-        </p>
-      </FlowPanel>
-
-      <ProgressSection
-        title="What's working"
-        hint="Habits and techniques called out as strengths across your clips."
-        tone="strength"
-        metrics={strengthMetrics}
-        openMetricId={openMetricId}
-        onToggle={(id) => setOpenMetricId((current) => (current === id ? null : id))}
+      <InsightCard
+        kicker={`${insight.sessionCount} session${insight.sessionCount === 1 ? "" : "s"} tracked`}
+        title={insight.headline}
+        summary={insight.headlineDetail}
       />
 
-      <ProgressSection
-        title="Areas to sharpen"
-        hint="Faults and habits to keep an eye on — lower numbers usually mean real improvement."
-        tone="focus"
-        metrics={focusMetrics}
-        openMetricId={openMetricId}
-        onToggle={(id) => setOpenMetricId((current) => (current === id ? null : id))}
-      />
+      {primaryFault && primaryFault.points.length > 1 ? (
+        <FlowPanel>
+          <p className="home-flow-label">{primaryFault.label}</p>
+          <FaultProgressChart
+            points={primaryFault.points}
+            trend={primaryFault.trend}
+            metricLabel={primaryFault.label}
+            unit={primaryFault.unit}
+            lowerIsBetter={primaryFault.lowerIsBetter}
+            height={180}
+            maxSessions={8}
+          />
+        </FlowPanel>
+      ) : null}
+
+      {insight.latestMainFault || insight.latestStrengthTitle ? (
+        <InsightCard
+          kicker="Latest session"
+          title={insight.latestStrengthTitle ?? "No strengths flagged"}
+          titleVariant="body"
+          highlight={insight.latestMainFault ?? undefined}
+          highlightLabel="Main fault"
+        />
+      ) : null}
+
+      {focusMetrics.length > 0 ? (
+        <FlowPanel>
+          <p className="home-flow-label">Areas to sharpen</p>
+          {focusMetrics.map((m) => (
+            <div key={m.id} className="progress-simple-row">
+              <div className="progress-simple-row-main">
+                <p className="progress-simple-row-label">{m.label}</p>
+                <p className="progress-simple-row-detail">{m.summary}</p>
+              </div>
+              <span className={`progress-metric-badge progress-metric-badge--${m.trend}`}>
+                {m.trend === "improving" ? "Improving" : m.trend === "worse" ? "Needs work" : "Stable"}
+              </span>
+            </div>
+          ))}
+        </FlowPanel>
+      ) : null}
+
+      {strengthMetrics.length > 0 ? (
+        <FlowPanel>
+          <p className="home-flow-label">What&apos;s working</p>
+          {strengthMetrics.map((m) => (
+            <div key={m.id} className="progress-simple-row">
+              <div className="progress-simple-row-main">
+                <p className="progress-simple-row-label">{m.label}</p>
+                <p className="progress-simple-row-detail">{m.summary}</p>
+              </div>
+              <span className="progress-metric-badge progress-metric-badge--improving">
+                Strength
+              </span>
+            </div>
+          ))}
+        </FlowPanel>
+      ) : null}
+
+      {insight.latestPositives.length > 0 ? (
+        <FlowPanel>
+          <p className="home-flow-label">Latest strengths flagged</p>
+          {insight.latestPositives.slice(0, 3).map((p) => (
+            <div key={p.title} className="progress-simple-row">
+              <div className="progress-simple-row-main">
+                <p className="progress-simple-row-label">{p.title}</p>
+                {p.detail ? <p className="progress-simple-row-detail">{p.detail}</p> : null}
+              </div>
+            </div>
+          ))}
+        </FlowPanel>
+      ) : null}
     </FlowShell>
   );
 }

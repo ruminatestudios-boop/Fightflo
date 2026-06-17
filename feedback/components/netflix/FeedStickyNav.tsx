@@ -41,12 +41,12 @@ export function FeedStickyNav({
           aria-label="Upload a clip"
         >
           <span className="feed-sticky-nav-main-ring" aria-hidden>
-            <svg viewBox="0 0 24 24" className="feed-sticky-nav-main-icon" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 16V4" />
-              <path d="M8.5 7.5L12 4l3.5 3.5" />
-              <path d="M4 16.5V20a2 2 0 002 2h12a2 2 0 002-2v-3.5" />
-            </svg>
-          </span>
+              <svg viewBox="0 0 24 24" className="feed-sticky-nav-main-icon" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 16V4" />
+                <path d="M8.5 7.5L12 4l3.5 3.5" />
+                <path d="M4 16.5V20a2 2 0 002 2h12a2 2 0 002-2v-3.5" />
+              </svg>
+            </span>
         </button>
 
         <button
@@ -56,8 +56,8 @@ export function FeedStickyNav({
           aria-label="Live record"
         >
           <span className="feed-sticky-nav-main-ring" aria-hidden>
-            <span className="feed-sticky-nav-record-dot" />
-          </span>
+              <span className="feed-sticky-nav-record-dot" />
+            </span>
         </button>
 
         <button

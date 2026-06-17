@@ -48,6 +48,7 @@ export function LiveRecordScreen({
   const [recording, setRecording] = useState(false);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [facing, setFacing] = useState<CameraFacing>("environment");
+  const [introDismissed, setIntroDismissed] = useState(false);
 
   const liveLandmarks = useLiveCameraPose(videoRef, ready);
 
@@ -102,7 +103,7 @@ export function LiveRecordScreen({
     } catch (err) {
       if (session !== cameraSessionRef.current) return;
 
-      if (err instanceof Error && (err.name === "AbortError" || err.message.includes("interrupted"))) {
+      if (err instanceof Error && (err.name === "AbortError" || err.message.includes("interrupted") || err.message.toLowerCase().includes("aborted"))) {
         return;
       }
 
@@ -111,9 +112,10 @@ export function LiveRecordScreen({
   }, [facing]);
 
   useEffect(() => {
+    if (!introDismissed) return;
     void startCamera();
     return () => stopCamera();
-  }, [startCamera, stopCamera]);
+  }, [introDismissed, startCamera, stopCamera]);
 
   const flipCamera = useCallback(() => {
     if (recording) return;
@@ -176,6 +178,42 @@ export function LiveRecordScreen({
       setError("Recording not supported on this device.");
     }
   }, [recording, onRecordingComplete, stopRecording]);
+
+  if (!introDismissed) {
+    return (
+      <div className="live-record-root live-record-intro" role="dialog" aria-modal="true" aria-label="Live coach intro">
+        <button
+          type="button"
+          className="live-record-icon-btn live-record-intro-close"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <div className="live-record-intro-content">
+          <div className="live-record-intro-icon" aria-hidden>
+            <span className="live-record-intro-dot" />
+          </div>
+          <h2 className="live-record-intro-title">Live Coach</h2>
+          <p className="live-record-intro-body">
+            Film yourself training. Your guard and chin position are tracked live — a red alert appears the moment your guard drops.
+          </p>
+          <p className="live-record-intro-body">
+            When you stop, your footage is analysed in full — you get a complete AI coaching report with skeleton overlay, weakness breakdown, and drill recommendations.
+          </p>
+          <button
+            type="button"
+            className="live-record-intro-btn"
+            onClick={() => setIntroDismissed(true)}
+          >
+            Start recording
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="live-record-root" role="dialog" aria-modal="true" aria-label="Live coach">
@@ -257,8 +295,8 @@ export function LiveRecordScreen({
       <div className="live-record-bottom">
         <p className="live-record-hint">
           {recording
-            ? `${formatDuration(remainingSec)} remaining — skeleton tracks live`
-            : `Up to ${formatDuration(MAX_LIVE_RECORD_SECONDS)} — live skeleton + guard cues`}
+            ? `${formatDuration(remainingSec)} left — guard tracked live · full report on stop`
+            : `Tap to record · guard alerts live · full AI report after`}
         </p>
         <button
           type="button"

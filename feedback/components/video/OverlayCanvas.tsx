@@ -154,7 +154,6 @@ export function drawOverlayFrame(
     : getVideoContentRect(video, width, height, videoLayout);
   const lookupTime = currentTime + landmarkTimeOffset;
 
-  drawVideoWatermark(ctx, layout);
 
   const interpolated = getInterpolatedLandmarksAtTime(
     storedLandmarks,
