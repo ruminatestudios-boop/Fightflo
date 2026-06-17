@@ -2494,6 +2494,22 @@ button.stepguide-card-ts:active {
   font-size: clamp(1.25rem, 4.5vw, 1.5rem);
 }
 
+.glass-greeting-lead {
+  margin: 0.75rem 0 0;
+  max-width: 22rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.glass-greeting-select {
+  margin: 0.65rem 0 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .glass-back {
   margin-bottom: 0.75rem;
   font-size: 0.8125rem;
@@ -3321,6 +3337,225 @@ button.stepguide-card-ts:active {
   padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
 }
 
+/* ─── Feed landing (orbit → hero merge) ─── */
+
+.feed-landing {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: max(1.25rem, env(safe-area-inset-top)) 1.25rem
+    max(1.5rem, env(safe-area-inset-bottom));
+  background: #000;
+  color: #fff;
+}
+
+.feed-landing--boot {
+  justify-content: center;
+}
+
+.feed-landing-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.feed-landing-brand-mark {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 9999px;
+  background: #fa4141;
+  box-shadow: 0 0 0 3px rgba(250, 65, 65, 0.25);
+}
+
+.feed-landing-brand-text {
+  font-family: var(--font-oswald), var(--font-display), system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.feed-landing-stage {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 1rem 0 0.5rem;
+}
+
+.feed-landing-orbit {
+  position: relative;
+  width: min(78vw, 19rem);
+  height: min(78vw, 19rem);
+}
+
+.feed-landing-orbit-item {
+  --orbit-radius: min(34vw, 8.4rem);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3.35rem;
+  height: 3.35rem;
+  margin: -1.675rem 0 0 -1.675rem;
+  border-radius: calc(var(--radius-card) * 1.35);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: rotate(var(--orbit-angle))
+    translateY(calc(-1 * var(--orbit-radius)))
+    rotate(calc(-1 * var(--orbit-angle)));
+  transition:
+    transform 1.05s cubic-bezier(0.22, 1, 0.36, 1) var(--orbit-delay),
+    opacity 0.75s ease var(--orbit-delay),
+    filter 0.75s ease var(--orbit-delay);
+  will-change: transform, opacity;
+}
+
+.feed-landing-orbit-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.feed-landing-orbit-item--merge {
+  transform: rotate(var(--orbit-angle)) translateY(0) rotate(calc(-1 * var(--orbit-angle)))
+    scale(0.15);
+  opacity: 0;
+  filter: blur(3px);
+}
+
+.feed-landing-hero {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7.75rem;
+  height: 7.75rem;
+  margin: -3.875rem 0 0 -3.875rem;
+  border-radius: calc(var(--radius-feed-card, 1.25rem) * 1.05);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+  opacity: 0;
+  transform: scale(0.72);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.35s,
+    transform 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.35s,
+    width 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.35s,
+    height 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.35s,
+    margin 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.35s;
+}
+
+.feed-landing-hero img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.feed-landing-hero--forming {
+  opacity: 0.55;
+  transform: scale(0.9);
+}
+
+.feed-landing-hero--visible {
+  width: 9.5rem;
+  height: 9.5rem;
+  margin: -4.75rem 0 0 -4.75rem;
+  opacity: 1;
+  transform: scale(1);
+}
+
+.feed-landing-copy {
+  width: min(100%, 22rem);
+  text-align: center;
+  opacity: 0;
+  transform: translateY(0.75rem);
+  transition:
+    opacity 0.55s ease,
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.feed-landing-copy--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.feed-landing-eyebrow {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.feed-landing-title {
+  margin: 0.55rem 0 0;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: clamp(1.45rem, 5.2vw, 1.85rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.feed-landing-body {
+  margin: 0.65rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.56);
+}
+
+.feed-landing-cta {
+  width: 100%;
+  margin-top: 1.15rem;
+  min-height: 3rem;
+  border: none;
+  border-radius: 9999px;
+  background: #fa4141;
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.feed-landing-cta:active {
+  transform: scale(0.98);
+  background: #e83a3a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feed-landing-orbit-item,
+  .feed-landing-hero,
+  .feed-landing-copy {
+    transition: none;
+  }
+
+  .feed-landing-orbit-item--merge {
+    opacity: 0;
+    transform: rotate(var(--orbit-angle)) translateY(0) rotate(calc(-1 * var(--orbit-angle)))
+      scale(0.15);
+  }
+
+  .feed-landing-hero--visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .feed-landing-copy--visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .feed-spotlight {
   margin-top: 0.5rem;
   padding-inline: 0.15rem;
@@ -3405,19 +3640,10 @@ button.stepguide-card-ts:active {
 
 .feed-spotlight-body {
   margin: 0;
-  padding: 0 1.05rem 0.65rem;
+  padding: 0 1.05rem 1rem;
   font-size: 0.8125rem;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.52);
-}
-
-.feed-spotlight-prompt {
-  margin: 0;
-  padding: 0 1.05rem 0.85rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.72);
 }
 
 .feed-spotlight-actions {
@@ -3425,6 +3651,10 @@ button.stepguide-card-ts:active {
   grid-template-columns: 1fr 1fr;
   gap: 0.55rem;
   padding: 0 1.05rem 1rem;
+}
+
+.feed-spotlight-actions--solo {
+  padding-top: 1rem;
 }
 
 .feed-spotlight-btn {

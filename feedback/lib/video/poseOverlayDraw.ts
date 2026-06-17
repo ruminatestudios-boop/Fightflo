@@ -1,6 +1,7 @@
 import type { FrameLandmarks } from "@/types";
 import type { GuardCalibration } from "@/lib/analysis/poseMetrics";
 import { getGuardLineY } from "@/lib/analysis/poseMetrics";
+import { POSE_SKELETON_MIN_VISIBILITY } from "@/lib/pose/mediapipePose";
 import { getLandmarkPoint } from "@/components/video/utils";
 import {
   mapLandmarkToCanvas,
@@ -86,7 +87,7 @@ export function drawSkeleton(
   landmarks: FrameLandmarks,
   options: SkeletonDrawOptions
 ) {
-  const { layout, highlightedJoint, minVisibility = 0.25 } = options;
+  const { layout, highlightedJoint, minVisibility = POSE_SKELETON_MIN_VISIBILITY } = options;
   if (!layout) return;
 
   ctx.save();
@@ -198,7 +199,7 @@ export function drawJointHighlight(
   landmarks: FrameLandmarks,
   options: SkeletonDrawOptions & { kind?: "issue" | "positive" }
 ) {
-  const { layout, highlightedJoint, pulsePhase = 0, kind = "issue", minVisibility = 0.25 } =
+  const { layout, highlightedJoint, pulsePhase = 0, kind = "issue", minVisibility = POSE_SKELETON_MIN_VISIBILITY } =
     options;
   if (!layout || !highlightedJoint) return;
 
@@ -251,7 +252,7 @@ export function drawGuardHandsOverlay(
     const wrist = getLandmarkPoint(landmarks, wristKey);
     const elbow = getLandmarkPoint(landmarks, elbowKey);
     if (!wrist || !elbow) continue;
-    if ((wrist.visibility ?? 1) < 0.25 || (elbow.visibility ?? 1) < 0.25) continue;
+    if ((wrist.visibility ?? 1) < POSE_SKELETON_MIN_VISIBILITY || (elbow.visibility ?? 1) < POSE_SKELETON_MIN_VISIBILITY) continue;
 
     const state = wristGuardState(landmarks, wristKey, options.guardCalibration);
     const bad = state === "bad";

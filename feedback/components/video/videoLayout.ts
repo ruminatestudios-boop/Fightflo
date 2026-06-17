@@ -74,3 +74,25 @@ export function mapLandmarkToCanvas(
     y: layout.offsetY + point.y * layout.drawHeight,
   };
 }
+
+/**
+ * 1:1 canvas ↔ video source pixels — no object-fit rescale math in the draw loop.
+ * CSS object-fit on the canvas element handles display cropping.
+ */
+export function getSourceAlignedContentRect(
+  video: HTMLVideoElement,
+  mirror = false
+): VideoContentRect {
+  const vw = video.videoWidth || 640;
+  const vh = video.videoHeight || 480;
+  return {
+    offsetX: 0,
+    offsetY: 0,
+    drawWidth: vw,
+    drawHeight: vh,
+    canvasWidth: vw,
+    canvasHeight: vh,
+    fit: "cover",
+    mirror,
+  };
+}

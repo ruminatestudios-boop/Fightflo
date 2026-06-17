@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FrameLandmarks } from "@/types";
 import type { GuardCalibration } from "@/lib/analysis/poseMetrics";
 import {
@@ -71,22 +71,22 @@ export function useShadowRoundTracking({
     }
   }, [landmarks, phase, calibration, elapsedSec]);
 
-  const finishCalibration = (): GuardCalibration | null => {
+  const finishCalibration = useCallback((): GuardCalibration | null => {
     const cal = calibrateGuardFromNeutralFrames(neutralBufferRef.current);
     setCalibration(cal);
     return cal;
-  };
+  }, []);
 
-  const resetTracking = () => {
+  const resetTracking = useCallback(() => {
     neutralBufferRef.current = [];
     setCalibration(null);
     setStats(createShadowboxingStats());
     setCalibrateFrames(0);
     setActiveWarning(null);
     if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
-  };
+  }, []);
 
-  const buildResult = (): ShadowRoundResult => {
+  const buildResult = useCallback((): ShadowRoundResult => {
     const coaching = buildShadowboxingCoachingCopy(stats, roundSeconds);
     return {
       roundSeconds,
@@ -106,7 +106,7 @@ export function useShadowRoundTracking({
       recommendMore: coaching.comboAnalysis.recommendMore,
       comboDrill: coaching.comboAnalysis.comboDrill,
     };
-  };
+  }, [stats, roundSeconds]);
 
   return {
     calibration,

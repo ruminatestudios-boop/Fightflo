@@ -1,7 +1,5 @@
 "use client";
 
-import { FEED_INTRO_COPY } from "@/lib/copy";
-
 interface FeedAppInfoCardsProps {
   onUpload?: () => void;
   onRecord?: () => void;
@@ -9,28 +7,9 @@ interface FeedAppInfoCardsProps {
 
 export function FeedAppInfoCards({ onUpload, onRecord }: FeedAppInfoCardsProps) {
   return (
-    <section className="feed-spotlight" aria-label="How Fightflo works">
+    <section className="feed-spotlight" aria-label="Get started">
       <article className="feed-spotlight-card">
-        <div className="feed-spotlight-header">
-          <span className="feed-spotlight-eyebrow">How it works</span>
-          <span className="feed-spotlight-meta">
-            <svg className="feed-spotlight-meta-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            AI coaching
-          </span>
-        </div>
-
-        <div className="feed-spotlight-profile">
-          <div className="feed-spotlight-copy">
-            <h2 className="feed-spotlight-title">{FEED_INTRO_COPY.headline}</h2>
-          </div>
-        </div>
-
-        <p className="feed-spotlight-body">{FEED_INTRO_COPY.body}</p>
-        <p className="feed-spotlight-prompt">{FEED_INTRO_COPY.prompt}</p>
-
-        <div className="feed-spotlight-actions">
+        <div className="feed-spotlight-actions feed-spotlight-actions--solo">
           <button type="button" className="feed-spotlight-btn feed-spotlight-btn--primary" onClick={onUpload}>
             <span className="feed-spotlight-btn-icon" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">

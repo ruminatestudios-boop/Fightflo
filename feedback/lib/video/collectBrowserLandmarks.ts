@@ -1,86 +1,16 @@
 "use client";
 
 import { FRAMES_PER_SECOND, frameToTimestamp } from "@/lib/analysis/timestamps";
+import { getClientPoseLandmarker } from "@/lib/pose/clientPoseLandmarker";
+import {
+  LandmarkTripleSmoothBuffer,
+  processFightingPoseFrame,
+} from "@/lib/pose/mediapipePose";
 import type { FrameLandmarks, LandmarkTimeline } from "@/types";
-
-const LANDMARK_MAP: Record<number, keyof FrameLandmarks> = {
-  0: "nose",
-  11: "left_shoulder",
-  12: "right_shoulder",
-  13: "left_elbow",
-  14: "right_elbow",
-  15: "left_wrist",
-  16: "right_wrist",
-  23: "left_hip",
-  24: "right_hip",
-  25: "left_knee",
-  26: "right_knee",
-  27: "left_ankle",
-  28: "right_ankle",
-};
 
 export interface LandmarkCollectionMeta {
   videoWidth: number;
   videoHeight: number;
-}
-
-type PoseLandmarkerInstance = {
-  detect: (image: HTMLVideoElement | HTMLCanvasElement) => {
-    landmarks: Array<
-      Array<{ x: number; y: number; z: number; visibility?: number }>
-    >;
-  };
-};
-
-let sharedLandmarker: PoseLandmarkerInstance | null = null;
-let landmarkerPromise: Promise<PoseLandmarkerInstance> | null = null;
-
-async function getClientLandmarker(): Promise<PoseLandmarkerInstance> {
-  if (sharedLandmarker) return sharedLandmarker;
-  if (landmarkerPromise) return landmarkerPromise;
-
-  landmarkerPromise = (async () => {
-    const { FilesetResolver, PoseLandmarker } = await import(
-      "@mediapipe/tasks-vision"
-    );
-
-    const vision = await FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
-    );
-
-    sharedLandmarker = await PoseLandmarker.createFromOptions(vision, {
-      baseOptions: {
-        modelAssetPath:
-          "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-        delegate: "CPU",
-      },
-      runningMode: "IMAGE",
-      numPoses: 1,
-    });
-
-    return sharedLandmarker;
-  })();
-
-  return landmarkerPromise;
-}
-
-function mapPose(
-  pose: Array<{ x: number; y: number; z: number; visibility?: number }>
-): FrameLandmarks {
-  const landmarks: FrameLandmarks = {};
-  for (const [idxStr, key] of Object.entries(LANDMARK_MAP)) {
-    const idx = Number(idxStr);
-    const point = pose[idx];
-    if (point && (point.visibility ?? 1) > 0.2) {
-      landmarks[key] = {
-        x: point.x,
-        y: point.y,
-        z: point.z,
-        visibility: point.visibility,
-      };
-    }
-  }
-  return landmarks;
 }
 
 function isIosSafari(): boolean {
@@ -156,7 +86,8 @@ export async function collectLandmarkTimelineFromVideo(
     throw new Error("Video dimensions not available");
   }
 
-  const landmarker = await getClientLandmarker();
+  const landmarker = await getClientPoseLandmarker("IMAGE", false);
+  const smoothBuffer = new LandmarkTripleSmoothBuffer();
   const timeline: LandmarkTimeline = [];
   const frameCount = Math.max(1, Math.ceil(video.duration * FRAMES_PER_SECOND));
   const savedTime = video.currentTime;
@@ -183,10 +114,13 @@ export async function collectLandmarkTimelineFromVideo(
       try {
         const result = landmarker.detect(canvas);
         const pose = result.landmarks[0];
+        const processed = pose
+          ? processFightingPoseFrame(pose, smoothBuffer)
+          : null;
         timeline.push({
           frame: frameIndex,
           timestamp: frameToTimestamp(frameIndex),
-          landmarks: pose ? mapPose(pose) : {},
+          landmarks: processed ?? {},
         });
       } catch {
         timeline.push({

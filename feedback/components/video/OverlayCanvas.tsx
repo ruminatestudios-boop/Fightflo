@@ -21,7 +21,12 @@ import {
 } from "./SkeletonOverlay";
 import { getInterpolatedLandmarksAtTime, hasUsableStoredLandmarks, landmarksAreDrawable } from "./landmarkPlayback";
 import { getAnnotationAt } from "./utils";
-import { getVideoContentRect, mapLandmarkToCanvas, type VideoLayoutOptions } from "./videoLayout";
+import {
+  getSourceAlignedContentRect,
+  getVideoContentRect,
+  mapLandmarkToCanvas,
+  type VideoLayoutOptions,
+} from "./videoLayout";
 
 interface OverlayCanvasProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
@@ -49,6 +54,8 @@ interface OverlayCanvasProps {
   videoFit?: VideoLayoutOptions["fit"];
   /** Flip overlay x when video has scaleX(-1) */
   mirrorLandmarks?: boolean;
+  /** Canvas internal pixels = video source resolution (live camera) */
+  alignCanvasToSource?: boolean;
 }
 
 function resolveLivePoseEnabled(
@@ -137,11 +144,14 @@ export function drawOverlayFrame(
   usingLivePose = false,
   highlightJoint: keyof FrameLandmarks | null = null,
   highlightKind: "issue" | "positive" = "issue",
-  videoLayout: VideoLayoutOptions = {}
+  videoLayout: VideoLayoutOptions = {},
+  alignCanvasToSource = false
 ) {
   ctx.clearRect(0, 0, width, height);
 
-  const layout = getVideoContentRect(video, width, height, videoLayout);
+  const layout = alignCanvasToSource
+    ? getSourceAlignedContentRect(video, videoLayout.mirror ?? false)
+    : getVideoContentRect(video, width, height, videoLayout);
   const lookupTime = currentTime + landmarkTimeOffset;
 
   drawVideoWatermark(ctx, layout);
@@ -329,7 +339,10 @@ export function OverlayCanvas({
   highlightKind = "issue",
   videoFit = "contain",
   mirrorLandmarks = false,
+  alignCanvasToSource: alignCanvasToSourceProp,
 }: OverlayCanvasProps) {
+  const alignCanvasToSource =
+    alignCanvasToSourceProp ?? (externalLivePose && videoFit === "cover");
   const videoLayout = useMemo(
     () => ({ fit: videoFit, mirror: mirrorLandmarks }),
     [videoFit, mirrorLandmarks]
@@ -363,16 +376,28 @@ export function OverlayCanvas({
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
 
+    if (alignCanvasToSource && video.videoWidth > 0 && video.videoHeight > 0) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+      canvas.style.objectFit = videoFit;
+      const ctx = canvas.getContext("2d");
+      if (ctx) ctx.setTransform(1, 0, 0, 1, 0, 0);
+      return;
+    }
+
     const rect = video.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     canvas.style.width = `${rect.width}px`;
     canvas.style.height = `${rect.height}px`;
+    canvas.style.objectFit = "";
 
     const ctx = canvas.getContext("2d");
     if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }, [videoRef]);
+  }, [videoRef, alignCanvasToSource, videoFit]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -389,13 +414,19 @@ export function OverlayCanvas({
       }
 
       pulseRef.current += 0.016;
-      const rect = video.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) {
+      const drawWidth = alignCanvasToSource
+        ? video.videoWidth || canvas.width
+        : video.getBoundingClientRect().width;
+      const drawHeight = alignCanvasToSource
+        ? video.videoHeight || canvas.height
+        : video.getBoundingClientRect().height;
+
+      if (drawWidth > 0 && drawHeight > 0) {
         drawOverlayFrame(
           ctx,
           video,
-          rect.width,
-          rect.height,
+          drawWidth,
+          drawHeight,
           video.currentTime,
           landmarks,
           liveLandmarks,
@@ -411,7 +442,8 @@ export function OverlayCanvas({
           usingLivePose,
           highlightJoint,
           highlightKind,
-          videoLayout
+          videoLayout,
+          alignCanvasToSource
         );
       }
 
@@ -448,6 +480,7 @@ export function OverlayCanvas({
     highlightJoint,
     highlightKind,
     videoLayout,
+    alignCanvasToSource,
   ]);
 
   return (

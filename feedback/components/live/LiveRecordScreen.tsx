@@ -7,6 +7,7 @@ import {
   attachStreamToVideo,
   detachVideoStream,
   extensionForMime,
+  formatCameraError,
   MAX_LIVE_RECORD_SECONDS,
   pickRecorderMimeType,
   startCameraStream,
@@ -101,18 +102,11 @@ export function LiveRecordScreen({
     } catch (err) {
       if (session !== cameraSessionRef.current) return;
 
-      const message =
-        err instanceof Error ? err.message : "Could not access camera";
-      if (message.includes("NotAllowed") || message.includes("Permission")) {
-        setError("Camera permission denied — allow camera in browser settings.");
-      } else if (
-        message.includes("interrupted") ||
-        message.includes("AbortError")
-      ) {
+      if (err instanceof Error && (err.name === "AbortError" || err.message.includes("interrupted"))) {
         return;
-      } else {
-        setError(message);
       }
+
+      setError(formatCameraError(err));
     }
   }, [facing]);
 

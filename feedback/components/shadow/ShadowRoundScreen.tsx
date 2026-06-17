@@ -13,6 +13,7 @@ import {
   attachStreamToVideo,
   detachVideoStream,
   extensionForMime,
+  formatCameraError,
   pickRecorderMimeType,
   startCameraStream,
   stopMediaStream,
@@ -135,10 +136,8 @@ export function ShadowRoundScreen({
       setError(null);
     } catch (err) {
       if (session !== cameraSessionRef.current) return;
-      const message = err instanceof Error ? err.message : "Could not access camera";
-      if (message.includes("NotAllowed") || message.includes("Permission")) {
-        setError("Camera permission denied — allow camera in browser settings.");
-      } else if (!message.includes("interrupted") && !message.includes("AbortError")) {
+      const message = formatCameraError(err);
+      if (!message.includes("interrupted") && err instanceof Error && err.name !== "AbortError") {
         setError(message);
       }
     }
@@ -365,7 +364,8 @@ export function ShadowRoundScreen({
         <div className="shadow-round-calibrate-banner">
           <p className="shadow-round-calibrate-title">Hands up — guard position</p>
           <p className="shadow-round-calibrate-sub">
-            Stand side-on, full body in frame. We learn your guard height.
+            Stand side-on, full body in frame. We learn your guard height — recording
+            starts automatically when the countdown ends.
             {calibrateFrames > 0 ? ` (${calibrateFrames} frames)` : ""}
           </p>
         </div>

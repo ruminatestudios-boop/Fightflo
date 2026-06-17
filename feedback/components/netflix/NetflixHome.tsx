@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { FEED_COPY } from "@/lib/copy";
 import { HomeFeatureGrid, type HomeFeatureId } from "@/components/home/HomeFeatureGrid";
 import { HomeSettingsChips } from "@/components/home/HomeSettingsChips";
 import {
@@ -104,11 +105,17 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
   } = useHomeInsights(true);
 
   const openLiveRecord = useCallback(() => {
+    setShadowRoundSeconds(null);
     setView("home");
     setMainTab("home");
     writeHomeUrlState("home", "home", homeRoute);
     setLiveRecordOpen(true);
   }, [homeRoute]);
+
+  const openShadowRound = useCallback((seconds: ShadowRoundLength) => {
+    setLiveRecordOpen(false);
+    setShadowRoundSeconds(seconds);
+  }, []);
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -289,7 +296,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
         return (
           <ShadowRoundFlow
             onBack={handleShellBack}
-            onStartRound={(seconds) => setShadowRoundSeconds(seconds)}
+            onStartRound={openShadowRound}
           />
         );
       case "reupload":
@@ -386,24 +393,36 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
         ) : view === "home" ? (
           <div className={`glass-home-inner ${homeRoute === "feed" ? "glass-home-inner--feed" : ""}`}>
             <header className="glass-greeting">
-              <p className="glass-greeting-sub">Ready to improve</p>
-              <h1 className="glass-greeting-title">
-                {userName
-                  ? `How can we help ${userName}'s training today?`
-                  : "How can we help your training today?"}
-              </h1>
-              {homeRoute === "feed" ? null : (
-                <HomeSettingsChips
-                  sport={sport}
-                  level={level}
-                  userName={userName}
-                  onSportClick={() => setSettingsModal("sport")}
-                  onLevelClick={() => setSettingsModal("level")}
-                  onNameClick={() => {
-                    setNameDraft(userName ?? "");
-                    setSettingsModal("name");
-                  }}
-                />
+              {homeRoute === "feed" ? (
+                <>
+                  <h1 className="glass-greeting-title">
+                    {userName
+                      ? `How can we help ${userName}'s training today?`
+                      : FEED_COPY.headline}
+                  </h1>
+                  <p className="glass-greeting-lead">{FEED_COPY.body}</p>
+                  <p className="glass-greeting-select">{FEED_COPY.selectPrompt}</p>
+                </>
+              ) : (
+                <>
+                  <p className="glass-greeting-sub">Ready to improve</p>
+                  <h1 className="glass-greeting-title">
+                    {userName
+                      ? `How can we help ${userName}'s training today?`
+                      : "How can we help your training today?"}
+                  </h1>
+                  <HomeSettingsChips
+                    sport={sport}
+                    level={level}
+                    userName={userName}
+                    onSportClick={() => setSettingsModal("sport")}
+                    onLevelClick={() => setSettingsModal("level")}
+                    onNameClick={() => {
+                      setNameDraft(userName ?? "");
+                      setSettingsModal("name");
+                    }}
+                  />
+                </>
               )}
             </header>
 

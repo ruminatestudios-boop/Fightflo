@@ -198,18 +198,38 @@ export interface LandmarkPoint {
 
 export interface FrameLandmarks {
   nose?: LandmarkPoint;
+  left_eye_inner?: LandmarkPoint;
+  left_eye?: LandmarkPoint;
+  left_eye_outer?: LandmarkPoint;
+  right_eye_inner?: LandmarkPoint;
+  right_eye?: LandmarkPoint;
+  right_eye_outer?: LandmarkPoint;
+  left_ear?: LandmarkPoint;
+  right_ear?: LandmarkPoint;
+  mouth_left?: LandmarkPoint;
+  mouth_right?: LandmarkPoint;
   left_shoulder?: LandmarkPoint;
   right_shoulder?: LandmarkPoint;
   left_elbow?: LandmarkPoint;
   right_elbow?: LandmarkPoint;
   left_wrist?: LandmarkPoint;
   right_wrist?: LandmarkPoint;
+  left_pinky?: LandmarkPoint;
+  right_pinky?: LandmarkPoint;
+  left_index?: LandmarkPoint;
+  right_index?: LandmarkPoint;
+  left_thumb?: LandmarkPoint;
+  right_thumb?: LandmarkPoint;
   left_hip?: LandmarkPoint;
   right_hip?: LandmarkPoint;
   left_knee?: LandmarkPoint;
   right_knee?: LandmarkPoint;
   left_ankle?: LandmarkPoint;
   right_ankle?: LandmarkPoint;
+  left_heel?: LandmarkPoint;
+  right_heel?: LandmarkPoint;
+  left_foot_index?: LandmarkPoint;
+  right_foot_index?: LandmarkPoint;
 }
 
 export interface TimelineFrame {

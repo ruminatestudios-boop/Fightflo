@@ -7,6 +7,12 @@ import {
 } from "@/lib/analysis/mediaPipeServerRuntime";
 import { assessPoseQuality } from "@/lib/analysis/poseQuality";
 import { getSportConfig } from "@/config/sports";
+import { createSportsPoseLandmarkerOptions } from "@/lib/pose/mediapipeConfig";
+import {
+  LandmarkTripleSmoothBuffer,
+  POSE_LANDMARK_MAP,
+  processFightingPoseFrame,
+} from "@/lib/pose/mediapipePose";
 import type {
   ConfirmedPoseEvent,
   FrameLandmarks,
@@ -14,25 +20,6 @@ import type {
   SportId,
 } from "@/types";
 import type { PoseLandmarker } from "@mediapipe/tasks-vision";
-
-const LANDMARK_MAP: Record<number, keyof FrameLandmarks> = {
-  0: "nose",
-  11: "left_shoulder",
-  12: "right_shoulder",
-  13: "left_elbow",
-  14: "right_elbow",
-  15: "left_wrist",
-  16: "right_wrist",
-  23: "left_hip",
-  24: "right_hip",
-  25: "left_knee",
-  26: "right_knee",
-  27: "left_ankle",
-  28: "right_ankle",
-};
-
-const LITE_MODEL =
-  "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
 
 let landmarkerInstance: PoseLandmarker | null = null;
 
@@ -48,14 +35,10 @@ async function getLandmarker() {
 
   const vision = await FilesetResolver.forVisionTasks(wasmBaseUrl);
 
-  landmarkerInstance = await PoseLandmarker.createFromOptions(vision, {
-    baseOptions: {
-      modelAssetPath: LITE_MODEL,
-      delegate: "CPU",
-    },
-    runningMode: "IMAGE",
-    numPoses: 1,
-  });
+  landmarkerInstance = await PoseLandmarker.createFromOptions(
+    vision,
+    createSportsPoseLandmarkerOptions("IMAGE", "CPU")
+  );
 
   return landmarkerInstance;
 }
@@ -71,19 +54,17 @@ async function loadFrameImage(framePath: string) {
 
 function mapPoseToLandmarks(
   pose: Array<{ x: number; y: number; z: number; visibility?: number }>,
-  indices: number[]
+  indices: number[],
+  smoothBuffer: LandmarkTripleSmoothBuffer
 ): FrameLandmarks {
+  const processed = processFightingPoseFrame(pose, smoothBuffer);
+  if (!processed) return {};
+
   const landmarks: FrameLandmarks = {};
   for (const idx of indices) {
-    const key = LANDMARK_MAP[idx];
-    const point = pose[idx];
-    if (key && point) {
-      landmarks[key] = {
-        x: point.x,
-        y: point.y,
-        z: point.z,
-        visibility: point.visibility,
-      };
+    const key = POSE_LANDMARK_MAP[idx];
+    if (key && processed[key]) {
+      landmarks[key] = processed[key];
     }
   }
   return landmarks;
@@ -167,13 +148,16 @@ export async function detectPoseWithMeta(
   }
 
   const landmarker = await getLandmarker();
+  const smoothBuffer = new LandmarkTripleSmoothBuffer();
 
   for (let i = 0; i < framePaths.length; i++) {
     try {
       const image = await loadFrameImage(framePaths[i]);
       const result = landmarker.detect(image as unknown as TexImageSource);
       const pose = result.landmarks[0];
-      const landmarks = pose ? mapPoseToLandmarks(pose, indices) : {};
+      const landmarks = pose
+        ? mapPoseToLandmarks(pose, indices, smoothBuffer)
+        : {};
 
       rawTimeline.push({
         frame: i,

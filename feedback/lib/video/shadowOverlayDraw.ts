@@ -7,6 +7,7 @@ import {
   type VideoContentRect,
 } from "@/components/video/videoLayout";
 import type { SkeletonDrawOptions, WristTrailPoint } from "./poseOverlayDraw";
+import { POSE_SKELETON_MIN_VISIBILITY } from "@/lib/pose/mediapipePose";
 import {
   drawGuardLine,
   drawJointHighlight,
@@ -22,7 +23,7 @@ function toCanvas(
 
 function jointVisible(
   point: { visibility?: number } | undefined,
-  min = 0.25
+  min = POSE_SKELETON_MIN_VISIBILITY
 ): boolean {
   return point !== undefined && (point.visibility ?? 1) >= min;
 }

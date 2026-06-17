@@ -7,10 +7,17 @@ export const INTRO_COPY = {
   getStartedLabel: "Get your FREE analysis",
 } as const;
 
-export const FEED_INTRO_COPY = {
+export const FEED_COPY = {
   headline: "How can we help your training today?",
-  body: "Fightflo helps you improve through AI-powered video analysis and coaching.",
-  prompt: "Select an option below",
+  body: "FightFlo helps you improve through AI-powered video analysis and coaching.",
+  selectPrompt: "Select an option below",
+} as const;
+
+export const FEED_LANDING_COPY = {
+  eyebrow: "AI coaching for fighters",
+  headline: "Turn every round into fight IQ",
+  body: "Upload clips, shadowbox live, and track guard, combos, and progress — all in one place.",
+  cta: "Get started",
 } as const;
 
 export const PWA_INSTALL_COPY = {
