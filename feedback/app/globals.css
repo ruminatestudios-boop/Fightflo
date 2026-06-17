@@ -7411,6 +7411,11 @@ button.stepguide-card-ts:active {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.session-library::-webkit-scrollbar {
+  display: none;
 }
 
 .session-library--empty {
