@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { SessionEditSheet } from "@/components/netflix/SessionEditSheet";
 import { SessionLibraryRow } from "@/components/netflix/SessionLibraryRow";
 import type { SessionLibraryEntry } from "@/lib/sessions/library";
 
@@ -22,8 +20,6 @@ export function SessionLibrary({
   isPro = false,
   onUpgrade,
 }: SessionLibraryProps) {
-  const [editing, setEditing] = useState<SessionLibraryEntry | null>(null);
-
   if (loading) {
     return (
       <div
@@ -72,7 +68,6 @@ export function SessionLibrary({
               key={session.id}
               session={session}
               isPro={isPro}
-              onEdit={() => setEditing(session)}
               onUpgrade={() => onUpgrade?.()}
               onDeleted={onRetry}
             />
@@ -80,12 +75,6 @@ export function SessionLibrary({
         </ul>
       </div>
 
-      <SessionEditSheet
-        session={editing}
-        open={editing !== null}
-        onClose={() => setEditing(null)}
-        onSaved={onRetry}
-      />
     </>
   );
 }
