@@ -541,15 +541,35 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
         isPro={isPro}
         onClose={() => setShowPricingModal(false)}
         onCheckout={async (plan) => {
-          const userId = localStorage.getItem("feedback_anon_user_id");
-          if (!userId) return;
-          const res = await fetch(apiPath("/api/checkout"), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ plan, userId }),
-          });
-          const data = await res.json();
-          if (data.url) window.location.href = data.url;
+          try {
+            let userId = localStorage.getItem("feedback_anon_user_id");
+            // Ensure a user exists in the DB (creates one if needed)
+            const ensureRes = await fetch(apiPath("/api/user/ensure"), {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId, sport, level }),
+            });
+            if (!ensureRes.ok) throw new Error("Could not create user session");
+            const ensureData = await ensureRes.json() as { userId?: string };
+            const resolvedId = ensureData.userId;
+            if (!resolvedId) throw new Error("No user ID returned");
+            // Persist so upload and other flows reuse the same user
+            storeUserId(resolvedId);
+
+            const res = await fetch(apiPath("/api/checkout"), {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ plan, userId: resolvedId }),
+            });
+            const data = await res.json() as { url?: string; error?: string };
+            if (data.url) {
+              window.location.href = data.url;
+            } else {
+              alert(data.error ?? "Checkout failed. Please try again.");
+            }
+          } catch (err) {
+            alert(err instanceof Error ? err.message : "Checkout failed. Please check your connection and try again.");
+          }
         }}
       />
 

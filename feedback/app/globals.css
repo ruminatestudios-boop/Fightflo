@@ -3624,21 +3624,54 @@ button.stepguide-card-ts:active {
 
 .feed-action-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
   width: 100%;
-  padding: 1rem 1rem 1rem 1.1rem;
   border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.07);
   background: #111;
   text-align: left;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  overflow: hidden;
 }
 
-.feed-action-card:hover {
-  background: #161616;
-  border-color: rgba(255, 255, 255, 0.11);
+.feed-action-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1rem 1rem 1.1rem;
+}
+
+.feed-action-card-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 0;
+}
+
+.feed-action-card-pricing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background: #fa4141;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #fff;
+  transition: background 0.15s ease;
+}
+
+.feed-action-card-pricing:hover {
+  background: #e83a3a;
+}
+
+.feed-action-card-pricing svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
 }
 
 .feed-action-card-btns {
@@ -3957,6 +3990,16 @@ button.stepguide-card-ts:active {
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 22px 70px rgba(0, 0, 0, 0.58),
     0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.home-feature-carousel-track--fullscreen .home-feature-carousel-slide--active .home-feature-carousel-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(ellipse at bottom left, rgba(250, 65, 65, 0.22) 0%, transparent 60%);
+  transition: opacity 0.4s ease;
 }
 
 .home-feature-carousel-track--fullscreen .home-feature-carousel-card {
@@ -6290,7 +6333,7 @@ button.stepguide-card-ts:active {
   align-items: center;
   justify-content: center;
   padding: 0.55rem 0.75rem 0.6rem;
-  border-radius: 9999px;
+  border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(10, 10, 12, 0.88);
   backdrop-filter: blur(28px) saturate(1.2);
@@ -6324,7 +6367,6 @@ button.stepguide-card-ts:active {
 
 .feed-sticky-nav-tab--active {
   color: rgba(255, 255, 255, 0.92);
-  background: rgba(255, 255, 255, 0.06);
 }
 
 .feed-sticky-nav-tab:active {
@@ -6337,7 +6379,7 @@ button.stepguide-card-ts:active {
   justify-content: center;
   width: 3.35rem;
   height: 3.35rem;
-  border-radius: 9999px;
+  border-radius: 1rem;
   margin-top: -1.05rem;
   color: rgba(255, 255, 255, 0.92);
 }
@@ -6348,7 +6390,7 @@ button.stepguide-card-ts:active {
   justify-content: center;
   width: 3.35rem;
   height: 3.35rem;
-  border-radius: 9999px;
+  border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(16px);
@@ -6363,17 +6405,11 @@ button.stepguide-card-ts:active {
 }
 
 .feed-sticky-nav-main--record .feed-sticky-nav-main-ring {
-  border-color: rgba(250, 65, 65, 0.38);
-  background: linear-gradient(
-    145deg,
-    rgba(250, 65, 65, 0.22) 0%,
-    rgba(255, 255, 255, 0.06) 42%,
-    rgba(0, 0, 0, 0.55) 100%
-  );
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.35);
   box-shadow:
     0 14px 46px rgba(0, 0, 0, 0.55),
-    0 10px 28px rgba(250, 65, 65, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .feed-sticky-nav-main-icon {
