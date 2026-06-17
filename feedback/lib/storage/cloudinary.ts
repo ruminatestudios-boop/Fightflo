@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
+import { getScanCostCollector } from "@/lib/telemetry/scanCost";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -54,6 +55,8 @@ export async function uploadClip(
     public_id: `${sessionId}_${label}`,
     overwrite: true,
   });
+  const bytes = result.bytes ?? 0;
+  if (bytes > 0) getScanCostCollector()?.addClipBytes(bytes);
   return result.secure_url;
 }
 
@@ -74,11 +77,20 @@ export async function uploadExportVideo(
           reject(error ?? new Error("Cloudinary export upload failed"));
           return;
         }
+        const bytes = result.bytes ?? fileBuffer.length;
+        if (bytes > 0) getScanCostCollector()?.setExportBytes(bytes);
         resolve(result.secure_url);
       }
     );
     stream.end(fileBuffer);
   });
+}
+
+export async function getVideoResourceBytes(publicId: string): Promise<number> {
+  const result = await cloudinary.api.resource(publicId, {
+    resource_type: "video",
+  });
+  return result.bytes ?? 0;
 }
 
 export async function deleteVideo(publicId: string): Promise<void> {

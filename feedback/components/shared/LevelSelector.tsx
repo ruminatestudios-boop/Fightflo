@@ -24,15 +24,11 @@ export function LevelSelector({ value, onChange }: LevelSelectorProps) {
             key={level.id}
             type="button"
             onClick={() => onChange(level.id)}
-            className={`rounded-card border-2 bg-white px-3 py-2.5 text-left text-black shadow-sm transition-all active:scale-[0.98] ${
-              selected
-                ? "border-black shadow-md"
-                : "border-transparent hover:shadow-md"
+            className={`home-level-pill text-left ${
+              selected ? "home-level-pill--selected" : ""
             }`}
           >
-            <span className="font-display text-xs font-semibold text-neutral-900">
-              {level.label}
-            </span>
+            <span className="text-xs font-semibold">{level.label}</span>
           </button>
         );
       })}

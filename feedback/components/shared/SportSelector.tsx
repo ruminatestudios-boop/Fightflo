@@ -20,16 +20,12 @@ export function SportSelector({ value, onChange }: SportSelectorProps) {
             key={id}
             type="button"
             onClick={() => onChange(id)}
-            className={`flex flex-1 items-center gap-2 rounded-card border-2 bg-white px-3 py-2.5 text-left text-black shadow-sm transition-all active:scale-[0.98] ${
-              selected
-                ? "border-black shadow-md"
-                : "border-transparent hover:shadow-md"
+            className={`home-level-pill flex flex-1 items-center gap-2 text-left ${
+              selected ? "home-level-pill--selected" : ""
             }`}
           >
             <span className="text-base">{sport.emoji}</span>
-            <span className="font-display text-xs font-semibold uppercase tracking-wide text-neutral-900">
-              {sport.name}
-            </span>
+            <span className="text-xs font-semibold">{sport.name}</span>
           </button>
         );
       })}

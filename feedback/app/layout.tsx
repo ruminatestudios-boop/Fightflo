@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { Barlow_Condensed, Inter } from "next/font/google";
+import { Barlow_Condensed, Inter, Oswald } from "next/font/google";
 import { Analytics } from "@/components/shared/Analytics";
 import { NavigationTracker } from "@/components/shared/NavigationTracker";
 import { PWARegister } from "@/components/shared/PWARegister";
@@ -21,6 +21,12 @@ const barlow = Barlow_Condensed({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
   variable: "--font-display",
+});
+
+const oswald = Oswald({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-oswald",
 });
 
 export const metadata: Metadata = {
@@ -53,7 +59,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${barlow.variable} min-h-dvh antialiased`}
+        className={`${inter.variable} ${barlow.variable} ${oswald.variable} min-h-dvh antialiased`}
       >
         <Suspense fallback={null}>
           <NavigationTracker />

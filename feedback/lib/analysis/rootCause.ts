@@ -1,4 +1,5 @@
 import { getSportConfig } from "@/config/sports";
+import type { SkillFoundationReport } from "@/lib/analysis/skillFoundation";
 import type { PatternAnalysisResult, SportId } from "@/types";
 
 export interface RootCauseDiagnosis {
@@ -124,14 +125,38 @@ const ROOT_CAUSE_TEMPLATES: Record<
 
 export function diagnoseRootCause(
   patternData: PatternAnalysisResult,
-  sport: SportId
+  sport: SportId,
+  skillFoundation?: SkillFoundationReport
 ): RootCauseDiagnosis {
   const sportConfig = getSportConfig(sport);
   const weaknessType =
+    skillFoundation?.primaryWeaknessType ||
     patternData.primary_weakness ||
     patternData.events[0]?.weakness_type ||
     "technique_error";
+
+  const primaryMoment =
+    skillFoundation?.moments.find((m) => m.weaknessType === weaknessType) ??
+    skillFoundation?.moments[0];
+
   const template = ROOT_CAUSE_TEMPLATES[weaknessType];
+
+  if (primaryMoment) {
+    return {
+      weakness_type: weaknessType,
+      what_is_happening: primaryMoment.detail,
+      root_cause: template?.root_cause ?? "Biomechanical sequencing breaks down at this timestamp.",
+      fight_consequence:
+        template?.fight_consequence ??
+        "Opponent can counter during this mechanical window.",
+      mechanical_fix: primaryMoment.fix,
+      elite_reference:
+        template?.elite_reference ??
+        sportConfig.elite_references[0] ??
+        "Study elite technique film.",
+      confidence: patternData.frequency > 5 ? 0.9 : 0.75,
+    };
+  }
 
   if (template) {
     return {

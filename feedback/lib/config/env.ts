@@ -54,3 +54,27 @@ export function hasProAccess(user: { is_pro: boolean } | null | undefined): bool
 export function isLoopsConfigured(): boolean {
   return Boolean(process.env.LOOPS_API_KEY?.trim());
 }
+
+/** Per-scan cost logging to Google Sheets (optional) */
+export function isGoogleSheetsWebhookConfigured(): boolean {
+  return Boolean(
+    process.env.GOOGLE_SHEETS_WEBHOOK_URL?.trim() &&
+      process.env.GOOGLE_SHEETS_WEBHOOK_SECRET?.trim()
+  );
+}
+
+function isGoogleSheetsServiceAccountConfigured(): boolean {
+  if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim()) return true;
+
+  return Boolean(
+    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim() &&
+      process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.trim() &&
+      process.env.GOOGLE_SHEETS_ID?.trim()
+  );
+}
+
+export function isGoogleSheetsConfigured(): boolean {
+  return (
+    isGoogleSheetsWebhookConfigured() || isGoogleSheetsServiceAccountConfigured()
+  );
+}

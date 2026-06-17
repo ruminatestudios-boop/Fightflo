@@ -50,7 +50,8 @@ export async function detectSportFromFrames(
     const result = await callGeminiVision<SportDetectionResult>(
       DETECTION_PROMPT,
       images,
-      { selected_sport: selectedSport, available_sports: AVAILABLE_SPORTS }
+      { selected_sport: selectedSport, available_sports: AVAILABLE_SPORTS },
+      { usageLabel: "sport_detection" }
     );
 
     if (!AVAILABLE_SPORTS.includes(result.sport)) {

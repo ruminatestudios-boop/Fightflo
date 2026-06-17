@@ -11,6 +11,11 @@
       "permanent": false
     },
     {
+      "source": "/feed",
+      "destination": "/feedback/feed",
+      "permanent": false
+    },
+    {
       "source": "/feedback/feedback/:path*",
       "destination": "/feedback/:path*",
       "statusCode": 308

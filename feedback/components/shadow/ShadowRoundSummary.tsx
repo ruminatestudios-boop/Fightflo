@@ -62,6 +62,26 @@ export function ShadowRoundSummary({
         </p>
       ) : null}
 
+      {result.recommendMore && result.recommendMore.length > 0 ? (
+        <section className="shadow-moment-section">
+          <p className="shadow-moment-section-label">Combos to do more of</p>
+          <ul className="shadow-moment-list">
+            {result.recommendMore.map((rec) => (
+              <li key={rec.combo} className="shadow-moment-card shadow-moment-card--combo">
+                <p className="shadow-moment-card-title">{rec.label}</p>
+                <p className="shadow-moment-card-detail">{rec.reason}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {result.topCombos && result.topCombos.length > 0 ? (
+        <p className="shadow-round-summary-combos">
+          Thrown most: {result.topCombos.join(" · ")}
+        </p>
+      ) : null}
+
       <div className="shadow-round-summary-block">
         <p className="shadow-round-summary-block-label">How to improve</p>
         <p className="shadow-round-summary-block-body">{result.mechanicalFix}</p>

@@ -87,7 +87,7 @@ export function useShadowRoundTracking({
   };
 
   const buildResult = (): ShadowRoundResult => {
-    const coaching = buildShadowboxingCoachingCopy(stats);
+    const coaching = buildShadowboxingCoachingCopy(stats, roundSeconds);
     return {
       roundSeconds,
       completedAt: new Date().toISOString(),
@@ -101,6 +101,10 @@ export function useShadowRoundTracking({
       drillName: coaching.drillName,
       summary: coaching.summary,
       drops: stats.drops,
+      punches: coaching.comboAnalysis.punches,
+      topCombos: coaching.comboAnalysis.topCombos,
+      recommendMore: coaching.comboAnalysis.recommendMore,
+      comboDrill: coaching.comboAnalysis.comboDrill,
     };
   };
 

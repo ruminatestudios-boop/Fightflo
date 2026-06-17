@@ -13,6 +13,35 @@ interface SessionSnapshot {
   poseScore: number | null;
 }
 
+const PLACEHOLDER_POSITIVE_RE =
+  /^(no observed strengths?|limited movement data|no strengths? (detected|found|identified))/i;
+const PLACEHOLDER_FAULT_RE =
+  /^(no confirmed weaknesses?|your main fault|no (clear )?weakness)/i;
+const PLACEHOLDER_DETAIL_RE =
+  /no computer vision data|re-upload with full body|limited movement data/i;
+
+function isMeaningfulPositiveTitle(title: string): boolean {
+  const trimmed = title.trim();
+  if (!trimmed) return false;
+  return !PLACEHOLDER_POSITIVE_RE.test(trimmed);
+}
+
+function isMeaningfulPositive(positive: {
+  title: string;
+  technical_detail?: string;
+}): boolean {
+  if (!isMeaningfulPositiveTitle(positive.title)) return false;
+  const detail = positive.technical_detail?.trim() ?? "";
+  if (detail && PLACEHOLDER_DETAIL_RE.test(detail)) return false;
+  return true;
+}
+
+function isMeaningfulFaultTitle(title: string): boolean {
+  const trimmed = title.trim();
+  if (!trimmed) return false;
+  return !PLACEHOLDER_FAULT_RE.test(trimmed);
+}
+
 type SnapshotValueKey = keyof Pick<
   SessionSnapshot,
   "positiveCount" | "totalFaults" | "guardDrops" | "faultVariety" | "poseScore"
@@ -138,7 +167,9 @@ function extractSnapshot(
       month: "short",
       day: "numeric",
     }),
-    positiveCount: report?.positives?.length ?? 0,
+    positiveCount:
+      report?.positives?.filter((positive) => isMeaningfulPositive(positive))
+        .length ?? 0,
     totalFaults: events.length,
     guardDrops: guard?.dropCount ?? 0,
     faultVariety: new Set(events.map((event) => event.weakness_type)).size,
@@ -165,12 +196,16 @@ export function buildProgressInsight(
   );
 
   const latestReport = reports.get(complete[complete.length - 1].id) ?? null;
-  const latestMainFault =
-    latestReport?.main_weakness?.title ?? "your main fault";
-  const latestPositives = (latestReport?.positives ?? []).map((positive) => ({
-    title: positive.title,
-    detail: positive.technical_detail,
-  }));
+  const rawMainFault = latestReport?.main_weakness?.title?.trim() ?? "";
+  const latestMainFault = isMeaningfulFaultTitle(rawMainFault)
+    ? rawMainFault
+    : null;
+  const latestPositives = (latestReport?.positives ?? [])
+    .filter((positive) => isMeaningfulPositive(positive))
+    .map((positive) => ({
+      title: positive.title,
+      detail: positive.technical_detail,
+    }));
   const latestStrengthTitle = latestPositives[0]?.title ?? null;
 
   const metrics: ProgressMetric[] = [
@@ -256,9 +291,13 @@ export function buildProgressInsight(
   const headlineDetail =
     complete.length === 1
       ? "Upload more clips — we'll chart strengths and issues across sessions."
-      : latestStrengthTitle
+      : latestStrengthTitle && latestMainFault
         ? `Latest strength: ${latestStrengthTitle}. Main fault to sharpen: ${latestMainFault}.`
-        : `Main fault to sharpen: ${latestMainFault}. Keep uploading to surface more strengths.`;
+        : latestStrengthTitle
+          ? `Latest strength: ${latestStrengthTitle}. Keep uploading to track faults over time.`
+          : latestMainFault
+            ? `Main fault to sharpen: ${latestMainFault}.`
+            : "Upload clear, full-body clips so we can flag strengths and faults across sessions.";
 
   return {
     sessionCount: complete.length,

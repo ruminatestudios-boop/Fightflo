@@ -26,6 +26,7 @@ export function ReuploadFlow({
           <InsightCard
             kicker="Last session"
             title={insight.title}
+            titleVariant="body"
             highlight={insight.weaknessTitle}
             highlightLabel="Main fault"
             fix={insight.mechanicalFix}

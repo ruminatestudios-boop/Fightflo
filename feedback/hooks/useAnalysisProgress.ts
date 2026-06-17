@@ -40,6 +40,12 @@ function resolveMessage(step: string, serverMessage: string): string {
   return config.detail ?? config.ticks[0] ?? "Working…";
 }
 
+function shouldIgnoreStepRegression(prevStep: string, nextStep: string): boolean {
+  const prevPhase = userPhaseForStep(prevStep).index;
+  const nextPhase = userPhaseForStep(nextStep).index;
+  return nextPhase < prevPhase;
+}
+
 function humanizeReportError(message: string): string {
   const lower = message.toLowerCase();
   if (lower.includes("fetch failed") || lower.includes("enotfound")) {
@@ -133,26 +139,32 @@ export function useAnalysisProgress(sessionId: string | null) {
         return true;
       }
 
-      if (step !== lastStepRef.current) {
-        hapticStep();
-        lastStepRef.current = step;
-      }
-
-      const userPhase = userPhaseForStep(step);
-
       setState((prev) => {
-        const stepProgress = Math.max(prev.progressPercent, config.percent - 8);
+        const ignoreRegression = shouldIgnoreStepRegression(prev.step, step);
+        const stableStep = ignoreRegression ? prev.step : step;
+        const stableConfig = ignoreRegression ? getStepConfig(prev.step) : config;
+        const stablePhase = userPhaseForStep(stableStep);
+        const stableMessage = ignoreRegression
+          ? prev.message
+          : resolveMessage(step, serverMessage);
+
+        if (!ignoreRegression && step !== lastStepRef.current) {
+          hapticStep();
+          lastStepRef.current = step;
+        }
+
+        const stepProgress = Math.max(prev.progressPercent, stableConfig.percent - 8);
         return {
           ...prev,
           session,
-          step,
-          eyebrow: config.eyebrow,
-          headline: config.headline,
-          message: resolveMessage(step, serverMessage),
+          step: stableStep,
+          eyebrow: stableConfig.eyebrow,
+          headline: stableConfig.headline,
+          message: stableMessage,
           progressPercent: stepProgress,
-          userPhase,
+          userPhase: stablePhase,
           overallProgressPercent: blendedProgressPercent(
-            userPhase.index,
+            stablePhase.index,
             stepProgress
           ),
         };

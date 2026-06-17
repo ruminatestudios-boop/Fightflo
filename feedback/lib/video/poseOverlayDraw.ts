@@ -45,9 +45,10 @@ function toCanvasPoint(
 
 function wristGuardState(
   landmarks: FrameLandmarks,
-  wrist: "left_wrist" | "right_wrist",
+  wrist: keyof FrameLandmarks,
   calibration?: GuardCalibration | null
 ): "good" | "bad" | "neutral" {
+  if (wrist !== "left_wrist" && wrist !== "right_wrist") return "neutral";
   const guardY = calibration?.guardLineY ?? getGuardLineY(landmarks);
   const threshold = calibration?.guardThreshold ?? 0.018;
   const wristPoint = landmarks[wrist];

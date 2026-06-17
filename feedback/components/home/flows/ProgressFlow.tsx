@@ -41,6 +41,13 @@ function formatDelta(metric: ProgressMetric): string {
   return `${direction} ${absDelta} ${unit} since session #${points[0].session}${suffix}`;
 }
 
+function formatMetricValue(metric: ProgressMetric): string {
+  if (metric.unit) {
+    return `${metric.lastValue} ${metric.unit}`;
+  }
+  return String(metric.lastValue);
+}
+
 function ProgressSparkline({
   points,
   trend,
@@ -97,8 +104,11 @@ function ProgressMetricCard({
           </div>
 
           <div className="progress-metric-card-value-row">
-            <p className="progress-metric-card-value">{metric.lastValue}</p>
-            <p className="progress-metric-card-unit">{metric.unit}</p>
+            <span
+              className={`progress-metric-value-pill progress-metric-value-pill--${metric.group}`}
+            >
+              {formatMetricValue(metric)}
+            </span>
           </div>
 
           <p className="progress-metric-card-delta">{formatDelta(metric)}</p>
@@ -202,45 +212,65 @@ export function ProgressFlow({ insight, onBack }: ProgressFlowProps) {
     );
   }
 
+  const hasStrengthInsight =
+    insight.latestPositives.length > 0 || insight.latestStrengthTitle;
+  const hasFaultInsight = Boolean(insight.latestMainFault);
+  const showCoachingEmpty = !hasStrengthInsight && !hasFaultInsight;
+
   return (
     <FlowShell title="Your progress" subtitle="Strengths & areas to sharpen" onBack={onBack}>
       <FlowPanel className="progress-overview">
-        <p className="home-flow-eyebrow">{insight.headline}</p>
+        <h2 className="progress-headline">{insight.headline}</h2>
         <p className="progress-overview-detail">{insight.headlineDetail}</p>
-        <div className="progress-overview-stats">
-          <div className="progress-overview-stat">
-            <span className="progress-overview-stat-value">{insight.sessionCount}</span>
-            <span className="progress-overview-stat-label">Sessions</span>
-          </div>
-          <div className="progress-overview-stat progress-overview-stat--strength">
-            <span className="progress-overview-stat-value">
-              {insight.latestPositives.length}
-            </span>
-            <span className="progress-overview-stat-label">Latest strengths</span>
-          </div>
-          <div className="progress-overview-stat progress-overview-stat--wide progress-overview-stat--strength">
-            <span className="progress-overview-stat-value progress-overview-stat-value--text">
-              {insight.latestStrengthTitle ?? "None flagged yet"}
-            </span>
-            <span className="progress-overview-stat-label">Top strength</span>
-          </div>
-          <div className="progress-overview-stat progress-overview-stat--wide progress-overview-stat--focus">
-            <span className="progress-overview-stat-value progress-overview-stat-value--text">
-              {insight.latestMainFault}
-            </span>
-            <span className="progress-overview-stat-label">Main fault</span>
-          </div>
+
+        <div className="progress-stat-row">
+          <span className="progress-stat-pill">
+            {insight.sessionCount} session{insight.sessionCount === 1 ? "" : "s"}
+          </span>
+          <span className="progress-stat-pill progress-stat-pill--strength">
+            {insight.latestPositives.length} latest strength
+            {insight.latestPositives.length === 1 ? "" : "s"}
+          </span>
         </div>
+
+        {showCoachingEmpty ? (
+          <div className="progress-empty-card">
+            <p className="progress-empty-title">Not enough coaching data yet</p>
+            <p className="progress-empty-body">
+              Upload a clear, full-body clip so we can flag real strengths and faults to track
+              here.
+            </p>
+          </div>
+        ) : (
+          <div className="progress-summary-grid">
+            <div className="progress-summary-card progress-summary-card--strength">
+              <p className="progress-summary-label">Top strength</p>
+              <p className="progress-summary-value">
+                {insight.latestStrengthTitle ?? "None flagged yet"}
+              </p>
+            </div>
+            <div className="progress-summary-card progress-summary-card--focus">
+              <p className="progress-summary-label">Main fault</p>
+              <p className="progress-summary-value">
+                {insight.latestMainFault ?? "None flagged yet"}
+              </p>
+            </div>
+          </div>
+        )}
+
         {insight.latestPositives.length > 0 ? (
           <ul className="progress-highlight-list">
             {insight.latestPositives.slice(0, 3).map((positive) => (
               <li key={positive.title} className="progress-highlight-item">
                 <p className="progress-highlight-title">{positive.title}</p>
-                <p className="progress-highlight-detail">{positive.detail}</p>
+                {positive.detail ? (
+                  <p className="progress-highlight-detail">{positive.detail}</p>
+                ) : null}
               </li>
             ))}
           </ul>
         ) : null}
+
         <p className="progress-overview-hint">
           {strengthsImproving > 0
             ? `${strengthsImproving} strength metric${strengthsImproving === 1 ? "" : "s"} trending up. Tap any card for the session chart.`

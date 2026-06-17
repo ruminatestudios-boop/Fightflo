@@ -137,6 +137,11 @@ export interface ConfirmedPoseEvent {
   jointHighlight: keyof FrameLandmarks;
   label: string;
   confidence: number;
+  /** Pose-verified coaching detail — not generic template text */
+  detail?: string;
+  mechanical_fix?: string;
+  evidence?: string;
+  pillar?: string;
 }
 
 export interface Report {

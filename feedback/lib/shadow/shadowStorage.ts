@@ -22,6 +22,10 @@ export function getLastShadowRound(): ShadowRoundResult | null {
       drillName: parsed.drillName ?? "",
       summary: parsed.summary ?? "",
       drops: parsed.drops ?? [],
+      punches: parsed.punches ?? [],
+      topCombos: parsed.topCombos ?? [],
+      recommendMore: parsed.recommendMore ?? [],
+      comboDrill: parsed.comboDrill ?? "",
     };
   } catch {
     return null;

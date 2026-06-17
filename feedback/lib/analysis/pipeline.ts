@@ -27,13 +27,23 @@ import {
 import { detectSportFromFrames } from "@/lib/analysis/sportDetector";
 import { loadFrameSamples } from "@/lib/analysis/frameSamples";
 import { findObservedStrengths } from "@/lib/analysis/positiveFinder";
+import {
+  analyzeSkillFoundation,
+  enrichConfirmedEvents,
+} from "@/lib/analysis/skillFoundation";
 import { humanLabelForWeakness } from "@/lib/analysis/poseMetrics";
 import { getSportConfig } from "@/config/sports";
+import {
+  getScanCostCollector,
+  initScanCostFromSession,
+} from "@/lib/telemetry/scanCost";
 import type { ReportClip, SkillLevel, SportId } from "@/types";
 
 export async function runAnalysisPipeline(sessionId: string): Promise<void> {
   const session = await getSessionById(sessionId);
   if (!session) throw new Error("Session not found");
+
+  await initScanCostFromSession(session);
 
   try {
     await updateSessionStatus(sessionId, "processing", {
@@ -42,6 +52,8 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
     });
 
     const framePaths = await extractFrames(session.video_url, sessionId);
+    const collector = getScanCostCollector();
+    if (collector) collector.frameCount = framePaths.length;
 
     await updateSessionStatus(sessionId, "processing", {
       step: "extracting_frames",
@@ -89,7 +101,27 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
 
     let patternData = await findPatterns(timeline, sport);
     patternData = applyPoseConfirmation(timeline, patternData);
-    const confirmedEvents = buildConfirmedEvents(timeline, patternData);
+    let confirmedEvents = buildConfirmedEvents(timeline, patternData);
+    const skillFoundation = analyzeSkillFoundation(
+      timeline,
+      sport,
+      confirmedEvents
+    );
+    confirmedEvents = enrichConfirmedEvents(
+      timeline,
+      confirmedEvents,
+      skillFoundation
+    );
+    const landmark_summary_enriched = {
+      ...landmark_summary,
+      skill_foundation: {
+        pillars: skillFoundation.pillars,
+        primary_gap: skillFoundation.primaryGap,
+        primary_weakness: skillFoundation.primaryWeaknessType,
+        summary: skillFoundation.summary,
+        moment_count: skillFoundation.moments.length,
+      },
+    };
     const observedStrengths = findObservedStrengths(timeline);
     const frameSamples = await loadFrameSamples(framePaths, 10);
 
@@ -145,12 +177,13 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
       {
         techniquesSeen: detection.techniques_seen,
         poseQuality: quality,
-        landmarkSummary: landmark_summary,
+        landmarkSummary: landmark_summary_enriched,
         confirmedEvents,
         observedStrengths,
         frameSamples,
         sessionHistory,
         isFollowUp: sessionHistory.length > 0,
+        skillFoundation,
       }
     );
 
@@ -193,7 +226,7 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
       clips,
       poseQuality: quality,
       confirmedEvents,
-      landmarkSummary: landmark_summary,
+      landmarkSummary: landmark_summary_enriched,
       followUpComparison,
       markComplete: false,
     });

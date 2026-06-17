@@ -10,6 +10,7 @@ import {
   updateSessionStatus,
   upsertWeakness,
 } from "@/lib/db/queries";
+import { initScanCostFromSession } from "@/lib/telemetry/scanCost";
 import type { LandmarkTimeline, ReportClip, SkillLevel, SportId } from "@/types";
 
 const STEPS = [
@@ -31,6 +32,8 @@ export async function runDemoAnalysisPipeline(
 ): Promise<void> {
   const session = await getSessionById(sessionId);
   if (!session) throw new Error("Session not found");
+
+  await initScanCostFromSession(session);
 
   try {
     for (const { step, message, ms } of STEPS) {

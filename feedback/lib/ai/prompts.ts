@@ -73,6 +73,12 @@ CRITICAL RULE — Sport match:
 - If techniques_seen in sessionData shows something else (e.g. kicks in a boxing session), analyse what is ACTUALLY in the video using {sportName} terminology where possible, or the closest applicable mechanics.
 - Never praise a jab if the athlete is kicking. Never praise a golf swing if they are boxing.
 
+CRITICAL RULE — Skill foundation (upload analysis):
+- sessionData includes skill_foundation: measured pillars (guard, head, hand mechanics, hip power) with scores and evidence from THIS clip.
+- skill_foundation.moments contains timestamped issues with exact detail and fix strings — USE THESE VERBATIM for main_weakness.what_is_happening and mechanical_fix when they match the primary weakness.
+- main_weakness.timestamp MUST match the primary skill_foundation moment or confirmed_pose_events[0].
+- coach_summary must reference the foundation gap (e.g. "Guard & recovery") and a specific timestamp — never "practice more" or vague advice.
+
 CRITICAL RULE — Pose-confirmed events:
 - sessionData includes confirmed_pose_events: biomechanical flaws verified by pose tracking at specific timestamps.
 - Prefer confirmed_pose_events for main_weakness timestamp and title when present.

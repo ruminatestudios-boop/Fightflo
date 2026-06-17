@@ -75,6 +75,7 @@ export async function buildHomeInsights(userId: string): Promise<HomeInsights> {
       summary: guardAnalysis.summary,
       mechanicalFix: guardAnalysis.mechanicalFix,
       drillName: guardAnalysis.drillName,
+      moments: guardAnalysis.moments,
     };
   }
 

@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/feed",
+        destination: "/feedback/feed",
+        permanent: false,
+      },
+      {
         source: "/feedback/feedback/:path*",
         destination: "/feedback/:path*",
         permanent: false,
@@ -22,11 +27,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/feedback",
-        destination: "http://localhost:3001/feedback",
+        destination: "http://localhost:3001",
       },
       {
         source: "/feedback/:path*",
-        destination: "http://localhost:3001/feedback/:path*",
+        destination: "http://localhost:3001/:path*",
       },
     ];
   },

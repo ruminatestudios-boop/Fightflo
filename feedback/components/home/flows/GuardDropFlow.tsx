@@ -17,7 +17,7 @@ export function GuardDropFlow({
   onBack,
 }: GuardDropFlowProps) {
   return (
-    <FlowShell title="Guard drop tracker" subtitle="Hands-up focus" onBack={onBack}>
+    <FlowShell title="Guard drop tracker" subtitle="Guard-only · timestamped" onBack={onBack}>
       {!insight ? (
         <FlowEmpty message="Upload and analyse a clip first — we'll flag every moment your guard drops." />
       ) : (
@@ -27,11 +27,13 @@ export function GuardDropFlow({
             accentKicker
             variant="guard"
             title={insight.title}
+            titleVariant="body"
             metric={
               insight.dropCount === 0
                 ? {
                     value: "0",
-                    label: "guard drops detected",
+                    suffix: "guard drops",
+                    label: "detected in this clip",
                     progressHint: "Keep this discipline in live rounds",
                   }
                 : {
@@ -46,10 +48,32 @@ export function GuardDropFlow({
                   }
             }
             summary={insight.dropCount > 0 ? insight.summary : undefined}
-            fix={insight.dropCount > 0 ? insight.mechanicalFix : insight.summary}
-            fixLabel={insight.dropCount > 0 ? "How to improve" : "Summary"}
+            fix={
+              insight.dropCount > 0
+                ? insight.moments[0]?.fix ?? insight.mechanicalFix
+                : insight.summary
+            }
+            fixLabel={insight.dropCount > 0 ? "First fix to try" : "Summary"}
             drill={insight.dropCount > 0 ? insight.drillName : undefined}
           />
+
+          {insight.dropCount > 0 && insight.moments.length > 0 ? (
+            <div className="guard-moment-list">
+              <p className="guard-moment-list-label">Timestamped guard drops</p>
+              <ul className="guard-moment-list-items">
+                {insight.moments.map((moment) => (
+                  <li key={moment.id} className="guard-moment-item">
+                    <span className="guard-moment-time">{moment.timestamp}</span>
+                    <div className="guard-moment-copy">
+                      <p className="guard-moment-title">{moment.title}</p>
+                      <p className="guard-moment-detail">{moment.detail}</p>
+                      <p className="guard-moment-fix">{moment.fix}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           {insight.dropCount > 0 ? (
             <FlowAction href={reportPath(insight.sessionId, "guard")}>

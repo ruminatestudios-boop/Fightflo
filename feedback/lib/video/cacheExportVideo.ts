@@ -15,6 +15,7 @@ import {
 } from "@/lib/db/queries";
 import { isCloudinaryConfigured } from "@/lib/config/env";
 import { uploadExportVideo } from "@/lib/storage/cloudinary";
+import { getScanCostCollector } from "@/lib/telemetry/scanCost";
 import type { ConfirmedPoseEvent, LandmarkTimeline, Session, SportId } from "@/types";
 import { exportFromAnalysisFrames } from "@/lib/video/exportFromAnalysisFrames";
 import { exportWatermarkedVideo } from "@/lib/video/exportWatermarkedVideo";
@@ -193,6 +194,7 @@ export async function cacheExportVideo(
   if (isCloudinaryConfigured()) {
     exportUrl = await uploadExportVideo(buffer, sessionId);
   } else {
+    getScanCostCollector()?.setExportBytes(buffer.length);
     const filePath = localExportFilePath(sessionId);
     await mkdir(dirname(filePath), { recursive: true });
     await writeFile(filePath, buffer);

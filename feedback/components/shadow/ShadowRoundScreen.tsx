@@ -55,7 +55,7 @@ export function ShadowRoundScreen({
   const [screenPhase, setScreenPhase] = useState<ScreenPhase>("camera");
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [facing, setFacing] = useState<CameraFacing>("environment");
+  const [facing, setFacing] = useState<CameraFacing>("user");
   const [calibrateLeft, setCalibrateLeft] = useState(SHADOW_CALIBRATE_SECONDS);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [result, setResult] = useState<ShadowRoundResult | null>(null);
@@ -294,7 +294,7 @@ export function ShadowRoundScreen({
   }
 
   const liveView = (
-    <div className="shadow-round-root" role="dialog" aria-modal="true" aria-label="Shadow round">
+    <div className="shadow-round-root" role="dialog" aria-modal="true" aria-label="Shadowboxing round">
       <video
         ref={videoRef}
         className={`shadow-round-video ${facing === "user" ? "shadow-round-video--mirror" : ""}`}
@@ -328,7 +328,7 @@ export function ShadowRoundScreen({
           type="button"
           className="live-record-icon-btn"
           onClick={handleClose}
-          aria-label="Close shadow round"
+          aria-label="Close shadowboxing round"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -416,7 +416,7 @@ export function ShadowRoundScreen({
       {screenPhase === "round" && (
         <div className="shadow-round-bottom">
           <p className="live-record-hint">
-            Shadow round — return hands to guard after every combo
+            Shadowboxing round — return hands to guard after every combo
           </p>
           <button
             type="button"

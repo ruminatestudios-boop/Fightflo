@@ -98,10 +98,11 @@ function drawVideoWatermark(
   const boxH = fontSize + padY * 2;
   const x = layout.offsetX + layout.drawWidth / 2 - boxW / 2;
   const y = layout.offsetY + layout.drawHeight - boxH - bottomGap;
+  const cardRadius = Math.min(8, boxW * 0.12, boxH * 0.28);
 
   ctx.fillStyle = "rgba(0, 0, 0, 0.32)";
   ctx.beginPath();
-  ctx.roundRect(x, y, boxW, boxH, 6);
+  ctx.roundRect(x, y, boxW, boxH, cardRadius);
   ctx.fill();
 
   ctx.textBaseline = "middle";

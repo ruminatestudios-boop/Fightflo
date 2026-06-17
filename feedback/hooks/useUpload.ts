@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { parseJsonResponse } from "@/lib/api/parseResponse";
 import { apiPath } from "@/lib/paths";
 import { hapticStep } from "@/lib/haptics";
@@ -75,10 +75,12 @@ function startSimulatedProgress(
 function uploadToCloudinary(
   file: File,
   params: NonNullable<CloudinarySignResponse["cloudinary"]>,
-  onProgress: (percent: number) => void
+  onProgress: (percent: number) => void,
+  onXhrReady?: (xhr: XMLHttpRequest) => void
 ): Promise<CloudinaryUploadResult> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
+    onXhrReady?.(xhr);
     let lastReported = 0;
     let heartbeat: number | null = null;
 
@@ -203,6 +205,9 @@ export function useUpload() {
     paywallMode: null,
   });
 
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
   const failUpload = useCallback(
     (message: string, allowance?: AnalysisAllowance) => {
       setState((s) => ({
@@ -257,6 +262,10 @@ export function useUpload() {
       );
 
       try {
+        abortRef.current?.abort();
+        abortRef.current = new AbortController();
+        const signal = abortRef.current.signal;
+
         const storedUserId =
           typeof window !== "undefined"
             ? localStorage.getItem("feedback_anon_user_id")
@@ -265,6 +274,7 @@ export function useUpload() {
         const signResponse = await fetch(apiPath("/api/upload/sign"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal,
           body: JSON.stringify({
             sport,
             level,
@@ -301,6 +311,20 @@ export function useUpload() {
                     ? "Finishing upload..."
                     : "Uploading your video...",
               }));
+            },
+            (xhr) => {
+              xhrRef.current = xhr;
+              signal.addEventListener(
+                "abort",
+                () => {
+                  try {
+                    xhr.abort();
+                  } catch {
+                    /* ignore */
+                  }
+                },
+                { once: true }
+              );
             }
           );
 
@@ -314,6 +338,7 @@ export function useUpload() {
           const completeResponse = await fetch(apiPath("/api/upload"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal,
             body: JSON.stringify({
               sessionId: sign.sessionId,
               userId: sign.userId,
@@ -363,6 +388,7 @@ export function useUpload() {
 
         const response = await fetch(apiPath("/api/upload"), {
           method: "POST",
+          signal,
           body: formData,
         });
 
@@ -395,12 +421,48 @@ export function useUpload() {
       } catch (error) {
         stopSignProgress();
         const message = error instanceof Error ? error.message : "Upload failed";
+        if (message === "Upload cancelled") {
+          setState({
+            phase: "idle",
+            progress: 0,
+            message: "",
+            sessionId: null,
+            userId: null,
+            error: null,
+            paywallMode: null,
+          });
+          return null;
+        }
         failUpload(message);
         return null;
+      } finally {
+        xhrRef.current = null;
+        abortRef.current = null;
       }
     },
     [validateFile, failUpload]
   );
+
+  const cancel = useCallback(() => {
+    if (state.phase !== "uploading") return;
+    abortRef.current?.abort();
+    try {
+      xhrRef.current?.abort();
+    } catch {
+      /* ignore */
+    }
+    xhrRef.current = null;
+    abortRef.current = null;
+    setState({
+      phase: "idle",
+      progress: 0,
+      message: "",
+      sessionId: null,
+      userId: null,
+      error: null,
+      paywallMode: null,
+    });
+  }, [state.phase]);
 
   const updateProgress = useCallback((progress: number, message: string) => {
     setState((s) => ({ ...s, progress, message }));
@@ -428,5 +490,5 @@ export function useUpload() {
     });
   }, []);
 
-  return { ...state, upload, updateProgress, markComplete, reset };
+  return { ...state, upload, cancel, updateProgress, markComplete, reset };
 }

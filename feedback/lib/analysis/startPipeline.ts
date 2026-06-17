@@ -1,18 +1,23 @@
 import { runDemoAnalysisPipeline } from "@/lib/analysis/demo-pipeline";
 import { isRealAnalysisPipelineEnabled } from "@/lib/config/env";
 import { updateSessionStatus } from "@/lib/db/queries";
+import { runWithScanCost } from "@/lib/telemetry/scanCost";
 
 /** Run analysis — in dev, fall back to demo pipeline if the real one fails. */
 export function startAnalysisPipeline(sessionId: string): void {
   if (!isRealAnalysisPipelineEnabled()) {
-    runDemoAnalysisPipeline(sessionId).catch(console.error);
+    void runWithScanCost(sessionId, "demo", () =>
+      runDemoAnalysisPipeline(sessionId)
+    );
     return;
   }
 
   void (async () => {
     try {
-      const { runAnalysisPipeline } = await import("@/lib/analysis/pipeline");
-      await runAnalysisPipeline(sessionId);
+      await runWithScanCost(sessionId, "real", async () => {
+        const { runAnalysisPipeline } = await import("@/lib/analysis/pipeline");
+        await runAnalysisPipeline(sessionId);
+      });
     } catch (error) {
       console.error("[pipeline]", error);
 
@@ -25,7 +30,9 @@ export function startAnalysisPipeline(sessionId: string): void {
         step: "writing_report",
         message: "Using demo analysis for local dev…",
       });
-      await runDemoAnalysisPipeline(sessionId);
+      await runWithScanCost(sessionId, "demo", () =>
+        runDemoAnalysisPipeline(sessionId)
+      );
     }
   })();
 }

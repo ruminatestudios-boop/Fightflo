@@ -1,6 +1,7 @@
 import { callGemini, callGeminiVision } from "@/lib/ai/gemini";
 import { getSportPrompts } from "@/lib/ai/prompts";
 import { diagnoseRootCause } from "@/lib/analysis/rootCause";
+import type { SkillFoundationReport } from "@/lib/analysis/skillFoundation";
 import {
   humanLabelForWeakness,
 } from "@/lib/analysis/poseMetrics";
@@ -70,6 +71,7 @@ export async function runPromptChain(input: {
   confirmedEvents?: ConfirmedPoseEvent[];
   observedStrengths?: ObservedStrength[];
   frameSamples?: string[];
+  skillFoundation?: SkillFoundationReport;
 }): Promise<CoachingFeedback> {
   const sportConfig = getSportConfig(input.sport);
   const prompts = getSportPrompts(input.sport);
@@ -100,6 +102,7 @@ export async function runPromptChain(input: {
     techniques_seen: input.techniquesSeen ?? [],
     pose_quality: input.poseQuality ?? null,
     landmark_summary: input.landmarkSummary ?? {},
+    skill_foundation: input.skillFoundation ?? null,
     session_history: input.sessionHistory ?? [],
     progress_note:
       input.isFollowUp && (input.sessionHistory?.length ?? 0) > 0
@@ -115,7 +118,7 @@ export async function runPromptChain(input: {
     sessionData,
     landmarkData,
     instruction:
-      "Write coaching ONLY for what is supported by confirmed_pose_events, observed_strengths, techniques_seen, landmark_summary, and the attached video frames. Do not invent generic praise.",
+      "Write coaching ONLY for what is supported by skill_foundation, confirmed_pose_events, observed_strengths, techniques_seen, landmark_summary, and the attached video frames. Use exact timestamps and measurements from skill_foundation.moments — never generic sport clichés.",
   };
 
   const raw =
@@ -123,39 +126,72 @@ export async function runPromptChain(input: {
       ? await callGeminiVision<RawCoachingFeedback>(
           prompts.coachingVoice,
           input.frameSamples,
-          coachingPayload
+          coachingPayload,
+          { usageLabel: "coaching" }
         )
       : await callGemini<RawCoachingFeedback>(
           prompts.coachingVoice,
-          coachingPayload
+          coachingPayload,
+          { usageLabel: "coaching" }
         );
 
   const feedback = normalizeFeedback(raw);
 
+  const foundation = input.skillFoundation;
+  const primaryMoment =
+    foundation?.moments.find(
+      (m) => m.weaknessType === foundation.primaryWeaknessType
+    ) ?? foundation?.moments[0];
+
   const weaknessTimestamp =
-    feedback.main_weakness.timestamp ||
-    primaryEvent?.timestamp ||
-    input.patternData.events[0]?.start_timestamp ||
-    "0:00";
+    primaryMoment?.timestamp ??
+    primaryEvent?.timestamp ??
+    (feedback.main_weakness.timestamp ||
+      input.patternData.events[0]?.start_timestamp ||
+      "0:00");
 
   feedback.main_weakness = {
     ...feedback.main_weakness,
     timestamp: weaknessTimestamp,
     what_is_happening:
-      feedback.main_weakness.what_is_happening || rootCause.what_is_happening,
+      primaryMoment?.detail ??
+      confirmedEvents[0]?.detail ??
+      (feedback.main_weakness.what_is_happening || rootCause.what_is_happening),
     root_cause: feedback.main_weakness.root_cause || rootCause.root_cause,
     fight_consequence:
       feedback.main_weakness.fight_consequence || rootCause.fight_consequence,
     mechanical_fix:
-      feedback.main_weakness.mechanical_fix || rootCause.mechanical_fix,
+      primaryMoment?.fix ??
+      confirmedEvents[0]?.mechanical_fix ??
+      foundation?.mechanicalFix ??
+      (feedback.main_weakness.mechanical_fix || rootCause.mechanical_fix),
     elite_reference:
       feedback.main_weakness.elite_reference || rootCause.elite_reference,
-    frequency: feedback.main_weakness.frequency || verifiedPattern.frequency,
+    frequency:
+      foundation?.frequencyLabel ??
+      (feedback.main_weakness.frequency || verifiedPattern.frequency),
     title:
-      feedback.main_weakness.title ||
-      primaryEvent?.label ||
-      verifiedPattern.human_title,
+      primaryMoment?.title ??
+      confirmedEvents[0]?.label ??
+      (feedback.main_weakness.title ||
+        primaryEvent?.label ||
+        verifiedPattern.human_title),
   };
+
+  if (foundation?.drillName && feedback.drill) {
+    feedback.drill = {
+      ...feedback.drill,
+      name: feedback.drill.name || foundation.drillName,
+      description:
+        primaryMoment?.fix ??
+        foundation.mechanicalFix ??
+        feedback.drill.description,
+    };
+  }
+
+  if (foundation?.coachSummarySeed) {
+    feedback.coach_summary = foundation.coachSummarySeed;
+  }
 
   if (input.observedStrengths?.length && feedback.positives.length > 0) {
     feedback.positives = feedback.positives.map((positive, i) => {
@@ -173,9 +209,10 @@ export async function runPromptChain(input: {
 
   if (!feedback.pattern_insight) {
     feedback.pattern_insight =
-      confirmedEvents.length > 0
+      foundation?.summary ??
+      (confirmedEvents.length > 0
         ? `${verifiedPattern.human_title} shows up as a repeatable mechanical pattern — fix the root cause and downstream errors resolve.`
-        : "Review the attached footage cues and drill focus for this session.";
+        : "Review the attached footage cues and drill focus for this session.");
   }
 
   return feedback;

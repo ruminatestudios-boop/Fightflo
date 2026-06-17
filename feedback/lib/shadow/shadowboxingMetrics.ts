@@ -8,17 +8,31 @@ import {
 import type { LandmarkTimeline } from "@/types";
 import type { ShadowDropEvent } from "./types";
 import {
+  appendPunchToChain,
+  buildShadowComboAnalysis,
+  classifyExtensionPeak,
+  comboKeyFromChain,
+  comboLabel,
+  stampPunch,
+  updateExtensionPeak,
+  type DetectedPunch,
+  type ExtensionPeak,
+} from "./shadowComboDetection";
+import {
   buildShadowRoundSummary,
   liveShadowboxingNote,
   makeShadowIssueMoment,
   makeShadowPositiveMoment,
   type ShadowMoment,
+  type ShadowMomentContext,
 } from "./shadowboxingCopy";
 
 export {
   buildShadowRoundSummary,
   liveShadowboxingNote,
+  shadowHomeCardHint,
   type ShadowMoment,
+  type ShadowMomentContext,
   type ShadowPositiveType,
   type ShadowWeaknessType,
 } from "./shadowboxingCopy";
@@ -90,6 +104,9 @@ export interface ShadowboxingStats {
   chinGoodStreak: number;
   baselineCenterX: number | null;
   stanceDriftFrames: number;
+  punches: DetectedPunch[];
+  comboChain: DetectedPunch[];
+  extensionPeak: ExtensionPeak | null;
 }
 
 export function createShadowboxingStats(): ShadowboxingStats {
@@ -109,6 +126,9 @@ export function createShadowboxingStats(): ShadowboxingStats {
     chinGoodStreak: 0,
     baselineCenterX: null,
     stanceDriftFrames: 0,
+    punches: [],
+    comboChain: [],
+    extensionPeak: null,
   };
 }
 
@@ -175,9 +195,22 @@ function shoulderCenterX(landmarks: FrameLandmarks): number | null {
   return (ls.x + rs.x) / 2;
 }
 
-function wristJointForHand(hand: ShadowDropEvent["hand"]): keyof FrameLandmarks {
-  if (hand === "left") return "left_wrist";
-  return "right_wrist";
+function handToLeadRear(hand: ShadowDropEvent["hand"]): ShadowMomentContext["hand"] {
+  if (hand === "left") return "lead";
+  if (hand === "right") return "rear";
+  return "both";
+}
+
+function comboContext(chain: DetectedPunch[]): ShadowMomentContext {
+  const comboKey = comboKeyFromChain(chain);
+  return {
+    comboKey,
+    comboLabel: chain.length >= 2 ? comboLabel(comboKey) : undefined,
+  };
+}
+
+function punchLabelForHand(hand: "lead" | "rear"): string {
+  return hand === "lead" ? "jab" : "cross";
 }
 
 export function ingestShadowboxingFrame(
@@ -262,6 +295,7 @@ export function ingestShadowboxingFrame(
   if (extending) {
     next.extensionStreak += 1;
     next.inExtension = true;
+    next.extensionPeak = updateExtensionPeak(next.extensionPeak, landmarks, metrics);
 
     const rightFlared =
       metrics.right_elbow_angle !== null && metrics.right_elbow_angle < ELBOW_FLARE_ANGLE;
@@ -269,13 +303,18 @@ export function ingestShadowboxingFrame(
       metrics.left_elbow_angle !== null && metrics.left_elbow_angle < ELBOW_FLARE_ANGLE;
 
     if (rightFlared && canEmitEvent(next, "elbow_flare_on_cross", elapsedSec)) {
+      const peakHand = next.extensionPeak?.hand ?? "rear";
       next = pushMoment(
         next,
         makeShadowIssueMoment(
           "elbow_flare_on_cross",
           elapsedSec,
           next.moments.length,
-          "right_elbow"
+          "right_elbow",
+          {
+            ...comboContext(next.comboChain),
+            punchLabel: punchLabelForHand(peakHand),
+          }
         ),
         elapsedSec
       );
@@ -298,7 +337,11 @@ export function ingestShadowboxingFrame(
           "elbow_flare_on_cross",
           elapsedSec,
           next.moments.length,
-          "left_elbow"
+          "left_elbow",
+          {
+            ...comboContext(next.comboChain),
+            punchLabel: "lead hook",
+          }
         ),
         elapsedSec
       );
@@ -313,7 +356,12 @@ export function ingestShadowboxingFrame(
       ) {
         next = pushMoment(
           next,
-          makeShadowIssueMoment("flat_hips", elapsedSec, next.moments.length),
+          makeShadowIssueMoment("flat_hips", elapsedSec, next.moments.length, "right_hip", {
+            ...comboContext(next.comboChain),
+            punchLabel: next.extensionPeak
+              ? punchLabelForHand(next.extensionPeak.hand)
+              : undefined,
+          }),
           elapsedSec
         );
         next.flatHipStreak = 0;
@@ -353,7 +401,11 @@ export function ingestShadowboxingFrame(
               "guard_drop_after_cross",
               elapsedSec,
               next.moments.length,
-              wristJointForHand(hand)
+              hand === "left" ? "left_wrist" : hand === "right" ? "right_wrist" : "right_wrist",
+              {
+                ...comboContext(next.comboChain),
+                hand: handToLeadRear(hand),
+              }
             ),
             elapsedSec
           );
@@ -365,6 +417,14 @@ export function ingestShadowboxingFrame(
     }
   } else if (next.inExtension) {
     const streak = next.extensionStreak;
+    const chainSnapshot = [...next.comboChain];
+    const classified = classifyExtensionPeak(next.extensionPeak);
+    if (classified) {
+      const punch = stampPunch(classified, elapsedSec);
+      next.punches = [...next.punches, punch];
+      next.comboChain = appendPunchToChain(next.comboChain, punch);
+    }
+
     if (
       streak >= SLOW_RETURN_MIN_FRAMES &&
       streak <= SLOW_RETURN_MAX_FRAMES &&
@@ -372,7 +432,9 @@ export function ingestShadowboxingFrame(
     ) {
       next = pushMoment(
         next,
-        makeShadowIssueMoment("slow_guard_return", elapsedSec, next.moments.length),
+        makeShadowIssueMoment("slow_guard_return", elapsedSec, next.moments.length, undefined, {
+          ...comboContext(chainSnapshot.length >= 2 ? chainSnapshot : next.comboChain),
+        }),
         elapsedSec
       );
     } else if (
@@ -389,10 +451,12 @@ export function ingestShadowboxingFrame(
 
     next.inExtension = false;
     next.extensionStreak = 0;
+    next.extensionPeak = null;
     next.flatHipStreak = 0;
     next.activeDropStreak = 0;
   } else {
     next.extensionStreak = 0;
+    next.extensionPeak = null;
     next.flatHipStreak = 0;
     next.activeDropStreak = 0;
   }
@@ -417,8 +481,17 @@ export const createShadowLiveStats = createShadowboxingStats;
 export const ingestShadowFrame = ingestShadowboxingFrame;
 export type ShadowLiveStats = ShadowboxingStats;
 
-export function buildShadowboxingCoachingCopy(stats: ShadowboxingStats) {
-  return buildShadowRoundSummary({ moments: stats.moments, roundSeconds: 0 });
+export function buildShadowboxingCoachingCopy(
+  stats: ShadowboxingStats,
+  roundSeconds: number
+) {
+  const comboAnalysis = buildShadowComboAnalysis(stats.punches, roundSeconds);
+  const coaching = buildShadowRoundSummary({
+    moments: stats.moments,
+    roundSeconds,
+    comboAnalysis,
+  });
+  return { ...coaching, comboAnalysis };
 }
 
 export const buildShadowCoachingCopy = buildShadowboxingCoachingCopy;

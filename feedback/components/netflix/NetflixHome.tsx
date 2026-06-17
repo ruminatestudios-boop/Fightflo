@@ -19,6 +19,7 @@ import { HomePricingFooter } from "@/components/home/HomePricingFooter";
 import { PaywallSheet } from "@/components/shared/PaywallSheet";
 import { PricingModal } from "@/components/shared/PricingModal";
 import { HomeStickyNav } from "@/components/netflix/HomeStickyNav";
+import { FeedStickyNav } from "@/components/netflix/FeedStickyNav";
 import { LiveRecordScreen } from "@/components/live/LiveRecordScreen";
 import { ShadowRoundScreen } from "@/components/shadow/ShadowRoundScreen";
 import { NetflixShell } from "@/components/netflix/NetflixShell";
@@ -37,7 +38,7 @@ import {
 import { parseJsonResponse } from "@/lib/api/parseResponse";
 import { displayNameFromEmail, formatDisplayName } from "@/lib/user/displayName";
 import { apiPath, reportPath } from "@/lib/paths";
-import { readHomeUrlState, writeHomeUrlState } from "@/lib/homeViews";
+import { readHomeUrlState, writeHomeUrlState, type HomeRoute } from "@/lib/homeViews";
 import {
   getStoredUserName,
   storeUserId,
@@ -55,7 +56,12 @@ type HomeView =
 
 type MainTab = "home" | "library";
 
-export function NetflixHome() {
+interface NetflixHomeProps {
+  /** `feed` = photo-card preview homepage at /feed */
+  homeRoute?: HomeRoute;
+}
+
+export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
   const router = useRouter();
   const uploadRef = useRef<UploadZoneHandle>(null);
   const [sport, setSport] = useState<SportId>("boxing");
@@ -63,8 +69,7 @@ export function NetflixHome() {
   const [view, setView] = useState<HomeView>("home");
   const [mainTab, setMainTab] = useState<MainTab>("home");
   const [activeCard, setActiveCard] = useState("upload");
-  const [demoLoading, setDemoLoading] = useState(false);
-  const [demoError, setDemoError] = useState<string | null>(null);
+  const [lockedNotice, setLockedNotice] = useState<string | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [isPro, setIsPro] = useState(isClientProUnlocked());
@@ -79,9 +84,9 @@ export function NetflixHome() {
   const [shadowRoundSeconds, setShadowRoundSeconds] = useState<ShadowRoundLength | null>(
     null
   );
-  const { phase, progress, message, error, paywallMode, upload, reset } =
+  const { phase, progress, message, error, paywallMode, upload, cancel, reset } =
     useUpload();
-  const isBusy = phase === "uploading" || phase === "processing" || demoLoading;
+  const isBusy = phase === "uploading" || phase === "processing";
   const uploadStatus = useUploadStatusTicker(isBusy, message, progress);
   const busyUserPhase = userPhaseForUploadClient(phase, progress);
   const busyOverallProgress = blendedProgressPercent(busyUserPhase.index, progress);
@@ -101,9 +106,9 @@ export function NetflixHome() {
   const openLiveRecord = useCallback(() => {
     setView("home");
     setMainTab("home");
-    writeHomeUrlState("home", "home");
+    writeHomeUrlState("home", "home", homeRoute);
     setLiveRecordOpen(true);
-  }, []);
+  }, [homeRoute]);
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -131,72 +136,37 @@ export function NetflixHome() {
     [handleFile]
   );
 
-  const handleDemo = useCallback(async () => {
-    setDemoError(null);
-    setDemoLoading(true);
-
-    try {
-      const storedUserId =
-        typeof window !== "undefined"
-          ? localStorage.getItem("feedback_anon_user_id")
-          : null;
-
-      const response = await fetch(apiPath("/api/demo"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sport, level, userId: storedUserId }),
-      });
-
-      const data = await parseJsonResponse<{
-        sessionId?: string;
-        userId?: string;
-        error?: string;
-      }>(response);
-
-      if (!response.ok || !data.sessionId) {
-        throw new Error(data.error ?? "Demo failed");
-      }
-
-      if (data.userId) storeUserId(data.userId);
-      void refetchInsights();
-      router.push(reportPath(data.sessionId));
-    } catch (err) {
-      setDemoError(err instanceof Error ? err.message : "Demo failed");
-      setDemoLoading(false);
-    }
-  }, [sport, level, router, refetchInsights]);
-
   const openUpload = useCallback(() => {
     setFollowUpParentId(null);
     setMainTab("home");
     setView("home");
     setActiveCard("upload");
-    writeHomeUrlState("home", "home");
+    writeHomeUrlState("home", "home", homeRoute);
     uploadRef.current?.open();
-  }, []);
+  }, [homeRoute]);
 
   const openFollowUpUpload = useCallback((parentSessionId: string) => {
     setFollowUpParentId(parentSessionId);
     setMainTab("home");
     setView("home");
     setActiveCard("reupload");
-    writeHomeUrlState("home", "home");
+    writeHomeUrlState("home", "home", homeRoute);
     uploadRef.current?.open();
-  }, []);
+  }, [homeRoute]);
 
   const goToLibrary = useCallback(() => {
     setView("home");
     setMainTab("library");
-    writeHomeUrlState("home", "library");
+    writeHomeUrlState("home", "library", homeRoute);
     void refetchLibrary();
-  }, [refetchLibrary]);
+  }, [refetchLibrary, homeRoute]);
 
   const goToHome = useCallback(() => {
     setView("home");
     setMainTab("home");
-    writeHomeUrlState("home", "home");
+    writeHomeUrlState("home", "home", homeRoute);
     void refetchInsights();
-  }, [refetchInsights]);
+  }, [refetchInsights, homeRoute]);
 
   const openReport = useCallback(
     (sessionId: string) => {
@@ -207,6 +177,14 @@ export function NetflixHome() {
 
   const handleFeatureSelect = useCallback(
     (id: HomeFeatureId) => {
+      const hasClip = (insights?.completeCount ?? 0) > 0;
+      const requiresClip = id === "guard" || id === "reupload" || id === "progress" || id === "weekly";
+      if (requiresClip && !hasClip) {
+        setLockedNotice("Upload a clip to unlock this tool.");
+        openUpload();
+        return;
+      }
+
       setActiveCard(id);
       if (id === "upload") {
         openUpload();
@@ -214,21 +192,27 @@ export function NetflixHome() {
       }
       setView(id);
       setMainTab("home");
-      writeHomeUrlState(id, "home");
+      writeHomeUrlState(id, "home", homeRoute);
     },
-    [openUpload]
+    [openUpload, homeRoute, insights?.completeCount]
   );
+
+  useEffect(() => {
+    if (!lockedNotice) return;
+    const t = window.setTimeout(() => setLockedNotice(null), 2600);
+    return () => window.clearTimeout(t);
+  }, [lockedNotice]);
 
   const handleShellBack = useCallback(() => {
     if (view !== "home") {
       setView("home");
-      writeHomeUrlState("home", mainTab);
+      writeHomeUrlState("home", mainTab, homeRoute);
       return;
     }
     if (mainTab === "library") {
       goToHome();
     }
-  }, [view, mainTab, goToHome]);
+  }, [view, mainTab, goToHome, homeRoute]);
 
   const handleLogoHome = useCallback(() => {
     goToHome();
@@ -243,7 +227,7 @@ export function NetflixHome() {
   }, []);
 
   useEffect(() => {
-    const { view: urlView, tab } = readHomeUrlState();
+    const { view: urlView, tab } = readHomeUrlState(homeRoute);
     if (urlView !== "home") {
       setView(urlView);
       setActiveCard(urlView);
@@ -251,7 +235,7 @@ export function NetflixHome() {
     if (tab === "library") {
       setMainTab("library");
     }
-  }, []);
+  }, [homeRoute]);
 
   useEffect(() => {
     if (error && paywallMode) setShowPaywall(true);
@@ -354,21 +338,25 @@ export function NetflixHome() {
               progress={busyBarProgress}
               userPhase={busyUserPhase}
               footer={
-                uploadStatus.elapsedSec >= 60 ? (
-                  <>
+                <span className="loading-panel-footer-wrap">
+                  <span>
                     <span className="loading-panel-keyword">
                       Step {busyUserPhase.index} of 3
                     </span>
-                    {` — ${Math.floor(uploadStatus.elapsedSec / 60)}m ${uploadStatus.elapsedSec % 60}s elapsed, keep this screen open`}
-                  </>
-                ) : (
-                  <>
-                    <span className="loading-panel-keyword">
-                      Step {busyUserPhase.index} of 3
-                    </span>
-                    {` — ${busyUserPhase.detail}. Usually 2–5 minutes total.`}
-                  </>
-                )
+                    {uploadStatus.elapsedSec >= 60
+                      ? ` — ${Math.floor(uploadStatus.elapsedSec / 60)}m ${uploadStatus.elapsedSec % 60}s elapsed, keep this screen open`
+                      : ` — ${busyUserPhase.detail}. Usually 2–5 minutes total.`}
+                  </span>
+                  {phase === "uploading" ? (
+                    <button
+                      type="button"
+                      className="loading-panel-cancel"
+                      onClick={cancel}
+                    >
+                      Cancel upload
+                    </button>
+                  ) : null}
+                </span>
               }
             />
           </div>
@@ -396,28 +384,27 @@ export function NetflixHome() {
             />
           </div>
         ) : view === "home" ? (
-          <div className="glass-home-inner">
+          <div className={`glass-home-inner ${homeRoute === "feed" ? "glass-home-inner--feed" : ""}`}>
             <header className="glass-greeting">
-              <p className="glass-greeting-sub">
-                <span className="glass-greeting-dot" aria-hidden />
-                Ready to improve
-              </p>
+              <p className="glass-greeting-sub">Ready to improve</p>
               <h1 className="glass-greeting-title">
                 {userName
                   ? `How can we help ${userName}'s training today?`
                   : "How can we help your training today?"}
               </h1>
-              <HomeSettingsChips
-                sport={sport}
-                level={level}
-                userName={userName}
-                onSportClick={() => setSettingsModal("sport")}
-                onLevelClick={() => setSettingsModal("level")}
-                onNameClick={() => {
-                  setNameDraft(userName ?? "");
-                  setSettingsModal("name");
-                }}
-              />
+              {homeRoute === "feed" ? null : (
+                <HomeSettingsChips
+                  sport={sport}
+                  level={level}
+                  userName={userName}
+                  onSportClick={() => setSettingsModal("sport")}
+                  onLevelClick={() => setSettingsModal("level")}
+                  onNameClick={() => {
+                    setNameDraft(userName ?? "");
+                    setSettingsModal("name");
+                  }}
+                />
+              )}
             </header>
 
             {followUpParentId && insights?.reupload ? (
@@ -427,15 +414,24 @@ export function NetflixHome() {
               </p>
             ) : null}
 
+            {lockedNotice ? (
+              <p className="glass-followup-banner" role="status">
+                {lockedNotice}
+              </p>
+            ) : null}
+
             <HomeFeatureGrid
               insights={insightsLoading ? null : insights}
               activeId={activeCard}
               onSelect={handleFeatureSelect}
+              variant={homeRoute === "feed" ? "feed" : "default"}
+              onUpload={openUpload}
+              onRecord={openLiveRecord}
             />
 
-            {(error || demoError) && (
+            {error && (
               <div className="mt-4 space-y-3">
-                <p className="glass-error">{error ?? demoError}</p>
+                <p className="glass-error">{error}</p>
                 {error && paywallMode && (
                   <button
                     type="button"
@@ -448,11 +444,9 @@ export function NetflixHome() {
               </div>
             )}
 
-            <HomePricingFooter
-              demoLoading={demoLoading}
-              onSampleClick={() => void handleDemo()}
-              onPlansClick={() => setShowPricingModal(true)}
-            />
+            {homeRoute === "feed" ? null : (
+              <HomePricingFooter onPlansClick={() => setShowPricingModal(true)} />
+            )}
           </div>
         ) : (
           renderFlow()
@@ -461,12 +455,26 @@ export function NetflixHome() {
         <UploadZone ref={uploadRef} hidden onFileSelect={handleFile} />
 
         {!isBusy && !liveRecordOpen && !shadowRoundSeconds && (
-          <HomeStickyNav
-            activeTab={mainTab}
-            onTabChange={(tab) => (tab === "library" ? goToLibrary() : goToHome())}
-            onRecord={openLiveRecord}
-            libraryCount={sessions.length}
-          />
+          homeRoute === "feed" ? (
+            <FeedStickyNav
+              activeTab={mainTab}
+              onTabChange={(tab) => (tab === "library" ? goToLibrary() : goToHome())}
+              onUpload={openUpload}
+              onRecord={openLiveRecord}
+              onSettings={() => {
+                setNameDraft(userName ?? "");
+                setSettingsModal("hub");
+              }}
+              libraryCount={sessions.length}
+            />
+          ) : (
+            <HomeStickyNav
+              activeTab={mainTab}
+              onTabChange={(tab) => (tab === "library" ? goToLibrary() : goToHome())}
+              onRecord={openLiveRecord}
+              libraryCount={sessions.length}
+            />
+          )
         )}
 
         {liveRecordOpen && (
@@ -484,7 +492,7 @@ export function NetflixHome() {
               setShadowRoundSeconds(null);
               setView("home");
               setActiveCard("upload");
-              writeHomeUrlState("home", "home");
+              writeHomeUrlState("home", "home", homeRoute);
               void handleFile(file);
             }}
             onDone={() => setShadowRoundSeconds(null)}
@@ -497,6 +505,7 @@ export function NetflixHome() {
       <HomeSettingsModals
         open={settingsModal}
         onClose={() => setSettingsModal(null)}
+        onNavigate={setSettingsModal}
         sport={sport}
         level={level}
         userName={userName}

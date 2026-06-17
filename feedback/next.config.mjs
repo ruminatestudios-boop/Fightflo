@@ -1,9 +1,11 @@
 /** @type {import('next').NextConfig} */
-const basePath = process.env.FEEDBACK_BASE_PATH ?? "/feedback";
+const defaultBasePath = process.env.NODE_ENV === "development" ? "" : "/feedback";
+const basePath = process.env.FEEDBACK_BASE_PATH ?? defaultBasePath;
 
 const nextConfig = {
   basePath,
   async redirects() {
+    if (!basePath) return [];
     return [
       {
         source: "/",
@@ -22,6 +24,12 @@ const nextConfig = {
       {
         source: "/report/:id",
         destination: "/feedback/report/:id",
+        permanent: false,
+        basePath: false,
+      },
+      {
+        source: "/feed",
+        destination: "/feedback/feed",
         permanent: false,
         basePath: false,
       },

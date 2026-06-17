@@ -100,11 +100,81 @@ const POSITIVE_COPY: Record<
   },
 };
 
+export interface ShadowMomentContext {
+  comboKey?: string;
+  comboLabel?: string;
+  hand?: "lead" | "rear" | "both";
+  punchLabel?: string;
+}
+
+function handPhrase(hand: ShadowMomentContext["hand"]): string {
+  if (hand === "lead") return "lead hand";
+  if (hand === "rear") return "rear hand";
+  if (hand === "both") return "both hands";
+  return "hand";
+}
+
+function comboPhrase(ctx?: ShadowMomentContext): string {
+  if (!ctx?.comboKey || ctx.comboKey.length < 3) return "";
+  const label = ctx.comboLabel ?? ctx.comboKey;
+  return ` after your ${label} (${ctx.comboKey})`;
+}
+
+function issueDetail(
+  type: ShadowWeaknessType,
+  elapsedSec: number,
+  ctx?: ShadowMomentContext
+): string {
+  const at = formatTime(elapsedSec);
+  const combo = comboPhrase(ctx);
+
+  switch (type) {
+    case "guard_drop_after_cross":
+      return `At ${at}${combo}, your ${handPhrase(ctx?.hand)} sat below cheek height before snapping back.`;
+    case "slow_guard_return":
+      return combo
+        ? `At ${at}${combo}, hands hung instead of returning to guard before the next step.`
+        : `At ${at}, hands hung after the punch instead of snapping back to cheeks.`;
+    case "elbow_flare_on_cross":
+      return ctx?.punchLabel
+        ? `At ${at}, on your ${ctx.punchLabel}${combo ? ` in ${ctx.comboLabel ?? ctx.comboKey}` : ""}, elbow opened wide — telegraphs the shot.`
+        : `At ${at}${combo}, elbow opened wide on extension — ribs exposed.`;
+    case "chin_up":
+      return `At ${at}${combo}, chin lifted above the shoulder line — head exposed mid-combo.`;
+    case "flat_hips":
+      return `At ${at}${combo || " on extension"}, hips stayed square — arm-only power on the shot.`;
+    case "stance_drift":
+      return `At ${at}${combo}, base shifted sideways while throwing — balance and defence suffer.`;
+  }
+}
+
+function issueFix(type: ShadowWeaknessType, ctx?: ShadowMomentContext): string {
+  switch (type) {
+    case "guard_drop_after_cross":
+      if (ctx?.comboKey?.includes("2")) {
+        return "Finish the cross, then snap rear hand to cheek before the hook or next punch.";
+      }
+      return "Touch cheeks before feet move — guard returns on the same count as the punch.";
+    case "slow_guard_return":
+      if (ctx?.comboKey?.includes("-")) {
+        return `On ${ctx.comboLabel ?? ctx.comboKey}: punch the numbers, then snap both hands home before stepping.`;
+      }
+      return "Count 1-2 on the punch, 3 on the return to guard.";
+    case "elbow_flare_on_cross":
+      return ctx?.punchLabel === "cross"
+        ? "Drive the cross through a narrow tunnel — elbow brushes your ribs."
+        : "Keep the elbow in on hooks — punch around the guard, not wide.";
+    default:
+      return ISSUE_COPY[type].fix;
+  }
+}
+
 export function makeShadowIssueMoment(
   type: ShadowWeaknessType,
   elapsedSec: number,
   index: number,
-  jointOverride?: keyof FrameLandmarks
+  jointOverride?: keyof FrameLandmarks,
+  ctx?: ShadowMomentContext
 ): ShadowMoment {
   const copy = ISSUE_COPY[type];
   return {
@@ -114,8 +184,8 @@ export function makeShadowIssueMoment(
     timestamp: formatTime(elapsedSec),
     eventType: type,
     title: copy.title,
-    detail: copy.detail,
-    fix: copy.fix,
+    detail: issueDetail(type, elapsedSec, ctx),
+    fix: issueFix(type, ctx),
     joint: jointOverride ?? copy.joint,
   };
 }
@@ -243,9 +313,12 @@ export function liveShadowboxingNote(
   return null;
 }
 
+import type { ShadowComboAnalysis } from "./shadowComboDetection";
+
 export function buildShadowRoundSummary(input: {
   moments: ShadowMoment[];
   roundSeconds: number;
+  comboAnalysis?: ShadowComboAnalysis;
 }): {
   summary: string;
   mechanicalFix: string;
@@ -278,17 +351,53 @@ export function buildShadowRoundSummary(input: {
     stance_drift: "Tape-line shadow — feet stay on a line for 2 min",
   };
 
+  const combo = input.comboAnalysis;
+  const topComboLine =
+    combo && combo.topCombos.length > 0
+      ? ` Top combos: ${combo.topCombos.join(" · ")}.`
+      : "";
+  const recommendLine =
+    combo && combo.recommendMore.length > 0
+      ? ` Do more ${combo.recommendMore[0].label} next round.`
+      : "";
+
   const summary =
     issues.length === 0
-      ? `Clean round — ${positives.length} good moment${positives.length === 1 ? "" : "s"} flagged. Tap each card to review what we caught.`
-      : `${issues.length} issue${issues.length === 1 ? "" : "s"} and ${positives.length} good moment${positives.length === 1 ? "" : "s"} flagged live. Tap a timestamp to see what happened.`;
+      ? `Clean round — ${positives.length} good moment${positives.length === 1 ? "" : "s"} flagged.${topComboLine}${recommendLine}`
+      : `${issues.length} issue${issues.length === 1 ? "" : "s"} and ${positives.length} good moment${positives.length === 1 ? "" : "s"} flagged live.${topComboLine}${recommendLine}`;
 
   const primaryCopy = primaryIssue ? ISSUE_COPY[primaryIssue] : null;
+  const comboFix = combo?.recommendMore[0]?.reason;
 
   return {
     summary,
-    mechanicalFix: primaryCopy?.fix ?? POSITIVE_COPY.quick_guard_return.fix,
-    drillName: primaryIssue ? drills[primaryIssue] : "Mirror shadow — 3×1 min defensive first",
+    mechanicalFix:
+      comboFix ??
+      primaryCopy?.fix ??
+      POSITIVE_COPY.quick_guard_return.fix,
+    drillName:
+      combo?.comboDrill ??
+      (primaryIssue ? drills[primaryIssue] : "Mirror shadow — 3×1 min defensive first"),
     primaryIssue,
   };
+}
+
+export function shadowHomeCardHint(
+  result: {
+    recommendMore?: { label: string }[];
+    topCombos?: string[];
+    issueCount?: number;
+  } | null
+): string {
+  if (!result) return "Live combos, guard & timestamps";
+  if (result.recommendMore?.[0]) {
+    return `Do more ${result.recommendMore[0].label}`;
+  }
+  if (result.topCombos?.[0]) {
+    return `Top: ${result.topCombos[0]}`;
+  }
+  if ((result.issueCount ?? 0) > 0) {
+    return `${result.issueCount} issue${result.issueCount === 1 ? "" : "s"} flagged live`;
+  }
+  return "Live combos, guard & timestamps";
 }

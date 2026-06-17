@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getScanCostCollector } from "@/lib/telemetry/scanCost";
 
 const DEFAULT_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
 
@@ -13,10 +14,28 @@ function getClient(): GoogleGenerativeAI {
   return client;
 }
 
+interface GeminiCallOptions {
+  model?: string;
+  temperature?: number;
+  usageLabel?: string;
+}
+
+function recordUsage(
+  label: string | undefined,
+  usage: {
+    promptTokenCount?: number;
+    candidatesTokenCount?: number;
+    totalTokenCount?: number;
+  } | undefined
+): void {
+  if (!label || !usage) return;
+  getScanCostCollector()?.recordGeminiUsage(label, usage);
+}
+
 export async function callGemini<T>(
   systemPrompt: string,
   userPayload: unknown,
-  options?: { model?: string; temperature?: number }
+  options?: GeminiCallOptions
 ): Promise<T> {
   const genAI = getClient();
   const model = genAI.getGenerativeModel({
@@ -32,6 +51,8 @@ export async function callGemini<T>(
     { text: JSON.stringify(userPayload, null, 2) },
   ]);
 
+  recordUsage(options?.usageLabel, result.response.usageMetadata);
+
   const text = result.response.text();
   return JSON.parse(text) as T;
 }
@@ -39,7 +60,8 @@ export async function callGemini<T>(
 export async function callGeminiVision<T>(
   systemPrompt: string,
   frameBase64Images: string[],
-  userPayload: unknown
+  userPayload: unknown,
+  options?: GeminiCallOptions
 ): Promise<T> {
   const genAI = getClient();
   const model = genAI.getGenerativeModel({
@@ -59,6 +81,8 @@ export async function callGeminiVision<T>(
     ...imageParts,
     { text: JSON.stringify(userPayload, null, 2) },
   ]);
+
+  recordUsage(options?.usageLabel, result.response.usageMetadata);
 
   const text = result.response.text();
   return JSON.parse(text) as T;

@@ -58,6 +58,13 @@ export const ANALYSIS_STEPS: Record<string, AnalysisStepConfig> = {
     detail: "Exporting timestamped clips for each coaching moment…",
     ticks: ["Exporting timestamped clips for each coaching moment…"],
   },
+  preparing_download: {
+    percent: 97,
+    eyebrow: "Download prep",
+    headline: "Preparing your replay",
+    detail: "Burning the skeleton overlay so your download is instant…",
+    ticks: ["Burning the skeleton overlay so your download is instant…"],
+  },
   complete: {
     percent: 100,
     eyebrow: "Done",

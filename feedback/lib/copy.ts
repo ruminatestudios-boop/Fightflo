@@ -1,10 +1,16 @@
 /** Product copy — AI video coaching */
 
 export const INTRO_COPY = {
-  headline: "Fight better. Start here.",
+  headline: "Turn footage into fight IQ",
   subtitle:
-    "Record your session. Our coaching engine finds what you can't see yourself — guard drops, footwork faults, bad habits. Timestamped. Unfiltered.",
-  getStartedLabel: "Get your free analysis",
+    "Upload your shadowboxing or fight video. Get AI-powered breakdowns of your defense, timing, footwork, and habits—so you know exactly what to fix next.",
+  getStartedLabel: "Get your FREE analysis",
+} as const;
+
+export const FEED_INTRO_COPY = {
+  headline: "How can we help your training today?",
+  body: "Fightflo helps you improve through AI-powered video analysis and coaching.",
+  prompt: "Select an option below",
 } as const;
 
 export const PWA_INSTALL_COPY = {

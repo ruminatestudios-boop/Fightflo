@@ -3,21 +3,27 @@ import { withBasePath } from "@/lib/paths";
 export const HOME_FLOW_VIEWS = ["guard", "shadow", "weekly", "reupload", "progress"] as const;
 export type HomeFlowView = (typeof HOME_FLOW_VIEWS)[number];
 
+export type HomeRoute = "home" | "feed";
+
+function homeRoutePath(route: HomeRoute): string {
+  return route === "feed" ? withBasePath("/feed") : withBasePath("/");
+}
+
 export function isHomeFlowView(
   value: string | null | undefined
 ): value is HomeFlowView {
   return HOME_FLOW_VIEWS.includes(value as HomeFlowView);
 }
 
-export function homeFlowPath(view: HomeFlowView): string {
-  const relative = withBasePath(`/?view=${view}`);
+export function homeFlowPath(view: HomeFlowView, route: HomeRoute = "home"): string {
+  const relative = `${homeRoutePath(route)}?view=${view}`;
   if (typeof window !== "undefined") {
     return new URL(relative, window.location.origin).href;
   }
   return `http://localhost:3001${relative}`;
 }
 
-export function readHomeUrlState(): {
+export function readHomeUrlState(route: HomeRoute = "home"): {
   view: HomeFlowView | "home";
   tab: "home" | "library";
 } {
@@ -36,7 +42,8 @@ export function readHomeUrlState(): {
 
 export function writeHomeUrlState(
   view: HomeFlowView | "home",
-  tab: "home" | "library"
+  tab: "home" | "library",
+  route: HomeRoute = "home"
 ): void {
   if (typeof window === "undefined") return;
 
@@ -45,6 +52,6 @@ export function writeHomeUrlState(
   if (tab === "library") params.set("tab", "library");
 
   const qs = params.toString();
-  const path = withBasePath("/") + (qs ? `?${qs}` : "");
+  const path = homeRoutePath(route) + (qs ? `?${qs}` : "");
   window.history.replaceState(null, "", path);
 }

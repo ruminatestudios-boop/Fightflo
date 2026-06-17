@@ -1,3 +1,4 @@
+import type { GuardDropMoment } from "@/lib/guard/guardAnalysis";
 import type { ProgressDataPoint, WeaknessTrend } from "@/types";
 import type { SessionLibraryEntry } from "@/lib/sessions/library";
 
@@ -42,7 +43,7 @@ export interface ProgressInsight {
   sessionCount: number;
   headline: string;
   headlineDetail: string;
-  latestMainFault: string;
+  latestMainFault: string | null;
   latestStrengthTitle: string | null;
   latestPositives: ProgressHighlight[];
   defaultMetricId: ProgressMetricId;
@@ -71,6 +72,7 @@ export interface GuardInsight {
   summary: string;
   mechanicalFix: string;
   drillName: string;
+  moments: GuardDropMoment[];
 }
 
 export interface HomeInsights {

@@ -26,6 +26,8 @@ interface InsightCardProps {
   marker?: string;
   markerLabel?: string;
   footer?: ReactNode;
+  /** Session labels use body size; weakness headlines stay large */
+  titleVariant?: "headline" | "body";
 }
 
 export function InsightCard({
@@ -43,6 +45,7 @@ export function InsightCard({
   marker,
   markerLabel = "Success marker",
   footer,
+  titleVariant = "headline",
 }: InsightCardProps) {
   return (
     <div
@@ -53,20 +56,29 @@ export function InsightCard({
       <p className={`insight-card-kicker ${accentKicker ? "loading-panel-kicker" : "glass-greeting-sub"}`}>
         {kicker}
       </p>
-      <h2 className="glass-greeting-title insight-card-title">{title}</h2>
+      <h2
+        className={
+          titleVariant === "body"
+            ? "insight-card-title insight-card-title--body"
+            : "glass-greeting-title insight-card-title"
+        }
+      >
+        {title}
+      </h2>
 
       {metric ? (
         <>
           <div className="insight-card-divider" aria-hidden />
           <div className="insight-card-metrics">
-            <div className="insight-card-metric-main">
-              <span className="insight-card-metric-value">{metric.value}</span>
-              {metric.suffix ? (
-                <span className="insight-card-metric-suffix">{metric.suffix}</span>
-              ) : null}
-            </div>
+            <span className="insight-card-metric-pill">
+              {metric.suffix
+                ? `${metric.value} ${metric.suffix}`
+                : `${metric.value} ${metric.label}`}
+            </span>
             <div className="insight-card-metric-meta">
-              <span className="insight-card-metric-label">{metric.label}</span>
+              {metric.suffix ? (
+                <span className="insight-card-metric-label">{metric.label}</span>
+              ) : null}
               {metric.progressHint ? (
                 <span className="insight-card-metric-hint">{metric.progressHint}</span>
               ) : null}

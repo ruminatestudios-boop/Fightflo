@@ -33,7 +33,12 @@ export const USER_ANALYSIS_PHASES: UserAnalysisPhase[] = [
     label: "Report",
     shortLabel: "AI coaching",
     detail: "Building your coaching report",
-    serverSteps: ["writing_report", "generating_clips", "complete"],
+    serverSteps: [
+      "writing_report",
+      "generating_clips",
+      "preparing_download",
+      "complete",
+    ],
   },
 ];
 

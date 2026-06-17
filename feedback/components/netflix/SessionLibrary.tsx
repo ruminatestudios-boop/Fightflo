@@ -26,7 +26,13 @@ export function SessionLibrary({
 
   if (loading) {
     return (
-      <div className="session-library session-library--empty">
+      <div
+        className="session-library session-library--empty"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <span className="session-library-loading-wheel" aria-hidden />
         <p className="session-library-hint">Loading your sessions…</p>
       </div>
     );

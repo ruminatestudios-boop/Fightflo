@@ -13,6 +13,10 @@
     {
       "source": "/feedback/:path*",
       "destination": "https://feedback.fightflo.app/feedback/:path*"
+    },
+    {
+      "source": "/feed",
+      "destination": "https://feedback.fightflo.app/feedback/feed"
     }
   ],
   "redirects": [

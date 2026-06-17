@@ -8,7 +8,7 @@ import { formatDisplayName } from "@/lib/user/displayName";
 import { storeUserName } from "@/lib/storage/client";
 import type { SkillLevel, SportId } from "@/types";
 
-export type HomeSettingsModal = "name" | "sport" | "level" | null;
+export type HomeSettingsModal = "hub" | "name" | "sport" | "level" | null;
 
 const LEVELS: { id: SkillLevel; label: string; hint: string }[] = [
   {
@@ -71,6 +71,7 @@ const LEVEL_OPTIONS = LEVELS.map((lvl) => ({
 interface HomeSettingsModalsProps {
   open: HomeSettingsModal;
   onClose: () => void;
+  onNavigate?: (modal: HomeSettingsModal) => void;
   sport: SportId;
   level: SkillLevel;
   userName: string | null;
@@ -84,6 +85,7 @@ interface HomeSettingsModalsProps {
 export function HomeSettingsModals({
   open,
   onClose,
+  onNavigate,
   sport,
   level,
   userName,
@@ -122,6 +124,47 @@ export function HomeSettingsModals({
 
   return (
     <>
+      <ModalShell
+        open={open === "hub"}
+        onClose={onClose}
+        compact
+        subtitle="Your profile"
+        title="Settings"
+        titleId="home-settings-hub-title"
+        bodyClassName="home-settings-modal-body"
+      >
+        <div className="home-settings-hub-list">
+          <button
+            type="button"
+            className="home-settings-hub-row"
+            onClick={() => onNavigate?.("name")}
+          >
+            <span className="home-settings-hub-row-kicker">Name</span>
+            <span className="home-settings-hub-row-value">{userName ?? "Add"}</span>
+          </button>
+          <button
+            type="button"
+            className="home-settings-hub-row"
+            onClick={() => onNavigate?.("sport")}
+          >
+            <span className="home-settings-hub-row-kicker">Sport</span>
+            <span className="home-settings-hub-row-value">
+              {SPORTS[sport].emoji} {SPORTS[sport].name}
+            </span>
+          </button>
+          <button
+            type="button"
+            className="home-settings-hub-row"
+            onClick={() => onNavigate?.("level")}
+          >
+            <span className="home-settings-hub-row-kicker">Level</span>
+            <span className="home-settings-hub-row-value">
+              {level.charAt(0).toUpperCase() + level.slice(1)}
+            </span>
+          </button>
+        </div>
+      </ModalShell>
+
       <ModalShell
         open={open === "name"}
         onClose={onClose}
