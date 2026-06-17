@@ -1,5 +1,5 @@
 /**
- * Verify HEAVY pose pipeline on real fight demo footage.
+ * Verify sports pose pipeline on real fight demo footage.
  *
  *   cd feedback && npx tsx scripts/verify-fighting-pose.ts
  */
@@ -21,9 +21,16 @@ async function main() {
     return joints.length >= 6;
   });
 
+  const reliableRatio =
+    result.quality.frames_total > 0
+      ? Math.round(
+          (result.quality.frames_with_pose / result.quality.frames_total) * 100
+        )
+      : 0;
+
   console.log("Frames analysed:", result.timeline.length);
   console.log("Drawable frames (visibility ≥ 0.65):", drawable.length);
-  console.log("Reliable frame ratio:", `${result.quality.reliable_frame_ratio}%`);
+  console.log("Pose frame ratio:", `${reliableRatio}%`);
   console.log("Guard calibrated:", result.landmark_summary.guard_calibrated);
 
   await cleanupSessionFiles(sessionId);
