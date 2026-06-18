@@ -34,6 +34,7 @@ interface HomeFeatureGridProps {
   onUpload?: () => void;
   onRecord?: () => void;
   onPricing?: () => void;
+  isPro?: boolean;
 }
 
 /** Short subheading on each home card — what the tool does, not session stats. */
@@ -110,6 +111,7 @@ export function HomeFeatureGrid({
   onUpload,
   onRecord,
   onPricing,
+  isPro = false,
 }: HomeFeatureGridProps) {
   const isFeed = variant === "feed";
   const feedUploadUsesPhoto = false;
@@ -232,7 +234,7 @@ export function HomeFeatureGrid({
               onSelect={onSelect}
               variant="fullscreen"
             />
-            <FeedAppInfoCards onUpload={onUpload} onRecord={onRecord} onPricing={onPricing} />
+            <FeedAppInfoCards onUpload={onUpload} onRecord={onRecord} onPricing={onPricing} isPro={isPro} completeCount={complete} />
           </>
         ) : (
           <div className="home-feature-grid-secondary-cards">

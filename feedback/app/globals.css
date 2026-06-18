@@ -3233,10 +3233,10 @@ button.stepguide-card-ts:active {
   inset: 0;
   background: linear-gradient(
     to top,
-    rgba(0, 0, 0, 0.94) 0%,
-    rgba(0, 0, 0, 0.72) 38%,
-    rgba(0, 0, 0, 0.28) 68%,
-    rgba(0, 0, 0, 0.12) 100%
+    rgba(0, 0, 0, 0.88) 0%,
+    rgba(0, 0, 0, 0.55) 28%,
+    rgba(0, 0, 0, 0.08) 55%,
+    rgba(0, 0, 0, 0) 100%
   );
 }
 
@@ -3706,6 +3706,226 @@ button.stepguide-card-ts:active {
   flex-shrink: 0;
 }
 
+/* First-visit guided hint */
+.feed-action-card--first {
+  border-color: rgba(250, 65, 65, 0.2);
+}
+
+.feed-action-card-first-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.875rem 0;
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fa4141;
+}
+
+.feed-action-card-first-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: #fa4141;
+  flex-shrink: 0;
+  animation: feed-first-dot-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes feed-first-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* Usage counter */
+.feed-action-card-usage {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #7e7e7e;
+}
+
+.feed-action-card-usage--warn {
+  color: #fa4141;
+  font-weight: 600;
+}
+
+/* Post-analysis next-step banner */
+.report-next-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 1.25rem 1.25rem max(1.5rem, env(safe-area-inset-bottom));
+  background: #111;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.report-next-step-label {
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #7e7e7e;
+  margin: 0;
+}
+
+.report-next-step-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  justify-content: center;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fefefe;
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.report-next-step-btn:hover {
+  background: #222;
+}
+
+.report-next-step-upgrade {
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fa4141;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0;
+}
+
+/* Email capture sheet */
+.email-capture-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.email-capture-sheet {
+  width: 100%;
+  background: #111;
+  border-radius: 1.25rem 1.25rem 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.5rem 1.25rem max(2rem, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+  animation: email-sheet-up 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes email-sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.email-capture-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  background: rgba(250, 65, 65, 0.1);
+  border: 1px solid rgba(250, 65, 65, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fa4141;
+  margin-bottom: 0.25rem;
+}
+
+.email-capture-title {
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fefefe;
+  margin: 0;
+}
+
+.email-capture-body {
+  font-size: 0.8125rem;
+  color: #7e7e7e;
+  margin: 0 0 0.5rem;
+  max-width: 22rem;
+  line-height: 1.5;
+}
+
+.email-capture-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.email-capture-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fefefe;
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: 0.9375rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.email-capture-input:focus {
+  border-color: rgba(250, 65, 65, 0.5);
+}
+
+.email-capture-input::placeholder {
+  color: #555;
+}
+
+.email-capture-error {
+  font-size: 0.75rem;
+  color: #fa4141;
+  margin: 0;
+}
+
+.email-capture-submit {
+  width: 100%;
+  padding: 0.875rem;
+  border-radius: 0.75rem;
+  background: #fa4141;
+  border: none;
+  color: #fff;
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.email-capture-submit:hover { background: #e83a3a; }
+.email-capture-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.email-capture-skip {
+  font-size: 0.8125rem;
+  color: #555;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  margin-top: 0.25rem;
+}
+
 .feed-action-card-btns {
   display: flex;
   gap: 0.45rem;
@@ -3740,19 +3960,20 @@ button.stepguide-card-ts:active {
   flex-shrink: 0;
   padding: 0.5rem 0.9rem;
   border-radius: 0.6rem;
-  border: none;
-  background: #fa4141;
+  border: 1px solid rgba(250, 65, 65, 0.6);
+  background: transparent;
   color: #fff;
   font-family: var(--font-instrument), system-ui, sans-serif;
   font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .feed-action-card-btn:hover {
-  background: #e83a3a;
+  background: rgba(250, 65, 65, 0.12);
+  border-color: #e83a3a;
 }
 
 .feed-action-card-btn svg {
@@ -4288,7 +4509,66 @@ button.stepguide-card-ts:active {
 }
 
 .home-settings-modal-body {
-  padding-top: 0;
+  padding-top: 0.25rem;
+}
+
+.home-picker-list {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.home-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  text-align: left;
+  transition: background 0.12s ease;
+  cursor: pointer;
+}
+
+.home-picker-row:last-child {
+  border-bottom: none;
+}
+
+.home-picker-row:active {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.home-picker-row--selected {
+  background: rgba(250, 65, 65, 0.1);
+}
+
+.home-picker-row-icon {
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.home-picker-row-label {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.home-picker-row--selected .home-picker-row-label {
+  color: #fff;
+}
+
+.home-picker-row-check {
+  font-size: 0.8rem;
+  color: #fa4141;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
 .home-settings-modal-actions {
@@ -4318,7 +4598,9 @@ button.stepguide-card-ts:active {
 .home-settings-hub-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
 }
 
 .home-settings-hub-row {
@@ -4327,28 +4609,33 @@ button.stepguide-card-ts:active {
   justify-content: space-between;
   gap: 0.75rem;
   width: 100%;
-  padding: 0.85rem 0.95rem;
-  border-radius: var(--radius-card);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  padding: 0.7rem 0.9rem;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
   text-align: left;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: background 0.12s ease;
+}
+
+.home-settings-hub-row:last-child {
+  border-bottom: none;
 }
 
 .home-settings-hub-row:active {
-  transform: scale(0.99);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .home-settings-hub-row-kicker {
   flex-shrink: 0;
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.6875rem;
+  font-weight: 500;
   color: rgba(255, 255, 255, 0.38);
 }
 
 .home-settings-hub-row-value {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4356,6 +4643,13 @@ button.stepguide-card-ts:active {
   font-size: 0.875rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.9);
+}
+
+.home-settings-hub-row-value::after {
+  content: "›";
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.25);
+  flex-shrink: 0;
 }
 
 .home-name-field--modal {
@@ -7415,12 +7709,57 @@ button.stepguide-card-ts:active {
   color: #fff;
 }
 
+.shadow-flow-timer-display--btn {
+  background: none;
+  border: none;
+  cursor: text;
+  padding: 0;
+  width: 100%;
+}
+.shadow-flow-timer-display--btn:hover {
+  opacity: 0.8;
+}
+
+.shadow-flow-timer-manual {
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+  text-align: center;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: clamp(2.25rem, 10vw, 2.75rem);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: #fff;
+  outline: none;
+  padding: 0 0 0.15rem;
+}
+.shadow-flow-timer-manual::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
 .shadow-flow-timer-caption {
   margin: 0 0 0.35rem;
   text-align: center;
   font-size: 0.8125rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.shadow-flow-timer-edit-btn {
+  background: none;
+  border: none;
+  color: rgba(250, 65, 65, 0.8);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
 }
 
 .shadow-flow-timer-slider {

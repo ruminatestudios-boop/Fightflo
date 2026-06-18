@@ -1,5 +1,5 @@
 /** Lifetime free analyses per account */
-export const FREE_ANALYSIS_LIMIT = 1;
+export const FREE_ANALYSIS_LIMIT = 3;
 
 /** Pro fair-use cap — resets on the 1st of each month (UTC) */
 export const PRO_MONTHLY_ANALYSIS_LIMIT = 15;

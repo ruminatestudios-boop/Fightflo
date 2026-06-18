@@ -1,6 +1,44 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+
+const CYCLING_WORDS = ["fix", "improve", "sharpen", "correct"];
+
+function CyclingHeadline() {
+  const [index, setIndex] = useState(0);
+  const [fade, setFade] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFade(false);
+      setTimeout(() => {
+        setIndex((i) => (i + 1) % CYCLING_WORDS.length);
+        setFade(true);
+      }, 300);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <h1 className="glass-greeting-title">
+      {"Most fighters train hard. Few know what to "}
+      <span
+        style={{
+          color: "#e53e3e",
+          display: "inline-block",
+          transition: "opacity 0.3s ease",
+          opacity: fade ? 1 : 0,
+          minWidth: "4ch",
+          fontFamily: "var(--font-script)",
+          fontSize: "1.15em",
+          fontWeight: 700,
+        }}
+      >
+        {CYCLING_WORDS[index]}.
+      </span>
+    </h1>
+  );
+}
 import { useRouter } from "next/navigation";
 import { FEED_COPY } from "@/lib/copy";
 import { HomeFeatureGrid, type HomeFeatureId } from "@/components/home/HomeFeatureGrid";
@@ -404,11 +442,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
             <header className="glass-greeting">
               {homeRoute === "feed" ? (
                 <>
-                  <h1 className="glass-greeting-title">
-                    {userName
-                      ? `How can we help ${userName}'s training today?`
-                      : FEED_COPY.headline}
-                  </h1>
+                  <CyclingHeadline />
                   <p className="glass-greeting-lead">{FEED_COPY.body}</p>
                   <p className="glass-greeting-select">{FEED_COPY.selectPrompt}</p>
                 </>
@@ -450,6 +484,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
               onUpload={openUpload}
               onRecord={openLiveRecord}
               onPricing={() => setShowPricingModal(true)}
+              isPro={isPro}
             />
 
             {error && (
@@ -586,6 +621,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
         }}
         onCheckout={() => void handlePaywallCheckout()}
       />
+
     </NetflixShell>
   );
 }

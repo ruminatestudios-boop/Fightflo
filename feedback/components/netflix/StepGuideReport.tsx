@@ -254,7 +254,9 @@ export function StepGuideReport({
         },
       ];
 
-      guardAnalysis.moments.forEach((moment) => {
+      const visibleMoments = guardAnalysis.moments.slice(0, 5);
+      const hiddenCount = guardAnalysis.moments.length - visibleMoments.length;
+      visibleMoments.forEach((moment) => {
         list.push({
           id: moment.id,
           eyebrow: moment.timestamp,
@@ -271,7 +273,7 @@ export function StepGuideReport({
             fight_consequence: guardAnalysis.fightConsequence,
             root_cause: report.main_weakness?.root_cause ?? "",
             elite_reference: report.main_weakness?.elite_reference ?? "",
-            frequency: "",
+            frequency: hiddenCount > 0 ? `+${hiddenCount} more drop${hiddenCount === 1 ? "" : "s"} detected` : "",
             timestamp: moment.timestamp,
           },
         });
@@ -891,6 +893,21 @@ export function StepGuideReport({
       >
         {renderSheetContent()}
       </AnalysisSheet>
+
+      <div className="report-next-step">
+        <p className="report-next-step-label">Ready to keep improving?</p>
+        <a href="/" className="report-next-step-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={15} height={15} aria-hidden>
+            <path d="M12 16V4M8.5 7.5L12 4l3.5 3.5M4 16.5V20a2 2 0 002 2h12a2 2 0 002-2v-3.5" />
+          </svg>
+          Upload your next clip
+        </a>
+        {!isPro && (
+          <button type="button" className="report-next-step-upgrade" onClick={onUpgrade}>
+            Unlock unlimited coaching
+          </button>
+        )}
+      </div>
     </NetflixShell>
   );
 }
