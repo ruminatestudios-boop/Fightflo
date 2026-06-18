@@ -28,7 +28,7 @@ const CARD_IMAGES = {
     position: "50% 20%",
   },
   progress: {
-    src: withBasePath("/images/feed-progress.png"),
+    src: withBasePath("/images/feed-progress-v2.png"),
     position: "60% 40%",
   },
 } as const satisfies Record<string, HomeCardImage>;
