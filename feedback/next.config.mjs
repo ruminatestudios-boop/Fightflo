@@ -37,8 +37,8 @@ const nextConfig = {
         "./node_modules/ffmpeg-static/**",
         "./node_modules/.bin/tsx",
         "./node_modules/tsx/**",
-        "./node_modules/tsx/dist/**",
         "./node_modules/esbuild/**",
+        "./node_modules/@esbuild/**",
         "./scripts/detect-pose-cli.ts",
       ],
       "/api/video/download": [
