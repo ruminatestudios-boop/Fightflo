@@ -121,6 +121,9 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
     null
   );
   const [followUpParentId, setFollowUpParentId] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [longVideoWarning, setLongVideoWarning] = useState(false);
+  const [offlineWarning, setOfflineWarning] = useState(false);
   const [liveRecordOpen, setLiveRecordOpen] = useState(false);
   const [shadowRoundSeconds, setShadowRoundSeconds] = useState<ShadowRoundLength | null>(
     null
@@ -157,14 +160,9 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
     setShadowRoundSeconds(seconds);
   }, []);
 
-  const handleFile = useCallback(
+  const doUpload = useCallback(
     async (file: File) => {
-      const sessionId = await upload(
-        file,
-        sport,
-        level,
-        followUpParentId ?? undefined
-      );
+      const sessionId = await upload(file, sport, level, followUpParentId ?? undefined);
       setFollowUpParentId(null);
       if (sessionId) {
         void refetchInsights();
@@ -173,6 +171,37 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
       }
     },
     [upload, sport, level, followUpParentId, router, refetchInsights, refetchLibrary]
+  );
+
+  const handleFile = useCallback(
+    async (file: File) => {
+      // Offline check
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        setOfflineWarning(true);
+        return;
+      }
+
+      // Duration check — warn if video is over 3 minutes
+      const checkDuration = (): Promise<number> =>
+        new Promise((resolve) => {
+          const url = URL.createObjectURL(file);
+          const vid = document.createElement("video");
+          vid.preload = "metadata";
+          vid.onloadedmetadata = () => { URL.revokeObjectURL(url); resolve(vid.duration); };
+          vid.onerror = () => { URL.revokeObjectURL(url); resolve(0); };
+          vid.src = url;
+        });
+
+      const duration = await checkDuration();
+      if (duration > 180) {
+        setPendingFile(file);
+        setLongVideoWarning(true);
+        return;
+      }
+
+      await doUpload(file);
+    },
+    [doUpload]
   );
 
   const handleLiveRecordingComplete = useCallback(
@@ -490,13 +519,21 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
             {error && (
               <div className="mt-4 space-y-3">
                 <p className="glass-error">{error}</p>
-                {error && paywallMode && (
+                {paywallMode ? (
                   <button
                     type="button"
                     className="w-full rounded-card border border-white/20 py-3 text-sm text-white"
                     onClick={() => setShowPaywall(true)}
                   >
                     {paywallMode === "topup" ? "Buy scan pack" : "Upgrade to Pro"}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="upload-retry-btn"
+                    onClick={() => { reset(); uploadRef.current?.open(); }}
+                  >
+                    Try again
                   </button>
                 )}
               </div>
@@ -621,6 +658,53 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
         }}
         onCheckout={() => void handlePaywallCheckout()}
       />
+
+      {/* Long video warning */}
+      {longVideoWarning && (
+        <div className="ux-sheet-backdrop" onClick={() => setLongVideoWarning(false)}>
+          <div className="ux-sheet" onClick={(e) => e.stopPropagation()}>
+            <p className="ux-sheet-title">Long video detected</p>
+            <p className="ux-sheet-body">
+              For the sharpest coaching, we recommend clips under 3 minutes. Longer videos
+              still work but analysis takes longer and focuses on fewer moments.
+            </p>
+            <button
+              type="button"
+              className="ux-sheet-btn-primary"
+              onClick={() => { setLongVideoWarning(false); void doUpload(pendingFile!); }}
+            >
+              Upload anyway
+            </button>
+            <button
+              type="button"
+              className="ux-sheet-btn-secondary"
+              onClick={() => { setLongVideoWarning(false); setPendingFile(null); uploadRef.current?.open(); }}
+            >
+              Pick a shorter clip
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Offline warning */}
+      {offlineWarning && (
+        <div className="ux-sheet-backdrop" onClick={() => setOfflineWarning(false)}>
+          <div className="ux-sheet" onClick={(e) => e.stopPropagation()}>
+            <p className="ux-sheet-title">No internet connection</p>
+            <p className="ux-sheet-body">
+              Connect to Wi-Fi or mobile data before uploading — your video needs a stable
+              connection to reach our servers.
+            </p>
+            <button
+              type="button"
+              className="ux-sheet-btn-primary"
+              onClick={() => setOfflineWarning(false)}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
 
     </NetflixShell>
   );

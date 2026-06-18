@@ -570,7 +570,7 @@ export function StepGuideReport({
         <div className="space-y-4 text-sm leading-relaxed text-white/70">
           <p>{report.coach_summary}</p>
           <p>{report.pattern_insight}</p>
-          <ReportShareFooter sessionId={session.id} onShare={onShare} />
+          <ReportShareFooter sessionId={session.id} onShare={onShare} mainWeaknessTitle={report.main_weakness?.title} />
         </div>
       );
     }

@@ -234,7 +234,16 @@ export function HomeFeatureGrid({
               onSelect={onSelect}
               variant="fullscreen"
             />
-            <FeedAppInfoCards onUpload={onUpload} onRecord={onRecord} onPricing={onPricing} isPro={isPro} completeCount={complete} />
+            <FeedAppInfoCards
+              onUpload={onUpload}
+              onRecord={onRecord}
+              onPricing={onPricing}
+              isPro={isPro}
+              completeCount={complete}
+              lastSessionDaysAgo={insights?.latestComplete
+                ? Math.floor((Date.now() - new Date((insights.latestComplete as { created_at: string }).created_at).getTime()) / 86400000)
+                : null}
+            />
           </>
         ) : (
           <div className="home-feature-grid-secondary-cards">

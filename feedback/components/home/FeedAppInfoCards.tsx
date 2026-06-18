@@ -8,6 +8,15 @@ interface FeedAppInfoCardsProps {
   onPricing?: () => void;
   isPro?: boolean;
   completeCount?: number;
+  lastSessionDaysAgo?: number | null;
+}
+
+function returnVisitorMessage(daysAgo: number): string {
+  if (daysAgo === 0) return "You trained today — upload your next clip.";
+  if (daysAgo === 1) return "Back again — ready to review yesterday's session?";
+  if (daysAgo <= 3) return `${daysAgo} days since your last session — time to improve.`;
+  if (daysAgo <= 7) return `${daysAgo} days since your last session — don't lose momentum.`;
+  return `It's been ${daysAgo} days — your next clip is waiting.`;
 }
 
 export function FeedAppInfoCards({
@@ -16,8 +25,10 @@ export function FeedAppInfoCards({
   onPricing,
   isPro = false,
   completeCount = 0,
+  lastSessionDaysAgo = null,
 }: FeedAppInfoCardsProps) {
   const isFirstVisit = completeCount === 0;
+  const isReturning = completeCount > 0 && lastSessionDaysAgo !== null;
   const remaining = Math.max(0, FREE_ANALYSIS_LIMIT - completeCount);
   const showUsage = !isPro && completeCount > 0 && completeCount < FREE_ANALYSIS_LIMIT;
   const almostOut = !isPro && remaining === 1 && completeCount > 0;
@@ -29,6 +40,11 @@ export function FeedAppInfoCards({
           <div className="feed-action-card-first-hint">
             <span className="feed-action-card-first-dot" aria-hidden />
             Start here — upload or record your training
+          </div>
+        )}
+        {isReturning && lastSessionDaysAgo !== null && (
+          <div className="feed-action-card-returning">
+            {returnVisitorMessage(lastSessionDaysAgo)}
           </div>
         )}
         <div className="feed-action-card-top">

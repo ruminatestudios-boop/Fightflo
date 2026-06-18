@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { GlassPage } from "@/components/shared/GlassPage";
 import { GlassStatusCard } from "@/components/shared/GlassStatusCard";
 import { PaywallSheet, type PaywallMode } from "@/components/shared/PaywallSheet";
 import { ReportEmailCapture } from "@/components/shared/ReportEmailCapture";
+import { PwaInstallModal } from "@/components/shared/PwaInstallModal";
 import { StepGuideReport } from "@/components/netflix/StepGuideReport";
 import { AnalysisProgressView } from "@/components/shared/AnalysisProgressView";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
@@ -49,6 +50,8 @@ export function ReportPageClient({
   const [showEmailCapture, setShowEmailCapture] = useState(true);
   const [storedEmail, setStoredEmail] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const pwaTriggered = useRef(false);
+  const pwaRef = useRef<(() => void) | null>(null);
 
   const userId = session?.user_id ?? null;
   const emailCapture = useReportEmailCapture(userId, sport);
@@ -89,6 +92,37 @@ export function ReportPageClient({
       setStoredEmail(emailCapture.email.trim());
     }
   }, [emailCapture.status, emailCapture.email]);
+
+  // Auto-show upgrade prompt when free user has used their last free analysis
+  useEffect(() => {
+    if (!report || isPro || showPaywall) return;
+    const uid =
+      userId ??
+      (typeof window !== "undefined" ? localStorage.getItem("feedback_anon_user_id") : null);
+    if (!uid) return;
+
+    fetch(apiPath(`/api/user/status?userId=${uid}`))
+      .then((r) => r.json())
+      .then((d: { used?: number; limit?: number; isPro?: boolean }) => {
+        if (d.isPro) return;
+        if (d.used !== undefined && d.limit !== undefined && d.used >= d.limit) {
+          const t = window.setTimeout(() => {
+            setPaywallMode("pro");
+            setShowPaywall(true);
+          }, 10000);
+          return () => window.clearTimeout(t);
+        }
+      })
+      .catch(() => undefined);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [report?.id, isPro]);
+
+  // Trigger PWA install prompt once, when the report first appears
+  useEffect(() => {
+    if (!report || pwaTriggered.current) return;
+    pwaTriggered.current = true;
+    pwaRef.current?.();
+  }, [report]);
 
   const handleShare = useCallback(async () => {
     if (!report) return;
@@ -215,6 +249,8 @@ export function ReportPageClient({
         onClose={() => setShowPaywall(false)}
         onCheckout={handlePaywallCheckout}
       />
+
+      <PwaInstallModal triggerRef={pwaRef} />
 
       {notice && (
         <div
