@@ -2425,40 +2425,26 @@ button.stepguide-card-ts:active {
   background: #000;
 }
 
-/* Vercel-style ambient glows */
+/* Smooth single top glow */
 .glass-orb {
   pointer-events: none;
   position: absolute;
-  border-radius: 9999px;
   z-index: 0;
 }
 
 .glass-orb--a {
-  top: -20%;
+  top: -30%;
   left: 50%;
   transform: translateX(-50%);
-  width: 70vw;
-  height: 40vh;
-  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.07) 0%, transparent 70%);
-  filter: blur(40px);
-}
-
-.glass-orb--b {
-  top: 30%;
-  right: -10%;
-  width: 50vw;
-  height: 50vh;
-  background: radial-gradient(ellipse at center, rgba(200, 200, 200, 0.04) 0%, transparent 70%);
+  width: 120vw;
+  height: 60vh;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.055) 0%, transparent 65%);
   filter: blur(60px);
 }
 
+.glass-orb--b,
 .glass-orb--c {
-  bottom: 10%;
-  left: -10%;
-  width: 50vw;
-  height: 40vh;
-  background: radial-gradient(ellipse at center, rgba(180, 180, 180, 0.04) 0%, transparent 70%);
-  filter: blur(60px);
+  display: none;
 }
 
 .glass-home-inner {
