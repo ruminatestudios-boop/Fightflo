@@ -2,8 +2,7 @@
 
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
-import { HERO_ONBOARDING_POSTER, ONBOARDING_VIDEO, ONBOARDING_VIDEO_CDN } from "@/lib/media";
-import { HeroMedia } from "@/components/ui/HeroMedia";
+
 
 interface IntroScreenProps {
   onGetStarted: () => void;
@@ -14,21 +13,21 @@ interface IntroScreenProps {
 
 const DEFAULT_TITLE = (
   <>
-    You&apos;re in
+    Your footage.
     <br />
-    the fight now
+    Real feedback.
   </>
 );
 
 const DEFAULT_SUBTITLE =
-  "Reactive shadowboxing with real fight rhythm — pressure, silence, and explosive exchanges.";
+  "Upload any session. AI breaks down your guard, timing, and movement — then tells you exactly what to drill next.";
 
 /** Strava-style full-screen intro — blocks until user taps Get started */
 export function IntroScreen({
   onGetStarted,
   title = DEFAULT_TITLE,
   subtitle = DEFAULT_SUBTITLE,
-  getStartedLabel = "Get started",
+  getStartedLabel = "Analyze My Session for FREE",
 }: IntroScreenProps) {
   return (
     <motion.div
@@ -40,24 +39,22 @@ export function IntroScreen({
       className="intro-screen-root fixed inset-0 z-40 h-[100dvh] w-full overflow-hidden bg-black"
       style={{ minHeight: "100dvh" }}
     >
-      <div className="intro-screen-media pointer-events-none absolute inset-0 z-0">
-        <HeroMedia
-          videoSrc={ONBOARDING_VIDEO}
-          fallbackVideoSrc={ONBOARDING_VIDEO_CDN}
-          posterSrc={HERO_ONBOARDING_POSTER}
-          overlay="strava"
-          eager
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <video
+          src="https://cdn.shopify.com/videos/c/o/v/e8f16a43809e4314bb66ee7dfc4d0d3f.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="h-full w-full object-cover"
         />
+        <div className="absolute inset-x-0 bottom-0 h-80 bg-gradient-to-t from-black via-black/70 to-transparent" />
       </div>
 
       <div className="intro-screen-content pointer-events-none relative z-10 flex h-full min-h-[100dvh] w-full flex-col">
         <div className="flex-1" />
 
-        <div className="intro-screen-footer pointer-events-auto relative px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-6">
-          <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black via-black/80 to-transparent"
-            aria-hidden
-          />
+        <div className="intro-screen-footer pointer-events-auto relative px-6 pb-[max(4rem,env(safe-area-inset-bottom))] pt-6">
           <div className="relative text-center">
             <h1 className="font-display text-balance text-[1.75rem] leading-[1.05] tracking-wide text-white sm:text-[2rem]">
               {title}
@@ -71,7 +68,7 @@ export function IntroScreen({
             <button
               type="button"
               onClick={onGetStarted}
-              className="font-display flex h-14 w-full cursor-pointer items-center justify-center rounded-xl bg-white text-[13px] tracking-[0.14em] text-black transition-colors hover:bg-[#e8e8e8] active:bg-[#d4d4d4]"
+              className="flex h-14 w-full cursor-pointer items-center justify-center rounded-xl bg-[#e53e3e] text-[16px] font-semibold text-white transition-colors hover:bg-[#c53030] active:bg-[#9b2c2c]"
               style={{ touchAction: "manipulation" }}
             >
               {getStartedLabel}
