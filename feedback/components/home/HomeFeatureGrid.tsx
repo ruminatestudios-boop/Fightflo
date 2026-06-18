@@ -121,7 +121,7 @@ export function HomeFeatureGrid({
   const secondary: FeatureBlock[] = [
     {
       id: "guard",
-      label: "Live guard coaching",
+      label: "AI alerts when your guard drops",
       hint: featureHint("guard", hasClip),
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -131,7 +131,7 @@ export function HomeFeatureGrid({
     },
     {
       id: "shadow",
-      label: "Shadowboxing round",
+      label: "Record a round, get live feedback",
       hint: featureHint("shadow", true),
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -155,7 +155,7 @@ export function HomeFeatureGrid({
       : []),
     {
       id: "reupload",
-      label: "Verify your fix",
+      label: "See if your last fault improved",
       hint: featureHint("reupload", hasClip),
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
@@ -166,7 +166,7 @@ export function HomeFeatureGrid({
     },
     {
       id: "progress",
-      label: "Your progress",
+      label: "Track how your technique improves",
       hint: featureHint("progress", hasClip),
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
