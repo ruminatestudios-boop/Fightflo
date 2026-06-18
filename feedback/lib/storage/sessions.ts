@@ -1,6 +1,7 @@
 import {
   FREE_ANALYSIS_LIMIT,
   PRO_MONTHLY_ANALYSIS_LIMIT,
+  CREW_DAILY_LIMIT,
 } from "@/config/limits";
 import { PRICING } from "@/config/pricing";
 import { isAnalysisLimitBypassed, hasProAccess, isValidCrewToken } from "@/lib/config/env";
@@ -8,6 +9,7 @@ import {
   createAnonymousUser,
   decrementBonusScans,
   getMonthlySessionCount,
+  getDailySessionCount,
   getUserById,
   incrementFreeAnalyses,
   createSession,
@@ -34,7 +36,7 @@ export async function getAnalysisAllowance(
   userId: string,
   crewToken?: string | null
 ): Promise<AnalysisAllowance> {
-  if (isAnalysisLimitBypassed() || isValidCrewToken(crewToken)) {
+  if (isAnalysisLimitBypassed()) {
     return {
       canAnalyse: true,
       isPro: hasProAccess(null),
@@ -42,6 +44,19 @@ export async function getAnalysisAllowance(
       limit: FREE_ANALYSIS_LIMIT,
       bonusScans: 0,
       message: "",
+    };
+  }
+
+  if (isValidCrewToken(crewToken)) {
+    const used = await getDailySessionCount(userId);
+    const canAnalyse = used < CREW_DAILY_LIMIT;
+    return {
+      canAnalyse,
+      isPro: true,
+      used,
+      limit: CREW_DAILY_LIMIT,
+      bonusScans: 0,
+      message: canAnalyse ? "" : `Daily limit of ${CREW_DAILY_LIMIT} uploads reached. Resets tomorrow.`,
     };
   }
 

@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { startOfCurrentMonthUtc } from "@/config/limits";
+import { startOfCurrentMonthUtc, startOfTodayUtc } from "@/config/limits";
 import * as devStore from "@/lib/db/dev-store";
 import {
   activateDevFallback,
@@ -172,6 +172,20 @@ export async function incrementFreeAnalyses(userId: string): Promise<void> {
     .from("users")
     .update({ free_analyses_used: user.free_analyses_used + 1 })
     .eq("id", userId);
+}
+
+export async function getDailySessionCount(userId: string): Promise<number> {
+  if (isDevStoreActive()) return 0;
+
+  const supabase = getSupabase();
+  const { count, error } = await supabase
+    .from("sessions")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .gte("created_at", startOfTodayUtc());
+
+  if (error) return 0;
+  return count ?? 0;
 }
 
 export async function getMonthlySessionCount(userId: string): Promise<number> {
