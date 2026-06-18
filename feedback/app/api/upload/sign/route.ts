@@ -22,8 +22,9 @@ export async function POST(request: NextRequest) {
     const sport = body.sport ?? "boxing";
     const level = body.level ?? "intermediate";
     const userId = await ensureUser(sport, level, body.userId ?? null);
+    const crewToken = request.headers.get("x-crew-token");
 
-    const allowance = await getAnalysisAllowance(userId);
+    const allowance = await getAnalysisAllowance(userId, crewToken);
     if (!allowance.canAnalyse) {
       return NextResponse.json(
         { error: allowance.message, allowance },

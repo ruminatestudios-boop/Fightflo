@@ -50,7 +50,8 @@ async function handleCloudinaryComplete(request: NextRequest) {
     }
   }
 
-  const allowance = await getAnalysisAllowance(userId);
+  const crewToken = request.headers.get("x-crew-token");
+  const allowance = await getAnalysisAllowance(userId, crewToken);
   if (!allowance.canAnalyse) {
     return NextResponse.json(
       { error: allowance.message, allowance },
@@ -107,7 +108,8 @@ async function handleDirectUpload(request: NextRequest) {
     }
   }
 
-  const allowance = await getAnalysisAllowance(userId);
+  const crewToken = request.headers.get("x-crew-token");
+  const allowance = await getAnalysisAllowance(userId, crewToken);
   if (!allowance.canAnalyse) {
     return NextResponse.json(
       { error: allowance.message, allowance },

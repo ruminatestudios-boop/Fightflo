@@ -9,6 +9,7 @@ import {
   isIntroDismissed,
   markIntroDismissed,
   purgeLegacyIntroPersistence,
+  storeCrewToken,
 } from "@/lib/storage/client";
 import { readHomeUrlState } from "@/lib/homeViews";
 import { apiPath, withBasePath } from "@/lib/paths";
@@ -21,6 +22,17 @@ export function HomePageClient() {
   useEffect(() => {
     purgeLegacyIntroPersistence();
     const params = new URLSearchParams(window.location.search);
+
+    // Crew access — store token and strip from URL
+    const crewParam = params.get("crew");
+    if (crewParam) {
+      storeCrewToken(crewParam);
+      params.delete("crew");
+      const qs = params.toString();
+      window.history.replaceState(null, "", withBasePath(`/${qs ? `?${qs}` : ""}`));
+      markIntroDismissed();
+      setShowIntro(false);
+    }
     if (params.get("intro") === "skip") {
       markIntroDismissed();
       setShowIntro(false);

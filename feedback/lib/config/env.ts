@@ -37,6 +37,13 @@ export function isAnalysisLimitBypassed(): boolean {
   return process.env.ANALYSIS_LIMIT_BYPASS === "true";
 }
 
+/** Validate a crew access token passed from the client */
+export function isValidCrewToken(token?: string | null): boolean {
+  const secret = process.env.CREW_ACCESS_TOKEN?.trim();
+  if (!secret || !token) return false;
+  return token.trim() === secret;
+}
+
 /** Unlock Pro features (download, clips) — on by default in local dev */
 export function isProFeaturesBypassed(): boolean {
   if (process.env.PRO_FEATURES_BYPASS === "true") return true;

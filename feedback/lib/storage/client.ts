@@ -2,6 +2,17 @@ const ANON_USER_KEY = "feedback_anon_user_id";
 const USER_NAME_KEY = "feedback_user_name";
 const INTRO_DISMISSED_KEY = "feedback_intro_dismissed";
 const INTRO_DISMISSED_COOKIE = "feedback_intro_session";
+const CREW_TOKEN_KEY = "feedback_crew_token";
+
+export function storeCrewToken(token: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(CREW_TOKEN_KEY, token);
+}
+
+export function getStoredCrewToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(CREW_TOKEN_KEY);
+}
 
 /** In-memory only — survives report → home remounts, resets on full page load. */
 let introDismissedThisJsSession = false;

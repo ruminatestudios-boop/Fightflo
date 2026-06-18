@@ -3,7 +3,7 @@ import {
   PRO_MONTHLY_ANALYSIS_LIMIT,
 } from "@/config/limits";
 import { PRICING } from "@/config/pricing";
-import { isAnalysisLimitBypassed, hasProAccess } from "@/lib/config/env";
+import { isAnalysisLimitBypassed, hasProAccess, isValidCrewToken } from "@/lib/config/env";
 import {
   createAnonymousUser,
   decrementBonusScans,
@@ -31,9 +31,10 @@ export async function ensureUser(
 }
 
 export async function getAnalysisAllowance(
-  userId: string
+  userId: string,
+  crewToken?: string | null
 ): Promise<AnalysisAllowance> {
-  if (isAnalysisLimitBypassed()) {
+  if (isAnalysisLimitBypassed() || isValidCrewToken(crewToken)) {
     return {
       canAnalyse: true,
       isPro: hasProAccess(null),
