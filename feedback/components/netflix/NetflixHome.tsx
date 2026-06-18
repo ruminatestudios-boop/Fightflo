@@ -482,7 +482,10 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
                 <>
                   <CyclingHeadline />
                   <p className="glass-greeting-lead">{FEED_COPY.body}</p>
-                  <p className="glass-greeting-select">{FEED_COPY.selectPrompt}</p>
+                  <p className="glass-greeting-select">
+                    Select an option below{" "}
+                    <span style={{ color: "#fa4141" }}>&#8964;</span>
+                  </p>
                 </>
               ) : (
                 <>
