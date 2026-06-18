@@ -78,7 +78,7 @@ export function FeedAppInfoCards({
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          <span>Unlock full AI coaching — see plans</span>
+          <span>Unlock full AI coaching — <span style={{ color: "#fa4141" }}>see plans</span></span>
         </button>
       </div>
     </section>
