@@ -533,6 +533,32 @@ export async function saveReport(input: {
   return report;
 }
 
+export async function updateReportClips(
+  sessionId: string,
+  reportId: string,
+  clips: import("@/types").ReportClip[]
+): Promise<void> {
+  const supabase = getSupabase();
+  const validClips = clips.filter((c) => c.clip_url);
+
+  if (validClips.length > 0) {
+    const clipRows = validClips.map((clip) => ({
+      session_id: sessionId,
+      report_id: reportId,
+      timestamp: clip.timestamp,
+      clip_url: clip.clip_url,
+      clip_type: clip.clip_type,
+      description: clip.description,
+    }));
+    await supabase.from("clips").insert(clipRows);
+  }
+
+  await supabase
+    .from("reports")
+    .update({ clips: validClips })
+    .eq("id", reportId);
+}
+
 export async function getUserSessions(userId: string): Promise<Session[]> {
   if (isDevStoreActive()) return devStore.getUserSessions(userId);
 

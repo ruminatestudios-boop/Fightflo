@@ -119,8 +119,10 @@ export function useAnalysisProgress(sessionId: string | null) {
 
       targetProgressRef.current = config.percent;
 
-      if (data.report && session.status === "complete") {
-        if (lastStepRef.current !== "complete") {
+      // Show report as soon as it exists — clips may still be loading
+      if (data.report) {
+        const clipsLoading = session.status === "processing" && step === "generating_clips";
+        if (!clipsLoading && lastStepRef.current !== "complete") {
           hapticSuccess();
           lastStepRef.current = "complete";
         }
@@ -134,12 +136,15 @@ export function useAnalysisProgress(sessionId: string | null) {
           step: "complete",
           eyebrow: ANALYSIS_STEPS.complete.eyebrow,
           headline: ANALYSIS_STEPS.complete.headline,
-          message: ANALYSIS_STEPS.complete.detail ?? ANALYSIS_STEPS.complete.ticks[0],
+          message: clipsLoading
+            ? "Cutting your highlight clips…"
+            : (ANALYSIS_STEPS.complete.detail ?? ANALYSIS_STEPS.complete.ticks[0]),
           progressPercent: 100,
           userPhase: completePhase,
           overallProgressPercent: 100,
         });
-        return true;
+        // Keep polling if clips are still loading so they appear when ready
+        return !clipsLoading;
       }
 
       if (session.status === "failed") {

@@ -20,6 +20,7 @@ import {
   getReportBySessionId,
   getSessionById,
   saveReport,
+  updateReportClips,
   updateSessionSport,
   updateSessionStatus,
   upsertWeakness,
@@ -203,6 +204,27 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
       message: `Drafted report — main weakness: "${feedback.main_weakness.title}"…`,
     });
 
+    // Save report immediately (no clips yet) so the user can start reading
+    const partialReport = await saveReport({
+      sessionId,
+      userId: session.user_id,
+      sport,
+      feedback,
+      landmarkData: timeline,
+      clips: [],
+      poseQuality: quality,
+      confirmedEvents,
+      landmarkSummary: landmark_summary_enriched,
+      followUpComparison,
+      markComplete: false,
+    });
+
+    // Mark session ready so the report page shows immediately
+    await updateSessionStatus(sessionId, "complete", {
+      step: "complete",
+      message: "Your report is ready — clips loading…",
+    });
+
     await updateSessionStatus(sessionId, "processing", {
       step: "generating_clips",
       message: "Cutting highlight clips at each coaching timestamp…",
@@ -217,19 +239,8 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
       }
     );
 
-    await saveReport({
-      sessionId,
-      userId: session.user_id,
-      sport,
-      feedback,
-      landmarkData: timeline,
-      clips,
-      poseQuality: quality,
-      confirmedEvents,
-      landmarkSummary: landmark_summary_enriched,
-      followUpComparison,
-      markComplete: false,
-    });
+    // Update report with clips now that they're ready
+    await updateReportClips(sessionId, partialReport.id, clips);
 
     if (session.user_id && patternData.primary_weakness) {
       await upsertWeakness(
@@ -270,7 +281,7 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
       step: "complete",
       message: "Your report is ready.",
     });
-  } catch (error) {
+  } catch (error: unknown) {
     await updateSessionStatus(sessionId, "failed", {
       step: "failed",
       message:
