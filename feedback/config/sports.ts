@@ -1,4 +1,4 @@
-import type { SportId } from "@/types";
+import type { SportId } from "../types";
 
 export interface MechanicsRange {
   min?: number;

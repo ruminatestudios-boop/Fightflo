@@ -1,5 +1,5 @@
-import { parseTimestamp } from "@/lib/analysis/timestamps";
-import type { FrameLandmarks, LandmarkTimeline } from "@/types";
+import { parseTimestamp } from "./timestamps";
+import type { FrameLandmarks, LandmarkTimeline } from "../../types";
 
 export type KickSide = "left" | "right";
 

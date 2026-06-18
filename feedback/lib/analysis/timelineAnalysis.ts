@@ -1,17 +1,17 @@
-import { parseTimestamp } from "@/lib/analysis/timestamps";
+import { parseTimestamp } from "./timestamps";
 import {
   buildKickFrameStates,
   detectKickEvents,
   type KickFrameState,
   type KickEvent,
-} from "@/lib/analysis/kickAnalysis";
+} from "./kickAnalysis";
 import {
   calibrateGuardFromTimeline,
   computeFrameMetrics,
   type GuardCalibration,
   type FrameMetrics,
-} from "@/lib/analysis/poseMetrics";
-import type { LandmarkTimeline } from "@/types";
+} from "./poseMetrics";
+import type { LandmarkTimeline } from "../../types";
 
 export interface FrameAnalysis {
   frame: number;

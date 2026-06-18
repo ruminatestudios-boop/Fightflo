@@ -3,12 +3,12 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { isAbsolute } from "path";
 import ffmpeg from "fluent-ffmpeg";
-import { configureFfmpeg } from "@/lib/config/ffmpeg";
+import { configureFfmpeg } from "../config/ffmpeg";
 import {
   FRAMES_PER_SECOND,
   frameToTimestamp,
   parseTimestamp,
-} from "@/lib/analysis/timestamps";
+} from "./timestamps";
 
 export { FRAMES_PER_SECOND, frameToTimestamp, parseTimestamp };
 

@@ -1,4 +1,4 @@
-import type { FrameLandmarks, LandmarkPoint, LandmarkTimeline } from "@/types";
+import type { FrameLandmarks, LandmarkPoint, LandmarkTimeline } from "../../types";
 
 /** One Euro filter — reduces jitter while keeping responsiveness */
 class OneEuroFilter {

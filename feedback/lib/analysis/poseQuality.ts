@@ -1,4 +1,4 @@
-import type { FrameLandmarks, LandmarkTimeline } from "@/types";
+import type { FrameLandmarks, LandmarkTimeline } from "../../types";
 
 export interface PoseQualityReport {
   score: number;

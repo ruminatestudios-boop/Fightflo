@@ -1,5 +1,5 @@
-import type { KickFrameState } from "@/lib/analysis/kickAnalysis";
-import type { FrameLandmarks, LandmarkPoint, LandmarkTimeline } from "@/types";
+import type { KickFrameState } from "./kickAnalysis";
+import type { FrameLandmarks, LandmarkPoint, LandmarkTimeline } from "../../types";
 
 export const MIN_JOINT_VISIBILITY = 0.5;
 export const MIN_WRIST_VISIBILITY = 0.45;

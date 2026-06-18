@@ -3,9 +3,9 @@ import { mkdir, readFile, rm, writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
-import type { SportId } from "@/types";
-import type { PoseDetectionResult } from "@/lib/analysis/poseDetectionCore";
-import { assessPoseQuality } from "@/lib/analysis/poseQuality";
+import type { SportId } from "../../types";
+import type { PoseDetectionResult } from "./poseDetectionCore";
+import { assessPoseQuality } from "./poseQuality";
 
 function feedbackRoot(): string {
   const cwd = process.cwd();

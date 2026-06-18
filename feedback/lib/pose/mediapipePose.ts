@@ -1,4 +1,4 @@
-import type { FrameLandmarks, LandmarkPoint } from "@/types";
+import type { FrameLandmarks, LandmarkPoint } from "../../types";
 
 export {
   POSE_LANDMARKER_LITE_URL,
@@ -11,7 +11,7 @@ export {
   POSE_JOINT_KEYS,
   POSE_GUARD_NODES,
   POSE_KICK_NODES,
-} from "@/lib/pose/mediapipeConfig";
+} from "./mediapipeConfig";
 
 import {
   POSE_JOINT_KEYS,
@@ -19,7 +19,7 @@ import {
   POSE_OCCLUSION_WRIST_VISIBILITY,
   POSE_INTERPOLATED_VISIBILITY,
   POSE_PIPELINE_MIN_VISIBILITY,
-} from "@/lib/pose/mediapipeConfig";
+} from "./mediapipeConfig";
 
 export type RawMediaPipePoint = {
   x: number;

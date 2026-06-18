@@ -1,5 +1,5 @@
 import type { PoseLandmarkerOptions } from "@mediapipe/tasks-vision";
-import type { FrameLandmarks } from "@/types";
+import type { FrameLandmarks } from "../../types";
 
 /**
  * Sports real-time config — Lite model for maximum FPS on punches/kicks.
