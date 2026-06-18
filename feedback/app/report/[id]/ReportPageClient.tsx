@@ -94,6 +94,7 @@ export function ReportPageClient({
   }, [emailCapture.status, emailCapture.email]);
 
   // Auto-show upgrade prompt when free user has used their last free analysis
+  // Delayed 30s so user can read the report first
   useEffect(() => {
     if (!report || isPro || showPaywall) return;
     const uid =
@@ -101,19 +102,18 @@ export function ReportPageClient({
       (typeof window !== "undefined" ? localStorage.getItem("feedback_anon_user_id") : null);
     if (!uid) return;
 
+    let t: ReturnType<typeof window.setTimeout>;
     fetch(apiPath(`/api/user/status?userId=${uid}`))
       .then((r) => r.json())
-      .then((d: { used?: number; limit?: number; isPro?: boolean }) => {
-        if (d.isPro) return;
-        if (d.used !== undefined && d.limit !== undefined && d.used >= d.limit) {
-          const t = window.setTimeout(() => {
-            setPaywallMode("pro");
-            setShowPaywall(true);
-          }, 10000);
-          return () => window.clearTimeout(t);
-        }
+      .then((d: { used?: number; limit?: number; isPro?: boolean; canAnalyse?: boolean }) => {
+        if (d.isPro || d.canAnalyse !== false) return;
+        t = window.setTimeout(() => {
+          setPaywallMode("pro");
+          setShowPaywall(true);
+        }, 30000);
       })
       .catch(() => undefined);
+    return () => window.clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [report?.id, isPro]);
 
