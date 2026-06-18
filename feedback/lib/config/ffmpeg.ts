@@ -18,12 +18,28 @@ function isExecutable(path: string): boolean {
 }
 
 function getBundledFfmpegPath(): string | null {
+  // Static import path (works locally and sometimes in Vercel)
   if (ffmpegStatic && existsSync(ffmpegStatic)) return ffmpegStatic;
+
+  // Dynamic require bypasses Next.js static analysis — more reliable in Vercel lambdas
+  try {
+    const p = (eval("require") as NodeRequire)("ffmpeg-static") as string | null; // eslint-disable-line
+    if (p && existsSync(p)) return p;
+  } catch { /* not available */ }
 
   const os = platform();
   const cpu = arch();
   const name = os === "win32" ? "ffmpeg.exe" : "ffmpeg";
-  const roots = [process.cwd(), join(process.cwd(), "feedback")];
+
+  // Vercel lambda paths (/var/task is the lambda root)
+  const roots = [
+    "/var/task",
+    "/var/task/.next/server",
+    process.cwd(),
+    join(process.cwd(), ".next/server"),
+    join(process.cwd(), "feedback"),
+    dirname(dirname(dirname(__dirname))), // traverse up from lib/config/ffmpeg.ts
+  ];
 
   for (const root of roots) {
     const candidate = join(root, "node_modules", "ffmpeg-static", name);

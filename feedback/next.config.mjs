@@ -26,17 +26,17 @@ const nextConfig = {
       "ffmpeg-static",
     ],
     outputFileTracingIncludes: {
-      "/api/upload/route": [
+      "/api/upload": [
         "./lib/analysis/mediaPipeWasmLoader.cjs",
         "./node_modules/@mediapipe/tasks-vision/wasm/**",
         "./node_modules/ffmpeg-static/**",
       ],
-      "/api/analyse/route": [
+      "/api/analyse": [
         "./lib/analysis/mediaPipeWasmLoader.cjs",
         "./node_modules/@mediapipe/tasks-vision/wasm/**",
         "./node_modules/ffmpeg-static/**",
       ],
-      "/api/video/download/route": [
+      "/api/video/download": [
         "./lib/analysis/mediaPipeWasmLoader.cjs",
         "./node_modules/@mediapipe/tasks-vision/wasm/**",
         "./node_modules/@napi-rs/canvas/**",
@@ -46,12 +46,12 @@ const nextConfig = {
       ],
     },
     outputFileTracingExcludes: {
-      "/api/video/download/status/route": [
+      "/api/video/download/status": [
         "./node_modules/ffmpeg-static/**",
         "./node_modules/@mediapipe/**",
         "./node_modules/@napi-rs/canvas/**",
       ],
-      "/api/upload/sign/route": [
+      "/api/upload/sign": [
         "./node_modules/ffmpeg-static/**",
         "./node_modules/@mediapipe/**",
         "./node_modules/@napi-rs/canvas/**",
