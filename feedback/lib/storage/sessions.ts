@@ -103,7 +103,7 @@ export async function getAnalysisAllowance(
     bonusScans: 0,
     message: canAnalyse
       ? ""
-      : `Free analysis used. Upgrade to Pro (${PRICING.pro.displayMonthly}) for ${PRO_MONTHLY_ANALYSIS_LIMIT}/month.`,
+      : `Free analyses used. Upgrade to Pro (${PRICING.pro.displayMonthly}) for ${PRO_MONTHLY_ANALYSIS_LIMIT}/month.`,
   };
 }
 

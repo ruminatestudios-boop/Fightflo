@@ -26,7 +26,7 @@ export const PRICING = {
     displayShort: formatGbp(TOPUP_PACK_PRICE_GBP),
   },
   free: {
-    lifetimeScans: 1,
+    lifetimeScans: 3,
     priceGbp: 0,
   },
 } as const;

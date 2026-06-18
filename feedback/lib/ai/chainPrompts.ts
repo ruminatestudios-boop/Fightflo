@@ -32,7 +32,7 @@ function normalizeFeedback(raw: RawCoachingFeedback): CoachingFeedback {
   return {
     positives: raw.positives,
     main_weakness: raw.main_weakness,
-    secondary_weaknesses: raw.secondary_weaknesses ?? [],
+    secondary_weaknesses: (raw.secondary_weaknesses ?? []).slice(0, 2),
     pattern_insight: raw.pattern_insight,
     drill: raw.drill ?? raw.drill_for_next_session ?? {
       name: "Technical correction drill",
@@ -111,7 +111,7 @@ export async function runPromptChain(input: {
     verified_pattern: verifiedPattern,
     all_detected_weaknesses: allDetectedWeaknesses,
     root_cause_from_pose: rootCause,
-    confirmed_pose_events: confirmedEvents,
+    confirmed_pose_events: confirmedEvents.slice(0, 15),
     observed_strengths: input.observedStrengths ?? [],
     techniques_seen: input.techniquesSeen ?? [],
     pose_quality: input.poseQuality ?? null,

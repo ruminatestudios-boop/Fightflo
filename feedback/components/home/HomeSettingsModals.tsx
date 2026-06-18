@@ -137,14 +137,6 @@ export function HomeSettingsModals({
           <button
             type="button"
             className="home-settings-hub-row"
-            onClick={() => onNavigate?.("name")}
-          >
-            <span className="home-settings-hub-row-kicker">Name</span>
-            <span className="home-settings-hub-row-value">{userName ?? "Add"}</span>
-          </button>
-          <button
-            type="button"
-            className="home-settings-hub-row"
             onClick={() => onNavigate?.("sport")}
           >
             <span className="home-settings-hub-row-kicker">Sport</span>
@@ -212,28 +204,17 @@ export function HomeSettingsModals({
             }}
           />
         </label>
-        <p className="home-settings-modal-hint">
-          Your name appears on the home greeting.
-        </p>
       </ModalShell>
 
       <ModalShell
         open={open === "sport"}
         onClose={onClose}
         compact
-        subtitle="Your training"
-        title="What are you training?"
+        subtitle="Sport"
+        title="Select your sport"
         titleId="home-sport-modal-title"
         bodyClassName="home-settings-modal-body"
-        footer={
-          <p className="home-settings-modal-hint home-settings-modal-hint--footer">
-            Tap your sport to save — applies to uploads and reports on this device.
-          </p>
-        }
       >
-        <p className="home-settings-modal-hint home-settings-modal-hint--lead">
-          We tailor fault detection, drills and coaching tone to the sport you pick.
-        </p>
         <HomePickerGrid
           selectedId={sport}
           onSelect={(id) => {
@@ -248,19 +229,11 @@ export function HomeSettingsModals({
         open={open === "level"}
         onClose={onClose}
         compact
-        subtitle="Your coaching"
-        title="How experienced are you?"
+        subtitle="Level"
+        title="Select your level"
         titleId="home-level-modal-title"
         bodyClassName="home-settings-modal-body"
-        footer={
-          <p className="home-settings-modal-hint home-settings-modal-hint--footer">
-            Tap your level to save — coaching depth adjusts for new uploads.
-          </p>
-        }
       >
-        <p className="home-settings-modal-hint home-settings-modal-hint--lead">
-          Pick the level that matches where you are now — we adjust how direct the feedback is.
-        </p>
         <HomePickerGrid
           selectedId={level}
           onSelect={(id) => {

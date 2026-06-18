@@ -145,7 +145,7 @@ Return JSON only:
   "coach_voice_summary": "30 word max. Direct. Technical."
 }
 
-Positives: only include what is genuinely visible and above baseline — 0 to 5, never padded. Secondary weaknesses: only if clearly evidenced in all_detected_weaknesses — omit rather than guess. Never generic boxing jargon unless sport is boxing.`,
+Positives: 0 to 2 maximum — only what is genuinely above baseline. Secondary weaknesses: maximum 2 entries, only if clearly evidenced — omit rather than guess. DO NOT list every detected event — synthesise patterns into one diagnosis per slot. Never generic boxing jargon unless sport is boxing.`,
 };
 
 export function getSportPrompts(sport: SportId) {

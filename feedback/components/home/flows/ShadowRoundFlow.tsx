@@ -48,16 +48,44 @@ const TRACK_ITEMS = [
   "Flat hips when punching",
 ] as const;
 
+function parseTimeInput(value: string): number | null {
+  const cleaned = value.trim();
+  // m:ss or mm:ss
+  const colonMatch = cleaned.match(/^(\d{1,2}):(\d{2})$/);
+  if (colonMatch) {
+    return parseInt(colonMatch[1], 10) * 60 + parseInt(colonMatch[2], 10);
+  }
+  // plain seconds or minutes
+  const num = parseInt(cleaned, 10);
+  if (!isNaN(num)) {
+    // if ≤ 10 treat as minutes, otherwise seconds
+    return num <= 10 ? num * 60 : num;
+  }
+  return null;
+}
+
 export function ShadowRoundFlow({
   onBack,
   onStartRound,
 }: ShadowRoundFlowProps) {
   const [roundSeconds, setRoundSeconds] = useState<ShadowRoundLength>(120);
+  const [timeInput, setTimeInput] = useState("");
+  const [inputMode, setInputMode] = useState<"slider" | "manual">("slider");
   const [lastRound, setLastRound] = useState<ShadowRoundResult | null>(null);
 
   useEffect(() => {
     setLastRound(getLastShadowRound());
   }, []);
+
+  const commitTimeInput = () => {
+    const parsed = parseTimeInput(timeInput);
+    if (parsed !== null) {
+      const clamped = clampShadowRoundLength(parsed);
+      setRoundSeconds(clamped);
+    }
+    setTimeInput("");
+    setInputMode("slider");
+  };
 
   return (
     <FlowShell
@@ -74,11 +102,43 @@ export function ShadowRoundFlow({
       <FlowPanel>
         <p className="home-flow-label">Round length</p>
         <div className="shadow-flow-timer">
-          <p className="shadow-flow-timer-display" aria-live="polite">
-            {formatTimer(roundSeconds)}
-          </p>
+          {inputMode === "manual" ? (
+            <input
+              type="text"
+              className="shadow-flow-timer-manual"
+              placeholder={formatTimer(roundSeconds)}
+              value={timeInput}
+              autoFocus
+              onChange={(e) => setTimeInput(e.target.value)}
+              onBlur={commitTimeInput}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitTimeInput();
+                if (e.key === "Escape") { setTimeInput(""); setInputMode("slider"); }
+              }}
+              aria-label="Enter round length (e.g. 2:30)"
+            />
+          ) : (
+            <button
+              type="button"
+              className="shadow-flow-timer-display shadow-flow-timer-display--btn"
+              onClick={() => { setTimeInput(formatTimer(roundSeconds)); setInputMode("manual"); }}
+              title="Click to type a time"
+              aria-label="Click to enter time manually"
+            >
+              {formatTimer(roundSeconds)}
+            </button>
+          )}
           <p className="shadow-flow-timer-caption">
             {formatRoundLengthLabel(roundSeconds)}
+            {inputMode === "slider" && (
+              <button
+                type="button"
+                className="shadow-flow-timer-edit-btn"
+                onClick={() => { setTimeInput(formatTimer(roundSeconds)); setInputMode("manual"); }}
+              >
+                Edit
+              </button>
+            )}
           </p>
           <input
             type="range"

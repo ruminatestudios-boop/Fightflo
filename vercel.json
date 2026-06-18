@@ -6,6 +6,9 @@
     }
   ],
   "rewrites": [
+    { "source": "/images/:path*", "destination": "https://feedback.fightflo.app/images/:path*" },
+    { "source": "/manifest.webmanifest", "destination": "https://feedback.fightflo.app/manifest.webmanifest" },
+    { "source": "/sw.js", "destination": "https://feedback.fightflo.app/sw.js" },
     { "source": "/feed", "destination": "https://feedback.fightflo.app/feed" },
     { "source": "/report/:id", "destination": "https://feedback.fightflo.app/report/:id" },
     { "source": "/api/analyse", "destination": "https://feedback.fightflo.app/api/analyse" },
@@ -14,12 +17,15 @@
     { "source": "/api/demo", "destination": "https://feedback.fightflo.app/api/demo" },
     { "source": "/api/insights", "destination": "https://feedback.fightflo.app/api/insights" },
     { "source": "/api/report", "destination": "https://feedback.fightflo.app/api/report" },
+    { "source": "/api/sessions", "destination": "https://feedback.fightflo.app/api/sessions" },
     { "source": "/api/sessions/:path*", "destination": "https://feedback.fightflo.app/api/sessions/:path*" },
+    { "source": "/api/upload", "destination": "https://feedback.fightflo.app/api/upload" },
     { "source": "/api/upload/:path*", "destination": "https://feedback.fightflo.app/api/upload/:path*" },
+    { "source": "/api/user", "destination": "https://feedback.fightflo.app/api/user" },
     { "source": "/api/user/:path*", "destination": "https://feedback.fightflo.app/api/user/:path*" },
+    { "source": "/api/video", "destination": "https://feedback.fightflo.app/api/video" },
     { "source": "/api/video/:path*", "destination": "https://feedback.fightflo.app/api/video/:path*" },
-    { "source": "/api/cron/emails", "destination": "https://feedback.fightflo.app/api/cron/emails" },
-    { "source": "/", "destination": "https://feedback.fightflo.app/feed" }
+    { "source": "/api/cron/emails", "destination": "https://feedback.fightflo.app/api/cron/emails" }
   ],
   "redirects": [
     { "source": "/feedback", "destination": "/", "permanent": false },

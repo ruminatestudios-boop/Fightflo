@@ -31,25 +31,25 @@ export function HomePickerGrid({
   className = "",
 }: HomePickerGridProps) {
   return (
-    <div className={`home-feature-grid home-feature-grid--modal ${className}`.trim()}>
-      <div className="home-feature-grid-secondary">
-        {options.map((option) => {
-          const selected = selectedId === option.id;
-          return (
-            <button
-              key={option.id}
-              type="button"
-              className={`glass-card ${selected ? "glass-card--active" : ""}`}
-              onClick={() => onSelect(option.id)}
-              aria-pressed={selected}
-            >
-              <IconBadge>{option.icon}</IconBadge>
-              <span className="glass-card-label">{option.label}</span>
-              <span className="home-feature-hint">{option.hint}</span>
-            </button>
-          );
-        })}
-      </div>
+    <div className={`home-picker-list ${className}`.trim()}>
+      {options.map((option) => {
+        const selected = selectedId === option.id;
+        return (
+          <button
+            key={option.id}
+            type="button"
+            className={`home-picker-row ${selected ? "home-picker-row--selected" : ""}`}
+            onClick={() => onSelect(option.id)}
+            aria-pressed={selected}
+          >
+            <span className="home-picker-row-icon" aria-hidden>{option.icon}</span>
+            <span className="home-picker-row-label">{option.label}</span>
+            {selected && (
+              <span className="home-picker-row-check" aria-hidden>✓</span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
