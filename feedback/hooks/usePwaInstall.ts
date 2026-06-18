@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   declinePwaInstall,
   isBeforeInstallPromptEvent,
@@ -19,6 +19,7 @@ export function usePwaInstall() {
   const [visible, setVisible] = useState(false);
   const [installing, setInstalling] = useState(false);
   const [mode, setMode] = useState<PwaInstallMode>("native");
+  const promptReady = useRef(false);
 
   useEffect(() => {
     if (isPwaInstalled()) {
@@ -30,7 +31,7 @@ export function usePwaInstall() {
 
     if (isIosHomeScreenInstallable()) {
       setMode("ios");
-      setVisible(true);
+      promptReady.current = true;
     }
 
     const onBeforeInstall = (event: Event) => {
@@ -38,7 +39,7 @@ export function usePwaInstall() {
       event.preventDefault();
       setDeferredPrompt(event);
       setMode("native");
-      setVisible(true);
+      promptReady.current = true;
     };
 
     const onInstalled = () => {
@@ -54,6 +55,14 @@ export function usePwaInstall() {
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);
       window.removeEventListener("appinstalled", onInstalled);
     };
+  }, []);
+
+  // Call this after the user has seen their first report
+  const triggerAfterReport = useCallback(() => {
+    if (!shouldShowPwaInstallPrompt()) return;
+    if (!promptReady.current && !isIosHomeScreenInstallable()) return;
+    // Small delay so the report has fully rendered before the modal appears
+    setTimeout(() => setVisible(true), 2500);
   }, []);
 
   const install = useCallback(async () => {
@@ -97,5 +106,6 @@ export function usePwaInstall() {
     mode,
     install,
     dismiss,
+    triggerAfterReport,
   };
 }

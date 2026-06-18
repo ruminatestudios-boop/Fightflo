@@ -4,8 +4,15 @@ import { usePwaInstall } from "@/hooks/usePwaInstall";
 import { PWA_INSTALL_COPY } from "@/lib/copy";
 import { ModalShell } from "@/components/shared/ModalShell";
 
-export function PwaInstallModal() {
-  const { visible, installing, mode, install, dismiss } = usePwaInstall();
+export function PwaInstallModal({
+  triggerRef,
+}: {
+  triggerRef?: React.MutableRefObject<(() => void) | null>;
+}) {
+  const { visible, installing, mode, install, dismiss, triggerAfterReport } =
+    usePwaInstall();
+
+  if (triggerRef) triggerRef.current = triggerAfterReport;
 
   return (
     <ModalShell
