@@ -1,26 +1,4 @@
 {
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/feedback",
-      "permanent": false
-    },
-    {
-      "source": "/report/:id",
-      "destination": "/feedback/report/:id",
-      "permanent": false
-    },
-    {
-      "source": "/feed",
-      "destination": "/feedback/feed",
-      "permanent": false
-    },
-    {
-      "source": "/feedback/feedback/:path*",
-      "destination": "/feedback/:path*",
-      "statusCode": 308
-    }
-  ],
   "crons": [
     {
       "path": "/api/cron/emails",
