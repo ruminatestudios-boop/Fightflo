@@ -3673,7 +3673,7 @@ button.stepguide-card-ts:active {
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.5);
+  background: #fa4141;
   flex-shrink: 0;
   animation: feed-first-dot-pulse 1.6s ease-in-out infinite;
 }
