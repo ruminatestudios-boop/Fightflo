@@ -1,5 +1,6 @@
 import { spawn } from "child_process";
 import { mkdir, readFile, rm, writeFile } from "fs/promises";
+import { existsSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import type { SportId } from "@/types";
@@ -14,6 +15,24 @@ function feedbackRoot(): string {
 
 function resolveCliScript(): string {
   return join(feedbackRoot(), "scripts", "detect-pose-cli.ts");
+}
+
+function resolveTsxBin(): { cmd: string; args: string[] } {
+  const root = feedbackRoot();
+  const candidates = [
+    join(root, "node_modules", ".bin", "tsx"),
+    join(root, "node_modules", "tsx", "dist", "cli.mjs"),
+    join(process.cwd(), "node_modules", ".bin", "tsx"),
+    "/var/task/node_modules/.bin/tsx",
+  ];
+  for (const p of candidates) {
+    if (existsSync(p)) {
+      if (p.endsWith(".mjs")) return { cmd: process.execPath, args: [p] };
+      return { cmd: p, args: [] };
+    }
+  }
+  // Last resort — use node with ts-node/esm or fall back to npx
+  return { cmd: "npx", args: ["--yes", "tsx"] };
 }
 
 /** MediaPipe cannot run inside the Next.js webpack bundle — use plain Node. */
@@ -33,11 +52,12 @@ export async function detectPoseWithMetaSubprocess(
     );
 
     const scriptPath = resolveCliScript();
+    const { cmd, args: tsxArgs } = resolveTsxBin();
     try {
       await new Promise<void>((resolve, reject) => {
       const child = spawn(
-        "npx",
-        ["--yes", "tsx", scriptPath, inputPath, outputPath],
+        cmd,
+        [...tsxArgs, scriptPath, inputPath, outputPath],
         {
           cwd: feedbackRoot(),
           env: process.env,

@@ -35,6 +35,9 @@ const nextConfig = {
         "./lib/analysis/mediaPipeWasmLoader.cjs",
         "./node_modules/@mediapipe/tasks-vision/wasm/**",
         "./node_modules/ffmpeg-static/**",
+        "./node_modules/.bin/tsx",
+        "./node_modules/tsx/**",
+        "./scripts/detect-pose-cli.ts",
       ],
       "/api/video/download": [
         "./lib/analysis/mediaPipeWasmLoader.cjs",
