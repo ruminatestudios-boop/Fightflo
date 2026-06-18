@@ -43,24 +43,24 @@ const FEATURE_HINTS: Record<
   { ready: string; locked: string }
 > = {
   guard: {
-    ready: "Record yourself live — AI alerts you the moment your guard drops.",
-    locked: "Record yourself live — AI alerts you the moment your guard drops.",
+    ready: "Point your camera at yourself and spar or hit pads. AI watches in real time and beeps every time your hands fall below chin level.",
+    locked: "Point your camera at yourself and spar or hit pads. AI watches in real time and beeps every time your hands fall below chin level.",
   },
   shadow: {
-    ready: "Hit record — AI coaches your guard and combos live as you move.",
-    locked: "No clip needed. Tap to start a live coaching round.",
+    ready: "Hit record and shadowbox for a round. AI tracks your movement, spots sloppy combos, and gives you a breakdown when you finish.",
+    locked: "Hit record and shadowbox for a round. AI tracks your movement, spots sloppy combos, and gives you a breakdown when you finish.",
   },
   weekly: {
-    ready: "Get one focused drill to fix your biggest fault this week.",
-    locked: "Upload a clip to generate your weekly focus drill.",
+    ready: "Based on your last session, AI picks the single most important drill to run this week — one fix, not ten.",
+    locked: "Upload a clip first. AI will pick the one drill that will improve your technique the most.",
   },
   reupload: {
-    ready: "Upload a new clip to see if your last fault has improved.",
-    locked: "Upload a clip to start tracking your improvement.",
+    ready: "Film the same drill or round you were told to fix. AI compares it to your last session and tells you if the fault is gone.",
+    locked: "Upload your first clip so AI has something to compare against next time.",
   },
   progress: {
-    ready: "See how your guard, combos, and faults trend over time.",
-    locked: "Upload a clip to start building your progress report.",
+    ready: "See your guard, footwork, and combo faults charted across every session — so you know if you're actually getting better.",
+    locked: "Upload a clip to start building your progress history. Every session adds to the chart.",
   },
 };
 
