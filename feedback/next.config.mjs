@@ -1,48 +1,16 @@
 /** @type {import('next').NextConfig} */
-const defaultBasePath = process.env.NODE_ENV === "development" ? "" : "/feedback";
-const basePath = process.env.FEEDBACK_BASE_PATH ?? defaultBasePath;
+const isProd = process.env.NODE_ENV === "production";
 
 const nextConfig = {
-  basePath,
+  basePath: "",
+  // Serve static assets directly from feedback.fightflo.app so they load
+  // correctly when pages are reverse-proxied through fightflo.app root.
+  assetPrefix: isProd ? "https://feedback.fightflo.app" : "",
   async redirects() {
-    if (!basePath) return [];
-    return [
-      {
-        source: "/",
-        destination: "/feedback",
-        permanent: false,
-        basePath: false,
-      },
-      {
-        // Some browsers request the manifest at the origin root even when the app
-        // is mounted under a basePath.
-        source: "/manifest.webmanifest",
-        destination: "/feedback/manifest.webmanifest",
-        permanent: false,
-        basePath: false,
-      },
-      {
-        source: "/report/:id",
-        destination: "/feedback/report/:id",
-        permanent: false,
-        basePath: false,
-      },
-      {
-        source: "/feed",
-        destination: "/feedback/feed",
-        permanent: false,
-        basePath: false,
-      },
-      {
-        source: "/feedback/feedback/:path*",
-        destination: "/feedback/:path*",
-        permanent: false,
-        basePath: false,
-      },
-    ];
+    return [];
   },
   env: {
-    NEXT_PUBLIC_BASE_PATH: basePath,
+    NEXT_PUBLIC_BASE_PATH: "",
     NEXT_PUBLIC_REAL_ANALYSIS: process.env.GEMINI_API_KEY ? "true" : "false",
     NEXT_PUBLIC_PRO_FEATURES_BYPASS:
       process.env.PRO_FEATURES_BYPASS === "true" ||

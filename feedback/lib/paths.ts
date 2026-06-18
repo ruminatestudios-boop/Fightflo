@@ -33,8 +33,7 @@ export function absoluteReportUrl(sessionId: string, mode?: "guard"): string {
   const base =
     typeof window !== "undefined"
       ? window.location.origin
-      : process.env.NEXT_PUBLIC_APP_URL?.replace(/\/feedback\/?$/, "") ??
-        "https://fightflo.app";
+      : process.env.NEXT_PUBLIC_APP_URL ?? "https://fightflo.app";
   const query = mode === "guard" ? "?mode=guard" : "";
   return `${base}${withBasePath(`/report/${sessionId}`)}${query}`;
 }
