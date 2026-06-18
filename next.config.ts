@@ -6,18 +6,8 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/bag",
-        destination: "/",
+        destination: "/bag-drill",
         permanent: true,
-      },
-      {
-        source: "/feed",
-        destination: "/feedback/feed",
-        permanent: false,
-      },
-      {
-        source: "/feedback/feedback/:path*",
-        destination: "/feedback/:path*",
-        permanent: false,
       },
     ];
   },
@@ -26,12 +16,44 @@ const nextConfig: NextConfig = {
 
     return [
       {
-        source: "/feedback",
-        destination: "http://localhost:3001",
+        source: "/",
+        destination: "http://localhost:3001/",
       },
       {
-        source: "/feedback/:path*",
-        destination: "http://localhost:3001/:path*",
+        source: "/feed",
+        destination: "http://localhost:3001/feed",
+      },
+      {
+        source: "/report/:path*",
+        destination: "http://localhost:3001/report/:path*",
+      },
+      {
+        source: "/api/analyse",
+        destination: "http://localhost:3001/api/analyse",
+      },
+      {
+        source: "/api/checkout",
+        destination: "http://localhost:3001/api/checkout",
+      },
+      {
+        source: "/api/webhook",
+        destination: "http://localhost:3001/api/webhook",
+      },
+      {
+        source: "/api/sessions/:path*",
+        destination: "http://localhost:3001/api/sessions/:path*",
+      },
+      {
+        source: "/api/upload/:path*",
+        destination: "http://localhost:3001/api/upload/:path*",
+      },
+      {
+        source: "/api/user/:path*",
+        destination: "http://localhost:3001/api/user/:path*",
+      },
+      {
+        source: "/api/video/:path*",
+        destination: "http://localhost:3001/api/video/:path*",
       },
     ];
   },

@@ -6,29 +6,23 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/feedback",
-      "destination": "https://feedback.fightflo.app/feedback"
-    },
-    {
-      "source": "/feedback/:path*",
-      "destination": "https://feedback.fightflo.app/feedback/:path*"
-    },
-    {
-      "source": "/feed",
-      "destination": "https://feedback.fightflo.app/feedback/feed"
-    }
+    { "source": "/feed", "destination": "https://feedback.fightflo.app/feed" },
+    { "source": "/report/:id", "destination": "https://feedback.fightflo.app/report/:id" },
+    { "source": "/api/analyse", "destination": "https://feedback.fightflo.app/api/analyse" },
+    { "source": "/api/checkout", "destination": "https://feedback.fightflo.app/api/checkout" },
+    { "source": "/api/webhook", "destination": "https://feedback.fightflo.app/api/webhook" },
+    { "source": "/api/demo", "destination": "https://feedback.fightflo.app/api/demo" },
+    { "source": "/api/insights", "destination": "https://feedback.fightflo.app/api/insights" },
+    { "source": "/api/report", "destination": "https://feedback.fightflo.app/api/report" },
+    { "source": "/api/sessions/:path*", "destination": "https://feedback.fightflo.app/api/sessions/:path*" },
+    { "source": "/api/upload/:path*", "destination": "https://feedback.fightflo.app/api/upload/:path*" },
+    { "source": "/api/user/:path*", "destination": "https://feedback.fightflo.app/api/user/:path*" },
+    { "source": "/api/video/:path*", "destination": "https://feedback.fightflo.app/api/video/:path*" },
+    { "source": "/api/cron/emails", "destination": "https://feedback.fightflo.app/api/cron/emails" },
+    { "source": "/", "destination": "https://feedback.fightflo.app/" }
   ],
   "redirects": [
-    {
-      "source": "/manifest.webmanifest",
-      "destination": "/feedback/manifest.webmanifest",
-      "permanent": false
-    },
-    {
-      "source": "/feedback/feedback/:path*",
-      "destination": "/feedback/:path*",
-      "statusCode": 308
-    }
+    { "source": "/feedback", "destination": "/", "permanent": false },
+    { "source": "/feedback/:path*", "destination": "/$1", "permanent": false }
   ]
 }
