@@ -80,6 +80,7 @@ import { apiPath, reportPath } from "@/lib/paths";
 import { readHomeUrlState, writeHomeUrlState, type HomeRoute } from "@/lib/homeViews";
 import {
   getStoredUserName,
+  getStoredCrewToken,
   storeUserId,
 } from "@/lib/storage/client";
 import type { SkillLevel, SportId } from "@/types";
@@ -318,7 +319,12 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
   }, [homeRoute]);
 
   useEffect(() => {
-    if (error && paywallMode) setShowPaywall(true);
+    if (error && paywallMode) {
+      // Don't show paywall if user has a crew token — means the server didn't
+      // recognise it (env var not deployed yet). Show the error message instead.
+      const crewToken = getStoredCrewToken();
+      if (!crewToken) setShowPaywall(true);
+    }
   }, [error, paywallMode]);
 
   useEffect(() => {

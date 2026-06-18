@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     const level = body.level ?? "intermediate";
     const userId = await ensureUser(sport, level, body.userId ?? null);
     const crewToken = request.headers.get("x-crew-token");
+    console.log("[upload/sign] crew token received:", crewToken ? "yes" : "none", "| CREW_ACCESS_TOKEN set:", !!process.env.CREW_ACCESS_TOKEN);
 
     const allowance = await getAnalysisAllowance(userId, crewToken);
     if (!allowance.canAnalyse) {
