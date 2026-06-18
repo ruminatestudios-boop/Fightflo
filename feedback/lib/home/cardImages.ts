@@ -12,19 +12,19 @@ const CARD_IMAGES = {
     position: "72% 20%",
   },
   guard: {
-    src: withBasePath("/images/feed-guard.png"),
+    src: withBasePath("/images/feed-guard-v2.png"),
     position: "50% 20%",
   },
   shadow: {
-    src: withBasePath("/images/feed-shadow.png"),
+    src: withBasePath("/images/feed-shadow-v2.png"),
     position: "50% 25%",
   },
   weekly: {
-    src: withBasePath("/images/feed-shadow.png"),
+    src: withBasePath("/images/feed-shadow-v2.png"),
     position: "50% 25%",
   },
   reupload: {
-    src: withBasePath("/images/feed-reupload.png"),
+    src: withBasePath("/images/feed-reupload-v2.png"),
     position: "50% 20%",
   },
   progress: {
