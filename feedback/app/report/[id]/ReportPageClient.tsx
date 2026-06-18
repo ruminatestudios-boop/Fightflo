@@ -34,6 +34,12 @@ export function ReportPageClient({
   const report = initialReport ?? polled.report;
   const session = initialSession ?? polled.session;
   const loading = !initialReport && polled.loading;
+  const clipsLoading =
+    !initialReport &&
+    !!report &&
+    !!polled.session &&
+    polled.session.status === "processing" &&
+    (polled.session as { progress_step?: string }).progress_step === "generating_clips";
   const sport = (session?.sport ?? "boxing") as SportId;
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallMode, setPaywallMode] = useState<PaywallMode>("pro");
@@ -169,6 +175,12 @@ export function ReportPageClient({
 
   return (
     <>
+      {clipsLoading && (
+        <div className="report-clips-loading">
+          <span className="report-clips-loading-dot" aria-hidden />
+          Cutting your highlight clips — they&apos;ll appear here automatically
+        </div>
+      )}
       <StepGuideReport
         report={report}
         session={session}

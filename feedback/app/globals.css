@@ -3804,6 +3804,32 @@ button.stepguide-card-ts:active {
   padding: 0.25rem 0;
 }
 
+/* Clips-loading banner shown at top of report while clips are being cut */
+.report-clips-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: rgba(250, 65, 65, 0.06);
+  border-bottom: 1px solid rgba(250, 65, 65, 0.12);
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #fa4141;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.report-clips-loading-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: currentColor;
+  flex-shrink: 0;
+  animation: feed-first-dot-pulse 1.2s ease-in-out infinite;
+}
+
 /* Email capture sheet */
 .email-capture-backdrop {
   position: fixed;
