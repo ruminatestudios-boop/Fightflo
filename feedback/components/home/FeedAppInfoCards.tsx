@@ -40,11 +40,6 @@ export function FeedAppInfoCards({
           <span className="feed-action-card-first-dot" aria-hidden />
           Start here — upload or record your training
         </div>
-        {isReturning && lastSessionDaysAgo !== null && (
-          <div className="feed-action-card-returning">
-            {returnVisitorMessage(lastSessionDaysAgo)}
-          </div>
-        )}
         <div className="feed-action-card-top">
           <div className="feed-action-card-copy">
             <p className="feed-action-card-title">TRAIN SMARTER.</p>
