@@ -6560,7 +6560,7 @@ button.stepguide-card-ts:active {
 
 .loading-panel-cancel {
   align-self: center;
-  border-radius: 9999px;
+  border-radius: var(--radius-card);
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: transparent;
   padding: 0.4rem 0.85rem;
