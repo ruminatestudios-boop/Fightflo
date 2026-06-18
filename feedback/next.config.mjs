@@ -2,7 +2,7 @@
 
 const nextConfig = {
   basePath: "",
-  assetPrefix: "",
+  assetPrefix: process.env.NODE_ENV === "production" ? "https://feedback.fightflo.app" : "",
   async redirects() {
     return [];
   },
