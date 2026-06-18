@@ -39,6 +39,7 @@ const nextConfig = {
         "./node_modules/tsx/**",
         "./node_modules/esbuild/**",
         "./node_modules/@esbuild/**",
+        "./tsconfig.json",
         "./scripts/detect-pose-cli.ts",
       ],
       "/api/video/download": [
