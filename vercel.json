@@ -19,7 +19,7 @@
     { "source": "/api/user/:path*", "destination": "https://feedback.fightflo.app/api/user/:path*" },
     { "source": "/api/video/:path*", "destination": "https://feedback.fightflo.app/api/video/:path*" },
     { "source": "/api/cron/emails", "destination": "https://feedback.fightflo.app/api/cron/emails" },
-    { "source": "/", "destination": "https://feedback.fightflo.app/" }
+    { "source": "/", "destination": "https://feedback.fightflo.app/feed" }
   ],
   "redirects": [
     { "source": "/feedback", "destination": "/", "permanent": false },
