@@ -31,8 +31,9 @@ function CyclingHeadline() {
             transition: "opacity 0.3s ease",
             opacity: fade ? 1 : 0,
             fontFamily: "var(--font-script)",
-            fontSize: "1.15em",
+            fontSize: "1.1em",
             fontWeight: 700,
+            fontStyle: "italic",
           }}
         >
           {CYCLING_WORDS[index]}.

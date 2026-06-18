@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { Barlow_Condensed, Dancing_Script, Instrument_Sans, Inter, Oswald } from "next/font/google";
+import { Barlow_Condensed, Playfair_Display, Instrument_Sans, Inter, Oswald } from "next/font/google";
 import { Analytics } from "@/components/shared/Analytics";
 import { NavigationTracker } from "@/components/shared/NavigationTracker";
 import { PWARegister } from "@/components/shared/PWARegister";
@@ -29,9 +29,10 @@ const barlow = Barlow_Condensed({
   variable: "--font-display",
 });
 
-const dancingScript = Dancing_Script({
+const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
   weight: ["700"],
+  style: ["italic"],
   variable: "--font-script",
 });
 
@@ -74,7 +75,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${barlow.variable} ${oswald.variable} ${instrumentSans.variable} ${dancingScript.variable} min-h-dvh antialiased`}
+        className={`${inter.variable} ${barlow.variable} ${oswald.variable} ${instrumentSans.variable} ${playfairDisplay.variable} min-h-dvh antialiased`}
       >
         <Suspense fallback={null}>
           <NavigationTracker />
