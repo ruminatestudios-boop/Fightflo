@@ -20,21 +20,23 @@ function CyclingHeadline() {
   }, []);
 
   return (
-    <h1 className="glass-greeting-title">
-      {"Most fighters train hard. Few know what to "}
-      <span
-        style={{
-          color: "#e53e3e",
-          display: "inline-block",
-          transition: "opacity 0.3s ease",
-          opacity: fade ? 1 : 0,
-          minWidth: "4ch",
-          fontFamily: "var(--font-script)",
-          fontSize: "1.15em",
-          fontWeight: 700,
-        }}
-      >
-        {CYCLING_WORDS[index]}.
+    <h1 className="glass-greeting-title" style={{ maxWidth: "none" }}>
+      <span style={{ display: "block" }}>Most fighters train hard.</span>
+      <span style={{ display: "block", whiteSpace: "nowrap" }}>
+        {"Few know what to "}
+        <span
+          style={{
+            color: "#e53e3e",
+            display: "inline-block",
+            transition: "opacity 0.3s ease",
+            opacity: fade ? 1 : 0,
+            fontFamily: "var(--font-script)",
+            fontSize: "1.15em",
+            fontWeight: 700,
+          }}
+        >
+          {CYCLING_WORDS[index]}.
+        </span>
       </span>
     </h1>
   );
