@@ -1,11 +1,8 @@
-/** @type {import('next').NextConfig} */
-const isProd = process.env.NODE_ENV === "production";
+/** @type {import('next').NextConfig} */ // v2
 
 const nextConfig = {
   basePath: "",
-  // Serve static assets directly from feedback.fightflo.app so they load
-  // correctly when pages are reverse-proxied through fightflo.app root.
-  assetPrefix: isProd ? "https://feedback.fightflo.app" : "",
+  assetPrefix: "",
   async redirects() {
     return [];
   },
