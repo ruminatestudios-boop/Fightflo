@@ -102,7 +102,7 @@ export function ReportPageClient({
       (typeof window !== "undefined" ? localStorage.getItem("feedback_anon_user_id") : null);
     if (!uid) return;
 
-    let t: ReturnType<typeof window.setTimeout>;
+    let t: number;
     fetch(apiPath(`/api/user/status?userId=${uid}`))
       .then((r) => r.json())
       .then((d: { used?: number; limit?: number; isPro?: boolean; canAnalyse?: boolean }) => {
