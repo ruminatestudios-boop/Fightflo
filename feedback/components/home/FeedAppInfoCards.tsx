@@ -55,7 +55,7 @@ export function FeedAppInfoCards({
                 {remaining} free {remaining === 1 ? "analysis" : "analyses"} left
               </p>
             ) : (
-              <p className="feed-action-card-desc">Upload a clip or record live to start.</p>
+              <p className="feed-action-card-desc">Film bag work, pads, or sparring.</p>
             )}
           </div>
           <div className="feed-action-card-btns">
