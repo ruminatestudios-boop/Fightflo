@@ -43,20 +43,20 @@ const FEATURE_HINTS: Record<
   { ready: string; locked: string }
 > = {
   guard: {
-    ready: "AI watches live and alerts you every time your hands drop below chin level.",
-    locked: "AI watches live and alerts you every time your hands drop below chin level.",
+    ready: "Our engine watches live and alerts you every time your hands drop below chin level.",
+    locked: "Our engine watches live and alerts you every time your hands drop below chin level.",
   },
   shadow: {
-    ready: "Shadowbox for a round. AI spots sloppy combos and gives you a breakdown after.",
-    locked: "Shadowbox for a round. AI spots sloppy combos and gives you a breakdown after.",
+    ready: "Shadowbox for a round. Our engine spots sloppy combos and gives you a breakdown after.",
+    locked: "Shadowbox for a round. Our engine spots sloppy combos and gives you a breakdown after.",
   },
   weekly: {
-    ready: "AI picks the one drill to run this week based on your biggest fault.",
-    locked: "Upload a clip first — AI will pick your one drill to focus on.",
+    ready: "Our engine picks the one drill to run this week based on your biggest fault.",
+    locked: "Upload a clip first — our engine will pick your one drill to focus on.",
   },
   reupload: {
-    ready: "Film the same drill again. AI compares it and tells you if the fault is fixed.",
-    locked: "Upload your first clip so AI has something to compare against.",
+    ready: "Film the same drill again. Our engine compares it and tells you if the fault is fixed.",
+    locked: "Upload your first clip so our engine has something to compare against.",
   },
   progress: {
     ready: "Your guard, footwork, and combos charted across every session.",
@@ -121,7 +121,7 @@ export function HomeFeatureGrid({
   const secondary: FeatureBlock[] = [
     {
       id: "guard",
-      label: "AI alerts when your guard drops",
+      label: "Get alerted when your guard drops",
       hint: featureHint("guard", hasClip),
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -131,7 +131,7 @@ export function HomeFeatureGrid({
     },
     {
       id: "shadow",
-      label: "Record a round, get live feedback",
+      label: "Record a round, get instant feedback",
       hint: featureHint("shadow", true),
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
