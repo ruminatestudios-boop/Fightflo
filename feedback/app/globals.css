@@ -2423,21 +2423,42 @@ button.stepguide-card-ts:active {
   min-height: 0;
   overflow: hidden;
   background: #000;
-  /* Ponder-style dashed grid */
-  background-image:
-    linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
-  background-size: 48px 48px;
 }
 
+/* Vercel-style ambient glows */
 .glass-orb {
-  display: none;
+  pointer-events: none;
+  position: absolute;
+  border-radius: 9999px;
+  z-index: 0;
 }
 
-.glass-orb--a,
-.glass-orb--b,
+.glass-orb--a {
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70vw;
+  height: 40vh;
+  background: radial-gradient(ellipse at center, rgba(120, 80, 255, 0.18) 0%, transparent 70%);
+  filter: blur(40px);
+}
+
+.glass-orb--b {
+  top: 30%;
+  right: -10%;
+  width: 50vw;
+  height: 50vh;
+  background: radial-gradient(ellipse at center, rgba(60, 120, 255, 0.1) 0%, transparent 70%);
+  filter: blur(60px);
+}
+
 .glass-orb--c {
-  display: none;
+  bottom: 10%;
+  left: -10%;
+  width: 50vw;
+  height: 40vh;
+  background: radial-gradient(ellipse at center, rgba(100, 60, 220, 0.1) 0%, transparent 70%);
+  filter: blur(60px);
 }
 
 .glass-home-inner {
