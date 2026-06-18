@@ -13,23 +13,23 @@ const CARD_IMAGES = {
   },
   guard: {
     src: withBasePath("/images/feed-guard.png"),
-    position: "50% 18%",
+    position: "50% 20%",
   },
   shadow: {
     src: withBasePath("/images/feed-shadow.png"),
-    position: "50% 35%",
+    position: "50% 25%",
   },
   weekly: {
     src: withBasePath("/images/feed-shadow.png"),
-    position: "55% 42%",
+    position: "50% 25%",
   },
   reupload: {
     src: withBasePath("/images/feed-reupload.png"),
-    position: "55% 22%",
+    position: "50% 20%",
   },
   progress: {
     src: withBasePath("/images/feed-progress.png"),
-    position: "50% 28%",
+    position: "60% 40%",
   },
 } as const satisfies Record<string, HomeCardImage>;
 
