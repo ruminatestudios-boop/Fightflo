@@ -10,7 +10,10 @@ import { assessPoseQuality } from "@/lib/analysis/poseQuality";
 function feedbackRoot(): string {
   const cwd = process.cwd();
   if (cwd.endsWith("feedback")) return cwd;
-  return join(cwd, "feedback");
+  // Vercel lambda: cwd is /var/task which IS the feedback root
+  const nested = join(cwd, "feedback");
+  if (existsSync(join(nested, "node_modules"))) return nested;
+  return cwd;
 }
 
 function resolveCliScript(): string {
