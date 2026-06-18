@@ -4317,13 +4317,7 @@ button.stepguide-card-ts:active {
 }
 
 .home-feature-carousel-track--fullscreen .home-feature-carousel-slide--active .home-feature-carousel-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: radial-gradient(ellipse at bottom left, rgba(250, 65, 65, 0.22) 0%, transparent 60%);
-  transition: opacity 0.4s ease;
+  display: none;
 }
 
 .home-feature-carousel-track--fullscreen .home-feature-carousel-card {
