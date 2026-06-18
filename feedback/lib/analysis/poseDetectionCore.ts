@@ -1,24 +1,24 @@
-import { FRAMES_PER_SECOND, frameToTimestamp } from "@/lib/analysis/extractFrames";
-import { smoothLandmarkTimeline } from "@/lib/analysis/landmarkSmoothing";
-import { buildTimelineContext } from "@/lib/analysis/timelineAnalysis";
+import { FRAMES_PER_SECOND, frameToTimestamp } from "./extractFrames";
+import { smoothLandmarkTimeline } from "./landmarkSmoothing";
+import { buildTimelineContext } from "./timelineAnalysis";
 import {
   ensureMediaPipeServerRuntime,
   getMediaPipeVisionWasmBaseUrl,
-} from "@/lib/analysis/mediaPipeServerRuntime";
-import { assessPoseQuality } from "@/lib/analysis/poseQuality";
-import { getSportConfig } from "@/config/sports";
-import { createSportsPoseLandmarkerOptions } from "@/lib/pose/mediapipeConfig";
+} from "./mediaPipeServerRuntime";
+import { assessPoseQuality } from "./poseQuality";
+import { getSportConfig } from "../../config/sports";
+import { createSportsPoseLandmarkerOptions } from "../pose/mediapipeConfig";
 import {
   LandmarkTripleSmoothBuffer,
   POSE_LANDMARK_MAP,
   processFightingPoseFrame,
-} from "@/lib/pose/mediapipePose";
+} from "../pose/mediapipePose";
 import type {
   ConfirmedPoseEvent,
   FrameLandmarks,
   LandmarkTimeline,
   SportId,
-} from "@/types";
+} from "../../types";
 import type { PoseLandmarker } from "@mediapipe/tasks-vision";
 
 let landmarkerInstance: PoseLandmarker | null = null;

@@ -57,8 +57,7 @@ export async function detectPoseWithMetaSubprocess(
     const scriptPath = resolveCliScript();
     const root = feedbackRoot();
     const { cmd, args: tsxArgs } = resolveTsxBin();
-    const tsconfig = join(root, "tsconfig.json");
-    const tsconfigArgs = existsSync(tsconfig) ? ["--tsconfig", tsconfig] : [];
+    const tsconfigArgs: string[] = [];
     try {
       await new Promise<void>((resolve, reject) => {
       const child = spawn(
