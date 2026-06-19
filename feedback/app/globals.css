@@ -515,10 +515,9 @@ body {
   overflow: hidden;
   max-width: none;
   background: #000;
-  /* Prevent iOS rubber-band from showing white edges */
   overscroll-behavior: none;
-  touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
+  /* none — fixed container must not pan, prevents iOS rubber-band */
+  touch-action: none;
 }
 
 .netflix-topbar,
@@ -942,6 +941,7 @@ body {
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .ff-modal-footer {
@@ -2495,6 +2495,7 @@ button.stepguide-card-ts:active {
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -3128,6 +3129,12 @@ button.stepguide-card-ts:active {
   height: 100%;
   object-fit: cover;
   transform: scale(1.02);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.home-card-photo img.img-loaded {
+  opacity: 1;
 }
 
 .home-card-gradient {
