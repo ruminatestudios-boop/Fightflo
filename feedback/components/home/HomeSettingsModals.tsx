@@ -157,11 +157,9 @@ export function HomeSettingsModals({
             </span>
           </button>
 
-          <div className="home-settings-hub-divider" />
-
           <button
             type="button"
-            className="home-settings-hub-row"
+            className="home-settings-hub-row home-settings-hub-row--section-start"
             onClick={() => { onClose(); router.push("/terms"); }}
           >
             <span className="home-settings-hub-row-kicker">Terms of Service</span>
@@ -181,10 +179,8 @@ export function HomeSettingsModals({
             onClick={() => { onClose(); window.location.href = "mailto:hello@fightflo.app?subject=Fightflo%20Feedback"; }}
           >
             <span className="home-settings-hub-row-kicker">Contact Us</span>
-            <span className="home-settings-hub-row-value">hello@fightflo.app ›</span>
+            <span className="home-settings-hub-row-value">hello@fightflo.app</span>
           </button>
-
-          <div className="home-settings-hub-divider" />
 
           <p className="home-settings-hub-version">Fightflo · AI Coaching · v1.0</p>
         </div>

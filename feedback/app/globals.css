@@ -4728,10 +4728,8 @@ button.stepguide-card-ts:active {
   flex-shrink: 0;
 }
 
-.home-settings-hub-divider {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.06);
-  margin: 0.25rem 0;
+.home-settings-hub-row--section-start {
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 .home-settings-hub-version {
@@ -6865,20 +6863,12 @@ button.stepguide-card-ts:active {
 }
 
 .feed-sticky-nav-main--upload .feed-sticky-nav-main-ring {
-  border-color: #e53e3e;
-  box-shadow:
-    0 14px 46px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(229, 62, 62, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .feed-sticky-nav-main--record .feed-sticky-nav-main-ring {
-  border-color: #e53e3e;
+  border-color: rgba(255, 255, 255, 0.14);
   background: rgba(0, 0, 0, 0.35);
-  box-shadow:
-    0 14px 46px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(229, 62, 62, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .feed-sticky-nav-main-icon {
