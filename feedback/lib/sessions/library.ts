@@ -81,8 +81,11 @@ export function toSessionLibraryEntry(
   report: Report | null,
   cloudName?: string | null
 ): SessionLibraryEntry {
+  // If a report exists the analysis succeeded — don't show failed regardless of DB status
+  const status = session.status === "failed" && report ? "complete" : session.status;
   return {
     ...session,
+    status,
     resolved_title: session.display_name?.trim() || defaultSessionTitle(session),
     resolved_summary: session.summary?.trim() || defaultSessionSummary(session, report),
     resolved_thumbnail: resolveSessionThumbnail(session, cloudName),
