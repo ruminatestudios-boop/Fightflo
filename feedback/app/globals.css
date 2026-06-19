@@ -97,6 +97,8 @@ html {
   color-scheme: dark;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  height: -webkit-fill-available;
+  overscroll-behavior: none;
 }
 
 html::-webkit-scrollbar {
@@ -110,6 +112,11 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 h1,
@@ -508,6 +515,10 @@ body {
   overflow: hidden;
   max-width: none;
   background: #000;
+  /* Prevent iOS rubber-band from showing white edges */
+  overscroll-behavior: none;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
 .netflix-topbar,
