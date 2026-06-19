@@ -3108,6 +3108,7 @@ button.stepguide-card-ts:active {
   z-index: 0;
   overflow: hidden;
   border-radius: inherit;
+  background: #0d0d0d;
 }
 
 .home-card-photo img {
@@ -3199,6 +3200,7 @@ button.stepguide-card-ts:active {
 .home-card-photo-overlay {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background: linear-gradient(
     to top,
     rgba(0, 0, 0, 0.96) 0%,

@@ -95,7 +95,7 @@ function CardPhoto({
       aria-hidden
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="" style={{ objectPosition: position }} loading="lazy" />
+      <img src={src} alt="" style={{ objectPosition: position }} loading="eager" />
       <span
         className={`home-card-photo-overlay ${variant === "hero" ? "home-card-photo-overlay--hero" : ""}`}
       />
