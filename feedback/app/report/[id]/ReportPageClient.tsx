@@ -168,6 +168,16 @@ export function ReportPageClient({
     void startCheckout(paywallMode === "topup" ? "topup" : "pro_monthly");
   }, [paywallMode, startCheckout]);
 
+  if (loading && !polled.initialFetchDone) {
+    return (
+      <GlassPage innerClassName="glass-home-inner glass-home-inner--busy">
+        <div className="report-simple-spinner-stage">
+          <span className="report-simple-spinner" aria-hidden />
+        </div>
+      </GlassPage>
+    );
+  }
+
   if (loading) {
     return (
       <GlassPage innerClassName="glass-home-inner glass-home-inner--busy">

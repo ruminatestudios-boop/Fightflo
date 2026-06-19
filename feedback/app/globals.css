@@ -3901,6 +3901,29 @@ button.stepguide-card-ts:active {
   animation: feed-first-dot-pulse 1.2s ease-in-out infinite;
 }
 
+.report-simple-spinner-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  width: 100%;
+}
+
+.report-simple-spinner {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  border: 2.5px solid rgba(255, 255, 255, 0.14);
+  border-top-color: #fa4141;
+  animation: report-simple-spinner-spin 0.7s linear infinite;
+}
+
+@keyframes report-simple-spinner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Email capture sheet */
 .email-capture-backdrop {
   position: fixed;

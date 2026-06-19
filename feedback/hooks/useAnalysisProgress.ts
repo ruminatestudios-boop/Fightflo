@@ -19,6 +19,7 @@ interface AnalysisProgressState {
   report: Report | null;
   session: Session | null;
   loading: boolean;
+  initialFetchDone: boolean;
   error: string | null;
   step: string;
   eyebrow: string;
@@ -67,6 +68,7 @@ export function useAnalysisProgress(sessionId: string | null) {
     report: null,
     session: null,
     loading: !!sessionId,
+    initialFetchDone: false,
     error: null,
     step: "extracting_frames",
     eyebrow: initialConfig.eyebrow,
@@ -132,6 +134,7 @@ export function useAnalysisProgress(sessionId: string | null) {
           report: data.report,
           session,
           loading: false,
+          initialFetchDone: true,
           error: null,
           step: "complete",
           eyebrow: ANALYSIS_STEPS.complete.eyebrow,
@@ -151,6 +154,7 @@ export function useAnalysisProgress(sessionId: string | null) {
         setState((s) => ({
           ...s,
           loading: false,
+          initialFetchDone: true,
           error: humanizeReportError(serverMessage || "Analysis failed"),
         }));
         return true;
@@ -174,6 +178,7 @@ export function useAnalysisProgress(sessionId: string | null) {
         return {
           ...prev,
           session,
+          initialFetchDone: true,
           step: stableStep,
           eyebrow: stableConfig.eyebrow,
           headline: stableConfig.headline,
@@ -194,6 +199,7 @@ export function useAnalysisProgress(sessionId: string | null) {
       setState((s) => ({
         ...s,
         loading: false,
+        initialFetchDone: true,
         error: humanizeReportError(message),
       }));
       return true;
