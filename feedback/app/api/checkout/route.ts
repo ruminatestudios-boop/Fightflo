@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
     }
 
     const checkoutPlan = plan as CheckoutPlan;
-    if (checkoutPlan !== "pro_monthly" && checkoutPlan !== "topup" && checkoutPlan !== "api_credits") {
+    const validPlans = ["pro_monthly", "topup", "api_credits_starter", "api_credits_growth"];
+    if (!validPlans.includes(checkoutPlan)) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     let successUrl: string;
     let cancelUrl: string;
-    if (checkoutPlan === "api_credits") {
+    if (checkoutPlan === "api_credits_starter" || checkoutPlan === "api_credits_growth") {
       successUrl = `${appUrl}/developer?credits=success`;
       cancelUrl = `${appUrl}/developer?credits=cancel`;
     } else if (checkoutPlan === "topup") {
@@ -51,8 +52,8 @@ export async function POST(request: NextRequest) {
     }
 
     let url: string;
-    if (checkoutPlan === "api_credits") {
-      url = await createApiCreditsCheckoutSession({ userId, email, successUrl, cancelUrl });
+    if (checkoutPlan === "api_credits_starter" || checkoutPlan === "api_credits_growth") {
+      url = await createApiCreditsCheckoutSession({ userId, email, successUrl, cancelUrl, plan: checkoutPlan });
     } else if (checkoutPlan === "topup") {
       url = await createTopUpCheckoutSession({ userId, email, successUrl, cancelUrl });
     } else {

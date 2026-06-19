@@ -1,4 +1,4 @@
-import { PRICING, TOPUP_SCAN_PACK, API_CREDIT_PACK_CALLS } from "@/config/pricing";
+import { PRICING, TOPUP_SCAN_PACK, API_CREDITS_STARTER_CALLS, API_CREDITS_GROWTH_CALLS } from "@/config/pricing";
 import Stripe from "stripe";
 
 let stripe: Stripe | null = null;
@@ -12,7 +12,7 @@ function getStripe(): Stripe {
   return stripe;
 }
 
-export type CheckoutPlan = "pro_monthly" | "topup" | "api_credits";
+export type CheckoutPlan = "pro_monthly" | "topup" | "api_credits_starter" | "api_credits_growth";
 
 function getProMonthlyPriceId(): string {
   const priceId = process.env.STRIPE_PRO_MONTHLY_PRICE_ID?.trim();
@@ -77,9 +77,15 @@ export async function createTopUpCheckoutSession(input: {
   return session.url;
 }
 
-function getApiCreditsPriceId(): string {
-  const priceId = process.env.STRIPE_API_CREDITS_PRICE_ID?.trim();
-  if (!priceId) throw new Error("STRIPE_API_CREDITS_PRICE_ID is not configured");
+function getApiCreditsStarterPriceId(): string {
+  const priceId = process.env.STRIPE_API_CREDITS_STARTER_PRICE_ID?.trim();
+  if (!priceId) throw new Error("STRIPE_API_CREDITS_STARTER_PRICE_ID is not configured");
+  return priceId;
+}
+
+function getApiCreditsGrowthPriceId(): string {
+  const priceId = process.env.STRIPE_API_CREDITS_GROWTH_PRICE_ID?.trim();
+  if (!priceId) throw new Error("STRIPE_API_CREDITS_GROWTH_PRICE_ID is not configured");
   return priceId;
 }
 
@@ -88,20 +94,25 @@ export async function createApiCreditsCheckoutSession(input: {
   email?: string;
   successUrl: string;
   cancelUrl: string;
+  plan: "api_credits_starter" | "api_credits_growth";
 }): Promise<string> {
   const client = getStripe();
+  const isStarter = input.plan === "api_credits_starter";
 
   const session = await client.checkout.sessions.create({
     mode: "payment",
     payment_method_types: ["card"],
-    line_items: [{ price: getApiCreditsPriceId(), quantity: 1 }],
+    line_items: [{
+      price: isStarter ? getApiCreditsStarterPriceId() : getApiCreditsGrowthPriceId(),
+      quantity: 1,
+    }],
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
     customer_email: input.email,
     metadata: {
       userId: input.userId,
-      plan: "api_credits",
-      calls: String(API_CREDIT_PACK_CALLS),
+      plan: input.plan,
+      calls: String(isStarter ? API_CREDITS_STARTER_CALLS : API_CREDITS_GROWTH_CALLS),
     },
   });
 

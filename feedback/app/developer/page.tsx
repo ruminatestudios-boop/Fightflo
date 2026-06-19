@@ -18,7 +18,7 @@ export default function DeveloperPage() {
   const [credits, setCredits] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [buyingCredits, setBuyingCredits] = useState(false);
+  const [buyingPlan, setBuyingPlan] = useState<"api_credits_starter" | "api_credits_growth" | null>(null);
   const [labelInput, setLabelInput] = useState("");
   const [newKey, setNewKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -51,21 +51,21 @@ export default function DeveloperPage() {
     if (banner === "success" || banner === "cancel") setCreditsBanner(banner);
   }, [fetchData, searchParams]);
 
-  async function buyCredits() {
+  async function buyCredits(plan: "api_credits_starter" | "api_credits_growth") {
     if (!userId) return;
-    setBuyingCredits(true);
+    setBuyingPlan(plan);
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: "api_credits", userId }),
+        body: JSON.stringify({ plan, userId }),
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
     } catch {
       setError("Failed to start checkout");
     } finally {
-      setBuyingCredits(false);
+      setBuyingPlan(null);
     }
   }
 
@@ -132,15 +132,40 @@ export default function DeveloperPage() {
         </div>
       )}
 
-      <div className="dev-credits-card">
-        <div className="dev-credits-info">
-          <span className="dev-credits-label">API Credits</span>
-          <span className="dev-credits-count">{credits === null ? "—" : credits.toLocaleString()}</span>
-          <span className="dev-credits-sub">{PRICING.apiCredits.calls} calls for {PRICING.apiCredits.displayShort}</span>
+      <div className="dev-credits-balance">
+        <span className="dev-credits-balance-label">Credits remaining</span>
+        <span className="dev-credits-balance-count">{credits === null ? "—" : credits.toLocaleString()}</span>
+      </div>
+
+      <div className="dev-packs">
+        <div className="dev-pack">
+          <div className="dev-pack-info">
+            <span className="dev-pack-name">Starter</span>
+            <span className="dev-pack-calls">{PRICING.apiCreditsStarter.calls} calls</span>
+            <span className="dev-pack-per">{PRICING.apiCreditsStarter.perCall}/call</span>
+          </div>
+          <div className="dev-pack-right">
+            <span className="dev-pack-price">{PRICING.apiCreditsStarter.displayShort}</span>
+            <button className="dev-buy-btn" onClick={() => buyCredits("api_credits_starter")} disabled={buyingPlan !== null}>
+              {buyingPlan === "api_credits_starter" ? "…" : "Buy"}
+            </button>
+          </div>
         </div>
-        <button className="dev-buy-btn" onClick={buyCredits} disabled={buyingCredits}>
-          {buyingCredits ? "…" : "Buy Credits"}
-        </button>
+
+        <div className="dev-pack dev-pack--featured">
+          <div className="dev-pack-badge">Best value</div>
+          <div className="dev-pack-info">
+            <span className="dev-pack-name">Growth</span>
+            <span className="dev-pack-calls">{PRICING.apiCreditsGrowth.calls} calls</span>
+            <span className="dev-pack-per">{PRICING.apiCreditsGrowth.perCall}/call</span>
+          </div>
+          <div className="dev-pack-right">
+            <span className="dev-pack-price">{PRICING.apiCreditsGrowth.displayShort}</span>
+            <button className="dev-buy-btn dev-buy-btn--featured" onClick={() => buyCredits("api_credits_growth")} disabled={buyingPlan !== null}>
+              {buyingPlan === "api_credits_growth" ? "…" : "Buy"}
+            </button>
+          </div>
+        </div>
       </div>
 
       {newKey && (

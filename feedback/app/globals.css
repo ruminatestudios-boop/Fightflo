@@ -9192,3 +9192,97 @@ button.stepguide-card-ts:active {
 }
 
 .dev-buy-btn:disabled { opacity: 0.5; }
+
+/* ── Credit packs ────────────────────────────────────────────────── */
+.dev-credits-balance {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.2rem 0;
+}
+
+.dev-credits-balance-label {
+  font-size: 0.8125rem;
+  color: rgba(255,255,255,0.4);
+}
+
+.dev-credits-balance-count {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.dev-packs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem 1.2rem 0;
+}
+
+.dev-pack {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 12px;
+  padding: 0.9rem;
+}
+
+.dev-pack--featured {
+  background: rgba(229,57,53,0.07);
+  border-color: rgba(229,57,53,0.25);
+}
+
+.dev-pack-badge {
+  position: absolute;
+  top: -0.55rem;
+  left: 0.85rem;
+  background: #e53935;
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.15em 0.5em;
+  border-radius: 4px;
+}
+
+.dev-pack-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.dev-pack-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.dev-pack-calls {
+  font-size: 0.8125rem;
+  color: rgba(255,255,255,0.5);
+}
+
+.dev-pack-per {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.3);
+}
+
+.dev-pack-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+
+.dev-pack-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.dev-buy-btn--featured {
+  background: #e53935;
+}

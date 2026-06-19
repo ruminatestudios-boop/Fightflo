@@ -13,8 +13,11 @@ export function formatGbp(amount: number, suffix = ""): string {
   return `£${rounded}${suffix}`;
 }
 
-export const API_CREDIT_PACK_CALLS = 100;
-export const API_CREDIT_PACK_PRICE_GBP = 49;
+export const API_CREDITS_STARTER_CALLS = 10;
+export const API_CREDITS_STARTER_PRICE_GBP = 9.99;
+
+export const API_CREDITS_GROWTH_CALLS = 100;
+export const API_CREDITS_GROWTH_PRICE_GBP = 49.99;
 
 export const PRICING = {
   pro: {
@@ -32,11 +35,18 @@ export const PRICING = {
     lifetimeScans: 3,
     priceGbp: 0,
   },
-  apiCredits: {
-    calls: API_CREDIT_PACK_CALLS,
-    priceGbp: API_CREDIT_PACK_PRICE_GBP,
-    display: formatGbp(API_CREDIT_PACK_PRICE_GBP, ` for ${API_CREDIT_PACK_CALLS} calls`),
-    displayShort: formatGbp(API_CREDIT_PACK_PRICE_GBP),
-    pricePerCall: formatGbp(API_CREDIT_PACK_PRICE_GBP / API_CREDIT_PACK_CALLS),
+  apiCreditsStarter: {
+    calls: API_CREDITS_STARTER_CALLS,
+    priceGbp: API_CREDITS_STARTER_PRICE_GBP,
+    display: formatGbp(API_CREDITS_STARTER_PRICE_GBP, ` for ${API_CREDITS_STARTER_CALLS} calls`),
+    displayShort: formatGbp(API_CREDITS_STARTER_PRICE_GBP),
+    perCall: formatGbp(API_CREDITS_STARTER_PRICE_GBP / API_CREDITS_STARTER_CALLS),
+  },
+  apiCreditsGrowth: {
+    calls: API_CREDITS_GROWTH_CALLS,
+    priceGbp: API_CREDITS_GROWTH_PRICE_GBP,
+    display: formatGbp(API_CREDITS_GROWTH_PRICE_GBP, ` for ${API_CREDITS_GROWTH_CALLS} calls`),
+    displayShort: formatGbp(API_CREDITS_GROWTH_PRICE_GBP),
+    perCall: formatGbp(API_CREDITS_GROWTH_PRICE_GBP / API_CREDITS_GROWTH_CALLS),
   },
 } as const;

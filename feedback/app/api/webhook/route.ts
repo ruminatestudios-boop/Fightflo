@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        if (session.mode === "payment" && plan === "api_credits") {
-          const calls = Number(session.metadata?.calls) || 100;
+        if (session.mode === "payment" && (plan === "api_credits_starter" || plan === "api_credits_growth")) {
+          const calls = Number(session.metadata?.calls) || 10;
           await addApiCredits(userId, calls);
           break;
         }
