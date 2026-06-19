@@ -46,6 +46,8 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
 
   await initScanCostFromSession(session);
 
+  let reportSaved = false;
+
   try {
     await updateSessionStatus(sessionId, "processing", {
       step: "extracting_frames",
@@ -219,6 +221,8 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
       markComplete: false,
     });
 
+    reportSaved = true;
+
     // Mark session ready so the report page shows immediately
     await updateSessionStatus(sessionId, "complete", {
       step: "complete",
@@ -282,11 +286,19 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
       message: "Your report is ready.",
     });
   } catch (error: unknown) {
-    await updateSessionStatus(sessionId, "failed", {
-      step: "failed",
-      message:
-        error instanceof Error ? error.message : "Analysis failed",
-    });
+    // If the report was already saved, keep the session as complete — clips/export
+    // failing after the report is written shouldn't hide the user's results.
+    if (reportSaved) {
+      await updateSessionStatus(sessionId, "complete", {
+        step: "complete",
+        message: "Your report is ready.",
+      }).catch(() => undefined);
+    } else {
+      await updateSessionStatus(sessionId, "failed", {
+        step: "failed",
+        message: error instanceof Error ? error.message : "Analysis failed",
+      });
+    }
     throw error;
   }
 }
