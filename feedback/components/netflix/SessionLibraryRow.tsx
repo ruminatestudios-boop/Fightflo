@@ -28,11 +28,10 @@ const STATUS_LABEL: Record<SessionStatus, string> = {
 };
 
 function formatSessionDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  const d = new Date(iso);
+  const date = d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  const time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  return `${date} · ${time}`;
 }
 
 async function compressImageFile(file: File): Promise<string> {
