@@ -25,7 +25,12 @@
     { "source": "/api/user/:path*", "destination": "https://feedback.fightflo.app/api/user/:path*" },
     { "source": "/api/video", "destination": "https://feedback.fightflo.app/api/video" },
     { "source": "/api/video/:path*", "destination": "https://feedback.fightflo.app/api/video/:path*" },
-    { "source": "/api/cron/emails", "destination": "https://feedback.fightflo.app/api/cron/emails" }
+    { "source": "/api/cron/emails", "destination": "https://feedback.fightflo.app/api/cron/emails" },
+    { "source": "/api/keys", "destination": "https://feedback.fightflo.app/api/keys" },
+    { "source": "/api/keys/:path*", "destination": "https://feedback.fightflo.app/api/keys/:path*" },
+    { "source": "/api/v1/:path*", "destination": "https://feedback.fightflo.app/api/v1/:path*" },
+    { "source": "/developer", "destination": "https://feedback.fightflo.app/developer" },
+    { "source": "/developer/:path*", "destination": "https://feedback.fightflo.app/developer/:path*" }
   ],
   "redirects": [
     { "source": "/feedback", "destination": "/", "permanent": false },

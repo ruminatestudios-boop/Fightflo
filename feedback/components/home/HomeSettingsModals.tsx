@@ -160,6 +160,15 @@ export function HomeSettingsModals({
           <button
             type="button"
             className="home-settings-hub-row home-settings-hub-row--section-start"
+            onClick={() => { onClose(); router.push("/developer"); }}
+          >
+            <span className="home-settings-hub-row-kicker">Developer API</span>
+            <span className="home-settings-hub-row-value">Manage API keys →</span>
+          </button>
+
+          <button
+            type="button"
+            className="home-settings-hub-row home-settings-hub-row--section-start"
             onClick={() => { onClose(); router.push("/terms"); }}
           >
             <span className="home-settings-hub-row-kicker">Terms of Service</span>
