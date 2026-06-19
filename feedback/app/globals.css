@@ -4042,7 +4042,8 @@ button.stepguide-card-ts:active {
   flex-shrink: 0;
   padding: 0.5rem 0.9rem;
   border-radius: 0.75rem;
-  border: 0.5px solid #e53e3e;
+  border: none;
+  outline: 0.5px solid rgba(229, 62, 62, 0.5);
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.9);
   font-family: var(--font-instrument), system-ui, sans-serif;
