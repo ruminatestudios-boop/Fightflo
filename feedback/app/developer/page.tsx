@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getStoredUserId } from "@/lib/storage/client";
@@ -11,7 +11,7 @@ interface ApiKeyWithSecret extends ApiKey {
   secret?: string;
 }
 
-export default function DeveloperPage() {
+function DeveloperPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [keys, setKeys] = useState<ApiKeyWithSecret[]>([]);
@@ -48,7 +48,7 @@ export default function DeveloperPage() {
   useEffect(() => {
     fetchData();
     const banner = searchParams.get("credits");
-    if (banner === "success" || banner === "cancel") setCreditsBanner(banner);
+    if (banner === "success" || banner === "cancel") setCreditsBanner(banner as "success" | "cancel");
   }, [fetchData, searchParams]);
 
   async function buyCredits(plan: "api_credits_starter" | "api_credits_growth") {
@@ -122,14 +122,10 @@ export default function DeveloperPage() {
       </div>
 
       {creditsBanner === "success" && (
-        <div className="dev-credits-banner dev-credits-banner--success">
-          Credits added — ready to use
-        </div>
+        <div className="dev-credits-banner dev-credits-banner--success">Credits added — ready to use</div>
       )}
       {creditsBanner === "cancel" && (
-        <div className="dev-credits-banner dev-credits-banner--cancel">
-          Purchase cancelled
-        </div>
+        <div className="dev-credits-banner dev-credits-banner--cancel">Purchase cancelled</div>
       )}
 
       <div className="dev-credits-balance">
@@ -183,7 +179,6 @@ export default function DeveloperPage() {
 
       <section className="dev-section">
         <h2 className="dev-section-title">API Keys</h2>
-
         <div className="dev-create-row">
           <input
             className="dev-label-input"
@@ -212,9 +207,7 @@ export default function DeveloperPage() {
                   <code className="dev-key-prefix">{k.key_prefix}••••••••••••••••••••••••</code>
                   <span className="dev-key-meta">
                     {k.call_count.toLocaleString()} calls ·{" "}
-                    {k.last_used_at
-                      ? `Last used ${new Date(k.last_used_at).toLocaleDateString()}`
-                      : "Never used"} ·{" "}
+                    {k.last_used_at ? `Last used ${new Date(k.last_used_at).toLocaleDateString()}` : "Never used"} ·{" "}
                     Created {new Date(k.created_at).toLocaleDateString()}
                   </span>
                 </div>
@@ -242,5 +235,13 @@ export default function DeveloperPage() {
         <Link href="/developer/docs" className="dev-docs-cta-btn">View Full Documentation</Link>
       </div>
     </main>
+  );
+}
+
+export default function DeveloperPage() {
+  return (
+    <Suspense>
+      <DeveloperPageInner />
+    </Suspense>
   );
 }
