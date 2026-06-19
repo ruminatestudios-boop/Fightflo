@@ -173,6 +173,7 @@ export function ReportPageClient({
       <GlassPage innerClassName="glass-home-inner glass-home-inner--busy">
         <div className="report-simple-spinner-stage">
           <span className="report-simple-spinner" aria-hidden />
+          <p className="report-simple-spinner-text">Loading…</p>
         </div>
       </GlassPage>
     );
