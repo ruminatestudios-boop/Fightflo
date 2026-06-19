@@ -439,13 +439,13 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
                       ? ` — ${Math.floor(uploadStatus.elapsedSec / 60)}m ${uploadStatus.elapsedSec % 60}s elapsed, keep this screen open`
                       : ` — ${busyUserPhase.detail}`}
                   </span>
-                  {phase === "uploading" ? (
+                  {(phase === "uploading" || phase === "processing") ? (
                     <button
                       type="button"
                       className="loading-panel-cancel"
                       onClick={cancel}
                     >
-                      Cancel upload
+                      {phase === "uploading" ? "Cancel upload" : "Cancel"}
                     </button>
                   ) : null}
                 </span>

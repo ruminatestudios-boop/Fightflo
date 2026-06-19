@@ -451,15 +451,18 @@ export function useUpload() {
   );
 
   const cancel = useCallback(() => {
-    if (state.phase !== "uploading") return;
-    abortRef.current?.abort();
-    try {
-      xhrRef.current?.abort();
-    } catch {
-      /* ignore */
+    // During upload: abort the network request
+    if (state.phase === "uploading") {
+      abortRef.current?.abort();
+      try {
+        xhrRef.current?.abort();
+      } catch {
+        /* ignore */
+      }
+      xhrRef.current = null;
+      abortRef.current = null;
     }
-    xhrRef.current = null;
-    abortRef.current = null;
+    // During analysis: analysis continues on server but dismiss the progress UI
     setState({
       phase: "idle",
       progress: 0,
