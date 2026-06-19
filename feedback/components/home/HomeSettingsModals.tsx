@@ -191,7 +191,7 @@ export function HomeSettingsModals({
             <span className="home-settings-hub-row-value">hello@fightflo.app</span>
           </button>
 
-          <p className="home-settings-hub-version">Fightflo · AI Coaching · v1.0</p>
+          <p className="home-settings-hub-version">Fightflo · Video analysis for serious fighters · v1.0</p>
         </div>
       </ModalShell>
 

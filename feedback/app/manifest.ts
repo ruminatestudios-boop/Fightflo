@@ -5,7 +5,7 @@ const prefix = basePath === "/" ? "" : basePath;
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Fightflo — AI Coaching",
+    name: "Fightflo: Video analysis for serious fighters",
     short_name: "Fightflo",
     description:
       "Upload training clips and get timestamped AI coaching on guard, footwork, and habits.",

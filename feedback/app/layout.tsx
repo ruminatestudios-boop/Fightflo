@@ -44,7 +44,7 @@ const oswald = Oswald({
 
 export const metadata: Metadata = {
   metadataBase: new URL(appOrigin),
-  title: "Fightflo — AI Coaching",
+  title: "Fightflo: Video analysis for serious fighters",
   description:
     "Film your training. AI tracks your movement and tells you exactly what to improve.",
   manifest: `${basePath}/manifest.webmanifest`,
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     "mobile-web-app-capable": "yes",
   },
   openGraph: {
-    title: "Fightflo — AI Coaching",
+    title: "Fightflo: Video analysis for serious fighters",
     description:
       "Upload any training video. Get timestamped technical coaching in minutes.",
   },
