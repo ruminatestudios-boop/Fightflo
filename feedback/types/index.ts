@@ -37,6 +37,7 @@ export interface User {
   free_analyses_used: number;
   free_analyses_limit: number;
   bonus_scans: number;
+  api_credits: number;
 }
 
 export interface AnalysisAllowance {

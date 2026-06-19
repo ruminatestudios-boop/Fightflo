@@ -9117,3 +9117,78 @@ button.stepguide-card-ts:active {
   color: rgba(255,255,255,0.85);
   width: 4rem;
 }
+
+/* ── Developer credits card ──────────────────────────────────────── */
+.dev-credits-banner {
+  margin: 0.8rem 1.2rem 0;
+  padding: 0.65rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.dev-credits-banner--success {
+  background: rgba(76,175,80,0.12);
+  color: #81c784;
+  border: 1px solid rgba(76,175,80,0.25);
+}
+
+.dev-credits-banner--cancel {
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.45);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.dev-credits-card {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 1rem 1.2rem 0;
+  background: rgba(229,57,53,0.07);
+  border: 1px solid rgba(229,57,53,0.2);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.dev-credits-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.dev-credits-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(255,255,255,0.35);
+}
+
+.dev-credits-count {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+}
+
+.dev-credits-sub {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  margin-top: 0.1rem;
+}
+
+.dev-buy-btn {
+  background: #e53935;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.dev-buy-btn:disabled { opacity: 0.5; }

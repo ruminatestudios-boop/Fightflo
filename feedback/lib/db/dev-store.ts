@@ -122,6 +122,7 @@ export async function createAnonymousUser(
     free_analyses_used: 0,
     free_analyses_limit: 1,
     bonus_scans: 0,
+    api_credits: 0,
   };
   users.set(user.id, user);
   touchDevStore();

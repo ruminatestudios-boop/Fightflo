@@ -3,6 +3,7 @@ import { TOPUP_SCAN_PACK } from "@/config/pricing";
 import { constructWebhookEvent } from "@/lib/payments/stripe";
 import {
   addBonusScans,
+  addApiCredits,
   linkStripeCustomer,
   setUserPro,
 } from "@/lib/db/queries";
@@ -33,6 +34,12 @@ export async function POST(request: NextRequest) {
         if (session.mode === "payment" && plan === "topup") {
           const scans = Number(session.metadata?.scans) || TOPUP_SCAN_PACK;
           await addBonusScans(userId, scans);
+          break;
+        }
+
+        if (session.mode === "payment" && plan === "api_credits") {
+          const calls = Number(session.metadata?.calls) || 100;
+          await addApiCredits(userId, calls);
           break;
         }
 

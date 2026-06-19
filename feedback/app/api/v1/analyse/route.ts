@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateBearerApiKey } from "@/lib/api/auth";
-import { createSession, getUserById } from "@/lib/db/queries";
+import { createSession, getUserById, deductApiCredit, getApiCredits } from "@/lib/db/queries";
 import { scheduleAnalysisPipeline } from "@/lib/analysis/startPipeline";
 import { randomUUID } from "crypto";
 import type { SkillLevel, SportId } from "@/types";
@@ -60,6 +60,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User account not found" }, { status: 404 });
     }
 
+    const credits = await getApiCredits(userId);
+    if (credits <= 0) {
+      return NextResponse.json(
+        {
+          error: "No API credits remaining. Purchase more at https://fightflo.app/developer",
+          credits_remaining: 0,
+          buy_url: "https://fightflo.app/developer",
+        },
+        { status: 402 }
+      );
+    }
+
+    const deducted = await deductApiCredit(userId);
+    if (!deducted) {
+      return NextResponse.json(
+        { error: "Failed to deduct credit", credits_remaining: 0 },
+        { status: 402 }
+      );
+    }
+
     const sessionId = randomUUID();
     await createSession({
       id: sessionId,
@@ -95,8 +115,9 @@ export async function POST(request: NextRequest) {
       {
         session_id: sessionId,
         status: "processing",
-        poll_url: `https://feedback.fightflo.app/api/v1/status/${sessionId}`,
-        report_url: `https://feedback.fightflo.app/api/v1/report/${sessionId}`,
+        credits_remaining: credits - 1,
+        poll_url: `https://fightflo.app/api/v1/status/${sessionId}`,
+        report_url: `https://fightflo.app/api/v1/report/${sessionId}`,
       },
       { status: 202 }
     );

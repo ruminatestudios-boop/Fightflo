@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getStoredUserId } from "@/lib/storage/client";
+import { PRICING } from "@/config/pricing";
 import type { ApiKey } from "@/lib/api-keys";
 
 interface ApiKeyWithSecret extends ApiKey {
@@ -12,32 +13,61 @@ interface ApiKeyWithSecret extends ApiKey {
 
 export default function DeveloperPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [keys, setKeys] = useState<ApiKeyWithSecret[]>([]);
+  const [credits, setCredits] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [buyingCredits, setBuyingCredits] = useState(false);
   const [labelInput, setLabelInput] = useState("");
   const [newKey, setNewKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [creditsBanner, setCreditsBanner] = useState<"success" | "cancel" | null>(null);
 
   const userId = typeof window !== "undefined" ? getStoredUserId() : null;
 
-  const fetchKeys = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     if (!userId) return;
     try {
-      const res = await fetch(`/api/keys?userId=${userId}`);
-      const data = await res.json();
-      setKeys(data.keys ?? []);
+      const [keysRes, creditsRes] = await Promise.all([
+        fetch(`/api/keys?userId=${userId}`),
+        fetch(`/api/user/credits?userId=${userId}`),
+      ]);
+      const keysData = await keysRes.json();
+      const creditsData = await creditsRes.json();
+      setKeys(keysData.keys ?? []);
+      setCredits(creditsData.credits ?? 0);
     } catch {
-      setError("Failed to load API keys");
+      setError("Failed to load data");
     } finally {
       setLoading(false);
     }
   }, [userId]);
 
   useEffect(() => {
-    fetchKeys();
-  }, [fetchKeys]);
+    fetchData();
+    const banner = searchParams.get("credits");
+    if (banner === "success" || banner === "cancel") setCreditsBanner(banner);
+  }, [fetchData, searchParams]);
+
+  async function buyCredits() {
+    if (!userId) return;
+    setBuyingCredits(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: "api_credits", userId }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch {
+      setError("Failed to start checkout");
+    } finally {
+      setBuyingCredits(false);
+    }
+  }
 
   async function createKey() {
     if (!userId) return;
@@ -54,7 +84,7 @@ export default function DeveloperPage() {
       if (!res.ok) throw new Error(data.error ?? "Failed to create key");
       setNewKey(data.key.secret);
       setLabelInput("");
-      await fetchKeys();
+      await fetchData();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -89,6 +119,28 @@ export default function DeveloperPage() {
           <h1 className="dev-title">Developer API</h1>
           <p className="dev-subtitle">Integrate Fightflo AI coaching into your own apps</p>
         </div>
+      </div>
+
+      {creditsBanner === "success" && (
+        <div className="dev-credits-banner dev-credits-banner--success">
+          Credits added — ready to use
+        </div>
+      )}
+      {creditsBanner === "cancel" && (
+        <div className="dev-credits-banner dev-credits-banner--cancel">
+          Purchase cancelled
+        </div>
+      )}
+
+      <div className="dev-credits-card">
+        <div className="dev-credits-info">
+          <span className="dev-credits-label">API Credits</span>
+          <span className="dev-credits-count">{credits === null ? "—" : credits.toLocaleString()}</span>
+          <span className="dev-credits-sub">{PRICING.apiCredits.calls} calls for {PRICING.apiCredits.displayShort}</span>
+        </div>
+        <button className="dev-buy-btn" onClick={buyCredits} disabled={buyingCredits}>
+          {buyingCredits ? "…" : "Buy Credits"}
+        </button>
       </div>
 
       {newKey && (

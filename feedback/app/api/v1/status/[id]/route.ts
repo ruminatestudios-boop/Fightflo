@@ -23,7 +23,7 @@ export async function GET(
     level: session.level,
     created_at: session.created_at,
     ...(session.status === "complete"
-      ? { report_url: `https://feedback.fightflo.app/api/v1/report/${session.id}` }
+      ? { report_url: `https://fightflo.app/api/v1/report/${session.id}` }
       : {}),
   });
 }

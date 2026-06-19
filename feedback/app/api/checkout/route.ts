@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   createProCheckoutSession,
   createTopUpCheckoutSession,
+  createApiCreditsCheckoutSession,
   type CheckoutPlan,
 } from "@/lib/payments/stripe";
 import { getUserById } from "@/lib/db/queries";
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     const checkoutPlan = plan as CheckoutPlan;
-    if (checkoutPlan !== "pro_monthly" && checkoutPlan !== "topup") {
+    if (checkoutPlan !== "pro_monthly" && checkoutPlan !== "topup" && checkoutPlan !== "api_credits") {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
@@ -35,29 +36,28 @@ export async function POST(request: NextRequest) {
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001/feedback";
-    const successUrl =
-      checkoutPlan === "topup"
-        ? `${appUrl}?topup=success`
-        : `${appUrl}?upgraded=true`;
-    const cancelUrl =
-      checkoutPlan === "topup"
-        ? `${appUrl}?topup=cancel`
-        : `${appUrl}?upgraded=false`;
 
-    const url =
-      checkoutPlan === "topup"
-        ? await createTopUpCheckoutSession({
-            userId,
-            email,
-            successUrl,
-            cancelUrl,
-          })
-        : await createProCheckoutSession({
-            userId,
-            email,
-            successUrl,
-            cancelUrl,
-          });
+    let successUrl: string;
+    let cancelUrl: string;
+    if (checkoutPlan === "api_credits") {
+      successUrl = `${appUrl}/developer?credits=success`;
+      cancelUrl = `${appUrl}/developer?credits=cancel`;
+    } else if (checkoutPlan === "topup") {
+      successUrl = `${appUrl}?topup=success`;
+      cancelUrl = `${appUrl}?topup=cancel`;
+    } else {
+      successUrl = `${appUrl}?upgraded=true`;
+      cancelUrl = `${appUrl}?upgraded=false`;
+    }
+
+    let url: string;
+    if (checkoutPlan === "api_credits") {
+      url = await createApiCreditsCheckoutSession({ userId, email, successUrl, cancelUrl });
+    } else if (checkoutPlan === "topup") {
+      url = await createTopUpCheckoutSession({ userId, email, successUrl, cancelUrl });
+    } else {
+      url = await createProCheckoutSession({ userId, email, successUrl, cancelUrl });
+    }
 
     return NextResponse.json({ url });
   } catch (error) {

@@ -1,4 +1,4 @@
-import { PRICING, TOPUP_SCAN_PACK } from "@/config/pricing";
+import { PRICING, TOPUP_SCAN_PACK, API_CREDIT_PACK_CALLS } from "@/config/pricing";
 import Stripe from "stripe";
 
 let stripe: Stripe | null = null;
@@ -12,7 +12,7 @@ function getStripe(): Stripe {
   return stripe;
 }
 
-export type CheckoutPlan = "pro_monthly" | "topup";
+export type CheckoutPlan = "pro_monthly" | "topup" | "api_credits";
 
 function getProMonthlyPriceId(): string {
   const priceId = process.env.STRIPE_PRO_MONTHLY_PRICE_ID?.trim();
@@ -70,6 +70,38 @@ export async function createTopUpCheckoutSession(input: {
       userId: input.userId,
       plan: "topup",
       scans: String(TOPUP_SCAN_PACK),
+    },
+  });
+
+  if (!session.url) throw new Error("Failed to create checkout session");
+  return session.url;
+}
+
+function getApiCreditsPriceId(): string {
+  const priceId = process.env.STRIPE_API_CREDITS_PRICE_ID?.trim();
+  if (!priceId) throw new Error("STRIPE_API_CREDITS_PRICE_ID is not configured");
+  return priceId;
+}
+
+export async function createApiCreditsCheckoutSession(input: {
+  userId: string;
+  email?: string;
+  successUrl: string;
+  cancelUrl: string;
+}): Promise<string> {
+  const client = getStripe();
+
+  const session = await client.checkout.sessions.create({
+    mode: "payment",
+    payment_method_types: ["card"],
+    line_items: [{ price: getApiCreditsPriceId(), quantity: 1 }],
+    success_url: input.successUrl,
+    cancel_url: input.cancelUrl,
+    customer_email: input.email,
+    metadata: {
+      userId: input.userId,
+      plan: "api_credits",
+      calls: String(API_CREDIT_PACK_CALLS),
     },
   });
 

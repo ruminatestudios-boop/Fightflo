@@ -138,6 +138,32 @@ export async function decrementBonusScans(userId: string): Promise<void> {
     .eq("id", userId);
 }
 
+export async function getApiCredits(userId: string): Promise<number> {
+  const user = await getUserById(userId);
+  return user?.api_credits ?? 0;
+}
+
+export async function addApiCredits(userId: string, count: number): Promise<void> {
+  const supabase = getSupabase();
+  const user = await getUserById(userId);
+  if (!user) return;
+  await supabase
+    .from("users")
+    .update({ api_credits: (user.api_credits ?? 0) + count })
+    .eq("id", userId);
+}
+
+export async function deductApiCredit(userId: string): Promise<boolean> {
+  const supabase = getSupabase();
+  const user = await getUserById(userId);
+  if (!user || (user.api_credits ?? 0) <= 0) return false;
+  await supabase
+    .from("users")
+    .update({ api_credits: user.api_credits - 1 })
+    .eq("id", userId);
+  return true;
+}
+
 export async function updateUserEmail(
   userId: string,
   email: string

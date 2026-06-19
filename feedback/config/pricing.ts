@@ -13,6 +13,9 @@ export function formatGbp(amount: number, suffix = ""): string {
   return `£${rounded}${suffix}`;
 }
 
+export const API_CREDIT_PACK_CALLS = 100;
+export const API_CREDIT_PACK_PRICE_GBP = 49;
+
 export const PRICING = {
   pro: {
     scansPerMonth: PRO_MONTHLY_SCANS,
@@ -28,5 +31,12 @@ export const PRICING = {
   free: {
     lifetimeScans: 3,
     priceGbp: 0,
+  },
+  apiCredits: {
+    calls: API_CREDIT_PACK_CALLS,
+    priceGbp: API_CREDIT_PACK_PRICE_GBP,
+    display: formatGbp(API_CREDIT_PACK_PRICE_GBP, ` for ${API_CREDIT_PACK_CALLS} calls`),
+    displayShort: formatGbp(API_CREDIT_PACK_PRICE_GBP),
+    pricePerCall: formatGbp(API_CREDIT_PACK_PRICE_GBP / API_CREDIT_PACK_CALLS),
   },
 } as const;
