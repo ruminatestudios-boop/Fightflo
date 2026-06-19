@@ -59,7 +59,7 @@ function DeveloperPageInner() {
     if (!userId) return;
     setBuyingPlan(plan);
     try {
-      const res = await fetch("/api/checkout", {
+      const res = await fetch("https://feedback.fightflo.app/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan, userId }),
