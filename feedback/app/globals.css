@@ -3201,9 +3201,9 @@ button.stepguide-card-ts:active {
   inset: 0;
   background: linear-gradient(
     to top,
-    rgba(0, 0, 0, 0.88) 0%,
-    rgba(0, 0, 0, 0.55) 28%,
-    rgba(0, 0, 0, 0.08) 55%,
+    rgba(0, 0, 0, 0.96) 0%,
+    rgba(0, 0, 0, 0.72) 32%,
+    rgba(0, 0, 0, 0.18) 58%,
     rgba(0, 0, 0, 0) 100%
   );
 }
