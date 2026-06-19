@@ -16,26 +16,21 @@ function feedbackRoot(): string {
   return cwd;
 }
 
-function resolveCliScript(): string {
-  return join(feedbackRoot(), "scripts", "detect-pose-cli.ts");
-}
-
-function resolveTsxBin(): { cmd: string; args: string[] } {
+function resolveCliScript(): { cmd: string; scriptPath: string } {
   const root = feedbackRoot();
-  const candidates = [
-    join(root, "node_modules", ".bin", "tsx"),
-    join(root, "node_modules", "tsx", "dist", "cli.mjs"),
-    join(process.cwd(), "node_modules", ".bin", "tsx"),
-    "/var/task/node_modules/.bin/tsx",
-  ];
-  for (const p of candidates) {
-    if (existsSync(p)) {
-      if (p.endsWith(".mjs")) return { cmd: process.execPath, args: [p] };
-      return { cmd: p, args: [] };
-    }
+  // Prefer the pre-compiled CJS bundle (built during `next build` by guard-build.mjs).
+  // Runs with plain node — no tsx, no tsconfig path resolution, no @/ alias issues.
+  const compiled = join(root, "scripts", "detect-pose-cli.cjs");
+  if (existsSync(compiled)) {
+    return { cmd: process.execPath, scriptPath: compiled };
   }
-  // Last resort — use node with ts-node/esm or fall back to npx
-  return { cmd: "npx", args: ["--yes", "tsx"] };
+  // Fallback: tsx on the TypeScript source (local dev only).
+  const source = join(root, "scripts", "detect-pose-cli.ts");
+  const tsxBin = join(root, "node_modules", ".bin", "tsx");
+  if (existsSync(tsxBin)) {
+    return { cmd: tsxBin, scriptPath: source };
+  }
+  return { cmd: "npx", scriptPath: source };
 }
 
 /** MediaPipe cannot run inside the Next.js webpack bundle — use plain Node. */
@@ -54,21 +49,16 @@ export async function detectPoseWithMetaSubprocess(
       JSON.stringify({ sport, framePaths })
     );
 
-    const scriptPath = resolveCliScript();
+    const { cmd, scriptPath } = resolveCliScript();
     const root = feedbackRoot();
-    const { cmd, args: tsxArgs } = resolveTsxBin();
-    const tsconfig = join(root, "tsconfig.json");
     try {
       await new Promise<void>((resolve, reject) => {
       const child = spawn(
         cmd,
-        [...tsxArgs, scriptPath, inputPath, outputPath],
+        [scriptPath, inputPath, outputPath],
         {
           cwd: root,
-          env: {
-            ...process.env,
-            TSX_TSCONFIG_PATH: existsSync(tsconfig) ? tsconfig : undefined,
-          },
+          env: { ...process.env },
           stdio: ["ignore", "ignore", "pipe"],
         }
       );
