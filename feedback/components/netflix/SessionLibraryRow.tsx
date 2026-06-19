@@ -176,6 +176,10 @@ export function SessionLibraryRow({
   const handleDownload = async (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
+    if (!isPro) {
+      onUpgrade();
+      return;
+    }
     const userId = session.user_id ?? getStoredUserId();
     if (!userId) return;
     setDownloading(true);
