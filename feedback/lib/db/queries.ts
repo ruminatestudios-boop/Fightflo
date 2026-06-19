@@ -360,6 +360,37 @@ export async function getReportBySessionId(
   return null;
 }
 
+export async function getReportsBySessionIds(
+  sessionIds: string[]
+): Promise<Map<string, Report>> {
+  if (!sessionIds.length) return new Map();
+
+  if (isDevStoreActive()) {
+    const entries = await Promise.all(
+      sessionIds.map(async (id) => [id, await devStore.getReportBySessionId(id)] as const)
+    );
+    return new Map(entries.filter(([, r]) => r !== null) as [string, Report][]);
+  }
+
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("reports")
+    .select()
+    .in("session_id", sessionIds)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return new Map();
+  }
+
+  // Keep only the most recent report per session
+  const map = new Map<string, Report>();
+  for (const row of (data ?? []) as Report[]) {
+    if (!map.has(row.session_id)) map.set(row.session_id, row);
+  }
+  return map;
+}
+
 export async function updateReportExportUrl(
   sessionId: string,
   exportVideoUrl: string
@@ -617,18 +648,22 @@ export async function getUserSessionLibrary(
   userId: string
 ): Promise<SessionLibraryEntry[]> {
   const sessions = await getUserSessions(userId);
+  if (!sessions.length) return [];
+
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME ?? null;
+  const sessionIds = sessions.map((s) => s.id);
 
-  const entries = await Promise.all(
-    sessions.map(async (session) => {
-      const meta = await readSessionMetadata(session.id);
-      const merged = mergeSessionMetadata(session, meta);
-      const report = await getReportBySessionId(session.id);
-      return toSessionLibraryEntry(merged, report, cloudName);
-    })
-  );
+  // Fetch all reports in one query instead of N individual queries
+  const [reportsMap, metaResults] = await Promise.all([
+    getReportsBySessionIds(sessionIds),
+    Promise.all(sessions.map((s) => readSessionMetadata(s.id))),
+  ]);
 
-  return entries;
+  return sessions.map((session, i) => {
+    const merged = mergeSessionMetadata(session, metaResults[i]);
+    const report = reportsMap.get(session.id) ?? null;
+    return toSessionLibraryEntry(merged, report, cloudName);
+  });
 }
 
 export async function deleteSession(
