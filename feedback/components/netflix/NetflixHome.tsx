@@ -225,6 +225,13 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
     uploadRef.current?.open();
   }, [homeRoute]);
 
+  // Opens the file picker directly without changing the view — used by
+  // the Upload/Record action buttons so the picker appears immediately.
+  const openPickerDirect = useCallback(() => {
+    setFollowUpParentId(null);
+    uploadRef.current?.open();
+  }, []);
+
   const openFollowUpUpload = useCallback((parentSessionId: string) => {
     setFollowUpParentId(parentSessionId);
     setMainTab("home");
@@ -522,7 +529,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
               activeId={activeCard}
               onSelect={handleFeatureSelect}
               variant={homeRoute === "feed" ? "feed" : "default"}
-              onUpload={openUpload}
+              onUpload={openPickerDirect}
               onRecord={openLiveRecord}
               onPricing={() => setShowPricingModal(true)}
               isPro={isPro}
