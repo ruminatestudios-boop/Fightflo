@@ -60,7 +60,7 @@ export function ReportShareFooter({ sessionId, onShare, mainWeaknessTitle }: Rep
       <button
         type="button"
         onClick={() => void copyCoachLink()}
-        className="netflix-cta-primary stepguide-share-row-btn"
+        className="netflix-cta-secondary stepguide-share-row-btn"
       >
         {coachCopied ? "Link copied" : "Share with coach"}
       </button>

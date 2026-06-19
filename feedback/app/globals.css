@@ -745,6 +745,31 @@ body {
   background: var(--btn-flat-active);
 }
 
+.netflix-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.5rem;
+  width: 100%;
+  border-radius: var(--radius-card);
+  border: none;
+  background: #1a1a1a;
+  padding: 0 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ffffff;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.netflix-cta-secondary:hover {
+  background: #222222;
+}
+
+.netflix-cta-secondary:active {
+  transform: scale(0.98);
+  background: #2a2a2a;
+}
+
 .netflix-modal-root,
 .ff-modal-root {
   position: fixed;
