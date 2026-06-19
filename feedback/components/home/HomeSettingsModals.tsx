@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { HomePickerGrid } from "@/components/home/HomePickerGrid";
 import { ModalShell } from "@/components/shared/ModalShell";
 import { SELECTABLE_SPORTS, SPORTS } from "@/config/sports";
@@ -95,6 +96,7 @@ export function HomeSettingsModals({
   onUserNameChange,
   onNameDraftChange,
 }: HomeSettingsModalsProps) {
+  const router = useRouter();
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -154,6 +156,37 @@ export function HomeSettingsModals({
               {level.charAt(0).toUpperCase() + level.slice(1)}
             </span>
           </button>
+
+          <div className="home-settings-hub-divider" />
+
+          <button
+            type="button"
+            className="home-settings-hub-row"
+            onClick={() => { onClose(); router.push("/terms"); }}
+          >
+            <span className="home-settings-hub-row-kicker">Terms of Service</span>
+            <span className="home-settings-hub-row-value" />
+          </button>
+          <button
+            type="button"
+            className="home-settings-hub-row"
+            onClick={() => { onClose(); router.push("/privacy"); }}
+          >
+            <span className="home-settings-hub-row-kicker">Privacy Policy</span>
+            <span className="home-settings-hub-row-value" />
+          </button>
+          <button
+            type="button"
+            className="home-settings-hub-row"
+            onClick={() => { onClose(); window.location.href = "mailto:hello@fightflo.app?subject=Fightflo%20Feedback"; }}
+          >
+            <span className="home-settings-hub-row-kicker">Contact Us</span>
+            <span className="home-settings-hub-row-value">hello@fightflo.app ›</span>
+          </button>
+
+          <div className="home-settings-hub-divider" />
+
+          <p className="home-settings-hub-version">Fightflo · AI Coaching · v1.0</p>
         </div>
       </ModalShell>
 

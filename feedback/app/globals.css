@@ -4728,6 +4728,19 @@ button.stepguide-card-ts:active {
   flex-shrink: 0;
 }
 
+.home-settings-hub-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 0.25rem 0;
+}
+
+.home-settings-hub-version {
+  padding: 0.6rem 0.9rem;
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.2);
+  text-align: center;
+}
+
 .home-name-field--modal {
   margin-bottom: 0;
 }
