@@ -4729,7 +4729,7 @@ button.stepguide-card-ts:active {
 }
 
 .home-settings-hub-row--section-start {
-  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-top-color: rgba(255, 255, 255, 0.06);
 }
 
 .home-settings-hub-version {
