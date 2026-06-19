@@ -91,7 +91,9 @@ export default function DocsPage() {
   return (
     <main className="docs-page">
       <div className="docs-header">
-        <button className="dev-back" onClick={() => router.back()}>← Back</button>
+        <button className="dev-back" onClick={() => router.back()}>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>
         <div>
           <h1 className="dev-title">API Documentation</h1>
           <p className="dev-subtitle">REST API · Base URL: https://fightflo.app</p>

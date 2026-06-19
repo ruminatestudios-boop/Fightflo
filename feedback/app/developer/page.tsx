@@ -82,12 +82,13 @@ export default function DeveloperPage() {
   return (
     <main className="dev-page">
       <div className="dev-header">
-        <button className="dev-back" onClick={() => router.back()}>← Back</button>
+        <button className="dev-back" onClick={() => router.back()}>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>
         <div>
           <h1 className="dev-title">Developer API</h1>
           <p className="dev-subtitle">Integrate Fightflo AI coaching into your own apps</p>
         </div>
-        <Link href="/developer/docs" className="dev-docs-link">View Docs →</Link>
       </div>
 
       {newKey && (
@@ -157,11 +158,12 @@ export default function DeveloperPage() {
   -H "Content-Type: application/json" \\
   -d '{"video_url":"https://...","sport":"boxing"}'`}</pre>
           <p className="dev-qs-step">3. Poll for results or provide a webhook URL</p>
-          <Link href="/developer/docs" className="dev-fullocs-link">
-            Full documentation →
-          </Link>
         </div>
       </section>
+
+      <div className="dev-docs-cta">
+        <Link href="/developer/docs" className="dev-docs-cta-btn">View Full Documentation</Link>
+      </div>
     </main>
   );
 }
