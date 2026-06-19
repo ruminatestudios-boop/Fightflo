@@ -144,8 +144,18 @@ export function HomeFeatureCarousel({
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
-    el.addEventListener("scroll", readIndexFromScroll, { passive: true });
-    return () => el.removeEventListener("scroll", readIndexFromScroll);
+
+    let settleTimer: number | undefined;
+    const onScroll = () => {
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(readIndexFromScroll, 110);
+    };
+
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.clearTimeout(settleTimer);
+      el.removeEventListener("scroll", onScroll);
+    };
   }, [readIndexFromScroll]);
 
   useEffect(() => {
@@ -199,7 +209,6 @@ export function HomeFeatureCarousel({
         <div className="home-feature-carousel-backdrop" aria-hidden>
           {activeUsesPhoto ? (
             <div
-              key={activeCardId}
               className="home-feature-carousel-backdrop-image"
               style={{
                 backgroundImage: `url(${homeCardImage(activeCardId).src})`,
@@ -208,7 +217,6 @@ export function HomeFeatureCarousel({
             />
           ) : (
             <div
-              key={activeCardId}
               className="home-feature-carousel-backdrop-gradient"
               style={{ background: homeCardGradient(activeCardId) }}
             />
