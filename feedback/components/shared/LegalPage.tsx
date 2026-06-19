@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { GlassPage } from "@/components/shared/GlassPage";
 import { LEGAL_LAST_UPDATED } from "@/lib/legal/content";
 
@@ -25,9 +24,6 @@ export function LegalPage({ title, sections }: LegalPageProps) {
             <p className="legal-page-body">{section.body}</p>
           </section>
         ))}
-        <p className="legal-page-back">
-          <Link href="/">Back to coaching</Link>
-        </p>
       </article>
     </GlassPage>
   );
