@@ -25,7 +25,11 @@ function DeveloperPageInner() {
   const [error, setError] = useState<string | null>(null);
   const [creditsBanner, setCreditsBanner] = useState<"success" | "cancel" | null>(null);
 
-  const userId = typeof window !== "undefined" ? getStoredUserId() : null;
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setUserId(getStoredUserId());
+  }, []);
 
   const fetchData = useCallback(async () => {
     if (!userId) return;
