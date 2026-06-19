@@ -3129,11 +3129,6 @@ button.stepguide-card-ts:active {
   height: 100%;
   object-fit: cover;
   transform: scale(1.02);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.home-card-photo img.img-loaded {
   opacity: 1;
 }
 
