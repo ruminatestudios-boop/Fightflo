@@ -98,7 +98,6 @@ export default function DocsPage() {
           <h1 className="dev-title">API Documentation</h1>
           <p className="dev-subtitle">REST API · Base URL: https://fightflo.app</p>
         </div>
-        <Link href="/developer" className="dev-docs-link">Manage Keys →</Link>
       </div>
 
       {/* Auth */}
@@ -222,6 +221,10 @@ export default function DocsPage() {
           for volume pricing, white-label options, or enterprise agreements.
         </p>
       </section>
+
+      <div className="dev-docs-cta">
+        <Link href="/developer" className="dev-docs-cta-btn">Manage API Keys</Link>
+      </div>
     </main>
   );
 }
