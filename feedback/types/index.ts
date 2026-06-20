@@ -65,6 +65,8 @@ export interface Session {
   cloudinary_public_id?: string | null;
   /** Prior session this clip is verifying a fix for */
   parent_session_id?: string | null;
+  /** Invite code used to bypass the paywall for this scan, if any */
+  invite_code?: string | null;
 }
 
 export type ComparisonStatus = "improved" | "worse" | "unchanged";

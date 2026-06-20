@@ -8,6 +8,12 @@ interface PerUserCost {
   totalUsd: number;
 }
 
+interface PerTierCost {
+  inviteCode: string;
+  scanCount: number;
+  totalUsd: number;
+}
+
 interface ScanCostRow {
   id: string;
   session_id: string | null;
@@ -21,6 +27,7 @@ interface ScanCostRow {
   cloudinary_usd: number;
   compute_usd: number;
   total_usd: number;
+  invite_code: string | null;
   created_at: string;
 }
 
@@ -29,13 +36,17 @@ interface ScanCostSummary {
   scanCount: number;
   avgUsd: number;
   perUser: PerUserCost[];
+  perTier: PerTierCost[];
   recent: ScanCostRow[];
 }
 
 const SECRET_KEY = "fightflo_admin_secret";
 
-function formatUsd(value: number): string {
-  return `$${value.toFixed(4)}`;
+// Fixed approximate rate — good enough for a cost dashboard, not for invoicing.
+const USD_TO_GBP = 0.79;
+
+function formatGbp(usdValue: number): string {
+  return `£${(usdValue * USD_TO_GBP).toFixed(4)}`;
 }
 
 export default function ScanCostsAdminPage() {
@@ -107,17 +118,45 @@ export default function ScanCostsAdminPage() {
   return (
     <div style={pageStyle}>
       <div style={{ ...cardStyle, maxWidth: "680px" }}>
-        <h1 style={titleStyle}>Scan costs</h1>
-        <p style={subStyle}>Estimated Gemini + Cloudinary + compute cost per scan</p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <h1 style={titleStyle}>Scan costs</h1>
+            <p style={subStyle}>Estimated Gemini + Cloudinary + compute cost per scan</p>
+          </div>
+          <button onClick={() => void fetchData(secret)} style={smallBtnStyle} disabled={loading}>
+            {loading ? "Refreshing…" : "Refresh"}
+          </button>
+        </div>
 
         {error ? <p style={errorStyle}>{error}</p> : null}
 
         {data ? (
           <>
             <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
-              <StatCard label="Total spend" value={formatUsd(data.totalUsd)} />
+              <StatCard label="Total spend" value={formatGbp(data.totalUsd)} />
               <StatCard label="Total scans" value={String(data.scanCount)} />
-              <StatCard label="Avg per scan" value={formatUsd(data.avgUsd)} />
+              <StatCard label="Avg per scan" value={formatGbp(data.avgUsd)} />
+            </div>
+
+            <p style={subStyle}>Cost per invite tier</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "2rem" }}>
+              {data.perTier.length === 0 ? (
+                <p style={{ fontSize: "0.85rem", opacity: 0.6 }}>No scans recorded yet.</p>
+              ) : (
+                data.perTier.map((t) => (
+                  <div key={t.inviteCode} style={rowStyle}>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: "0.8rem", fontFamily: "monospace", opacity: 0.8 }}>
+                        {t.inviteCode}
+                      </span>
+                      <strong style={{ fontSize: "0.85rem" }}>{formatGbp(t.totalUsd)}</strong>
+                    </div>
+                    <p style={{ margin: "0.25rem 0 0", fontSize: "0.75rem", opacity: 0.55 }}>
+                      {t.scanCount} scan{t.scanCount === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                ))
+              )}
             </div>
 
             <p style={subStyle}>Cost per user</p>
@@ -131,7 +170,7 @@ export default function ScanCostsAdminPage() {
                       <span style={{ fontSize: "0.8rem", fontFamily: "monospace", opacity: 0.8 }}>
                         {u.userId === "unknown" ? "(no user id)" : u.userId.slice(0, 12) + "…"}
                       </span>
-                      <strong style={{ fontSize: "0.85rem" }}>{formatUsd(u.totalUsd)}</strong>
+                      <strong style={{ fontSize: "0.85rem" }}>{formatGbp(u.totalUsd)}</strong>
                     </div>
                     <p style={{ margin: "0.25rem 0 0", fontSize: "0.75rem", opacity: 0.55 }}>
                       {u.scanCount} scan{u.scanCount === 1 ? "" : "s"}
@@ -148,12 +187,13 @@ export default function ScanCostsAdminPage() {
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <span style={{ fontSize: "0.78rem", opacity: 0.7 }}>
                       {r.sport ?? "—"} · {r.status} · {r.pipeline}
+                      {r.invite_code ? ` · ${r.invite_code}` : ""}
                     </span>
-                    <strong style={{ fontSize: "0.82rem" }}>{formatUsd(Number(r.total_usd))}</strong>
+                    <strong style={{ fontSize: "0.82rem" }}>{formatGbp(Number(r.total_usd))}</strong>
                   </div>
                   <p style={{ margin: "0.25rem 0 0", fontSize: "0.72rem", opacity: 0.5 }}>
-                    gemini {formatUsd(Number(r.gemini_usd))} · cloudinary {formatUsd(Number(r.cloudinary_usd))} ·
-                    compute {formatUsd(Number(r.compute_usd))} · {new Date(r.created_at).toLocaleString()}
+                    gemini {formatGbp(Number(r.gemini_usd))} · cloudinary {formatGbp(Number(r.cloudinary_usd))} ·
+                    compute {formatGbp(Number(r.compute_usd))} · {new Date(r.created_at).toLocaleString()}
                   </p>
                 </div>
               ))}
@@ -224,6 +264,17 @@ const primaryBtnStyle: React.CSSProperties = {
   fontWeight: 600,
   fontSize: "0.9rem",
   cursor: "pointer",
+};
+
+const smallBtnStyle: React.CSSProperties = {
+  padding: "0.45rem 0.9rem",
+  borderRadius: "0.5rem",
+  border: "1px solid rgba(255,255,255,0.15)",
+  background: "rgba(255,255,255,0.06)",
+  color: "#fff",
+  fontSize: "0.8rem",
+  cursor: "pointer",
+  whiteSpace: "nowrap",
 };
 
 const rowStyle: React.CSSProperties = {

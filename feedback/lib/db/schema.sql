@@ -155,3 +155,6 @@ CREATE TABLE IF NOT EXISTS affiliate_commissions (
 
 CREATE INDEX IF NOT EXISTS idx_affiliate_commissions_code ON affiliate_commissions(code);
 CREATE INDEX IF NOT EXISTS idx_affiliate_commissions_paid ON affiliate_commissions(paid);
+
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS invite_code TEXT;
+ALTER TABLE scan_costs ADD COLUMN IF NOT EXISTS invite_code TEXT;

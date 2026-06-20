@@ -1224,6 +1224,7 @@ export interface ScanCostRecord {
   cloudinary_usd: number;
   compute_usd: number;
   total_usd: number;
+  invite_code: string | null;
   created_at: string;
 }
 
@@ -1239,6 +1240,7 @@ export async function recordScanCost(input: {
   cloudinaryUsd: number;
   computeUsd: number;
   totalUsd: number;
+  inviteCode: string | null;
 }): Promise<void> {
   if (isDevStoreActive()) return;
 
@@ -1255,6 +1257,7 @@ export async function recordScanCost(input: {
     cloudinary_usd: input.cloudinaryUsd,
     compute_usd: input.computeUsd,
     total_usd: input.totalUsd,
+    invite_code: input.inviteCode,
   });
 }
 
@@ -1268,4 +1271,76 @@ export async function listScanCosts(limit = 200): Promise<ScanCostRecord[]> {
 
   if (error) return [];
   return (data as ScanCostRecord[]) ?? [];
+}
+
+export async function setSessionInviteCode(
+  sessionId: string,
+  code: string
+): Promise<void> {
+  if (isDevStoreActive()) return;
+
+  const supabase = getSupabase();
+  await supabase.from("sessions").update({ invite_code: code }).eq("id", sessionId);
+}
+
+export async function listRecentSessions(
+  limit = 100,
+  statusFilter?: string
+): Promise<Session[]> {
+  const supabase = getSupabase();
+  let query = supabase
+    .from("sessions")
+    .select()
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (statusFilter) query = query.eq("status", statusFilter);
+
+  const { data, error } = await query;
+  if (error) return [];
+  return (data as Session[]) ?? [];
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function searchUsers(searchTerm: string): Promise<User[]> {
+  const supabase = getSupabase();
+  const filter = UUID_RE.test(searchTerm)
+    ? `id.eq.${searchTerm},email.ilike.%${searchTerm}%`
+    : `email.ilike.%${searchTerm}%`;
+
+  const { data, error } = await supabase
+    .from("users")
+    .select()
+    .or(filter)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (error) return [];
+  return (data as User[]) ?? [];
+}
+
+export async function listRecentUsers(limit = 50): Promise<User[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("users")
+    .select()
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) return [];
+  return (data as User[]) ?? [];
+}
+
+export async function setUserBonusScans(
+  userId: string,
+  bonusScans: number
+): Promise<void> {
+  const supabase = getSupabase();
+  await supabase.from("users").update({ bonus_scans: bonusScans }).eq("id", userId);
+}
+
+export async function setUserIsPro(userId: string, isPro: boolean): Promise<void> {
+  const supabase = getSupabase();
+  await supabase.from("users").update({ is_pro: isPro }).eq("id", userId);
 }

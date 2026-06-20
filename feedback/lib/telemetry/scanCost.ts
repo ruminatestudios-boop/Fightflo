@@ -25,6 +25,7 @@ export class ScanCostCollector {
   pipeline: "real" | "demo" = "real";
   sport: SportId | "" = "";
   userId: string | null = null;
+  inviteCode: string | null = null;
   videoDurationSec = 0;
   frameCount = 0;
   clipCount = 0;
@@ -189,6 +190,7 @@ export async function initScanCostFromSession(session: Session): Promise<void> {
   collector.sport = session.sport;
   collector.userId = session.user_id;
   collector.videoDurationSec = session.video_duration;
+  collector.inviteCode = session.invite_code ?? null;
 
   if (session.cloudinary_public_id) {
     try {
@@ -261,6 +263,7 @@ async function persistScanCostToDb(collector: ScanCostCollector): Promise<void> 
     cloudinaryUsd: breakdown.cloudinaryUsd,
     computeUsd: breakdown.computeUsd,
     totalUsd: breakdown.totalUsd,
+    inviteCode: collector.inviteCode,
   });
 }
 

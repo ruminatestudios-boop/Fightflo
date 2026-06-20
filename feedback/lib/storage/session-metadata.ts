@@ -1,5 +1,6 @@
 import { mkdir, readFile, rm, writeFile } from "fs/promises";
 import { join } from "path";
+import { isDevStoreActive } from "@/lib/db/devFallback";
 
 export interface SessionMetadataRecord {
   display_name?: string | null;
@@ -16,6 +17,7 @@ function metaPath(sessionId: string): string {
 export async function readSessionMetadata(
   sessionId: string
 ): Promise<SessionMetadataRecord | null> {
+  if (!isDevStoreActive()) return null;
   try {
     const raw = await readFile(metaPath(sessionId), "utf8");
     return JSON.parse(raw) as SessionMetadataRecord;
@@ -28,6 +30,11 @@ export async function writeSessionMetadata(
   sessionId: string,
   patch: SessionMetadataRecord
 ): Promise<SessionMetadataRecord> {
+  // Production (Supabase configured) stores these columns directly on the
+  // sessions table — local disk is only a fallback for the in-memory dev store,
+  // and Vercel's filesystem is read-only outside /tmp so this must not run there.
+  if (!isDevStoreActive()) return patch;
+
   await mkdir(META_DIR, { recursive: true });
   const existing = (await readSessionMetadata(sessionId)) ?? {};
   const merged: SessionMetadataRecord = { ...existing };
@@ -41,6 +48,7 @@ export async function writeSessionMetadata(
 }
 
 export async function deleteSessionMetadata(sessionId: string): Promise<void> {
+  if (!isDevStoreActive()) return;
   try {
     await rm(metaPath(sessionId), { force: true });
   } catch {
