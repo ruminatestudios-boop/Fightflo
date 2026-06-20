@@ -60,7 +60,7 @@ const FEATURE_HINTS: Record<
   },
   progress: {
     ready: "See your guard, footwork, and combos charted over time.",
-    locked: "Upload a clip to start tracking your progress.",
+    locked: "Upload your first clip to start tracking your progress across every session.",
   },
 };
 
