@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
+import { isDevStoreActive } from "@/lib/db/devFallback";
 
 const LOG_DIR = path.join(process.cwd(), ".local-data", "email-log");
 
@@ -17,6 +18,7 @@ interface EmailLog {
 }
 
 async function readLog(userId: string): Promise<EmailLog> {
+  if (!isDevStoreActive()) return {};
   try {
     const raw = await readFile(path.join(LOG_DIR, `${userId}.json`), "utf8");
     return JSON.parse(raw) as EmailLog;
@@ -26,6 +28,7 @@ async function readLog(userId: string): Promise<EmailLog> {
 }
 
 async function writeLog(userId: string, log: EmailLog): Promise<void> {
+  if (!isDevStoreActive()) return;
   await mkdir(LOG_DIR, { recursive: true });
   await writeFile(
     path.join(LOG_DIR, `${userId}.json`),

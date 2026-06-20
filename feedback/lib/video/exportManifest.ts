@@ -1,5 +1,6 @@
 import { mkdir, readFile, stat, writeFile } from "fs/promises";
 import { join } from "path";
+import { isDevStoreActive } from "@/lib/db/devFallback";
 
 const EXPORT_DIR = join(process.cwd(), ".local-data", "exports");
 
@@ -24,6 +25,7 @@ export function localExportFilePath(sessionId: string): string {
 export async function readExportManifest(
   sessionId: string
 ): Promise<ExportManifestRecord | null> {
+  if (!isDevStoreActive()) return null;
   try {
     const raw = await readFile(manifestPath(sessionId), "utf8");
     const parsed = JSON.parse(raw) as Partial<ExportManifestRecord>;
@@ -49,6 +51,7 @@ export async function writeExportManifest(
   url: string,
   options?: { hasSkeleton?: boolean }
 ): Promise<void> {
+  if (!isDevStoreActive()) return;
   await mkdir(EXPORT_DIR, { recursive: true });
   await writeFile(
     manifestPath(sessionId),
@@ -63,6 +66,7 @@ export async function writeExportManifest(
 }
 
 export async function clearExportManifest(sessionId: string): Promise<void> {
+  if (!isDevStoreActive()) return;
   try {
     await writeFile(manifestPath(sessionId), "");
   } catch {
@@ -71,6 +75,7 @@ export async function clearExportManifest(sessionId: string): Promise<void> {
 }
 
 export async function localExportExists(sessionId: string): Promise<boolean> {
+  if (!isDevStoreActive()) return false;
   try {
     await stat(localExportFilePath(sessionId));
     return true;
