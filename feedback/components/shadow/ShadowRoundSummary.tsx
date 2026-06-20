@@ -45,7 +45,7 @@ function consolidateMoments(moments: ShadowMoment[]): ConsolidatedMoment[] {
   return Array.from(byType.values()).sort((a, b) => b.count - a.count);
 }
 
-type SummaryTab = "issues" | "good" | "improve";
+type SummaryTab = "summary" | "issues" | "good" | "improve";
 
 export function ShadowRoundSummary({
   result,
@@ -62,7 +62,11 @@ export function ShadowRoundSummary({
     [result.moments]
   );
 
-  const [tab, setTab] = useState<SummaryTab>(issues.length > 0 ? "issues" : "good");
+  const [tab, setTab] = useState<SummaryTab>("summary");
+  const [showFullReport, setShowFullReport] = useState(false);
+
+  const topIssue = issues[0];
+  const topPositive = positives[0];
 
   return (
     <div className="shadow-round-summary">
@@ -101,6 +105,15 @@ export function ShadowRoundSummary({
         <button
           type="button"
           role="tab"
+          aria-selected={tab === "summary"}
+          className={`shadow-round-summary-tab${tab === "summary" ? " shadow-round-summary-tab--active" : ""}`}
+          onClick={() => setTab("summary")}
+        >
+          Summary
+        </button>
+        <button
+          type="button"
+          role="tab"
           aria-selected={tab === "issues"}
           className={`shadow-round-summary-tab${tab === "issues" ? " shadow-round-summary-tab--active" : ""}`}
           onClick={() => setTab("issues")}
@@ -126,6 +139,47 @@ export function ShadowRoundSummary({
           Improve
         </button>
       </div>
+
+      {tab === "summary" ? (
+        <div className="shadow-round-summary-synopsis">
+          {topIssue ? (
+            <div className="shadow-round-summary-synopsis-row shadow-round-summary-synopsis-row--issue">
+              <p className="shadow-round-summary-synopsis-label">Biggest issue</p>
+              <p className="shadow-round-summary-synopsis-title">
+                {topIssue.title}
+                {topIssue.count > 1 ? ` (×${topIssue.count})` : ""}
+              </p>
+              <p className="shadow-round-summary-synopsis-detail">{topIssue.detail}</p>
+            </div>
+          ) : (
+            <div className="shadow-round-summary-synopsis-row shadow-round-summary-synopsis-row--issue">
+              <p className="shadow-round-summary-synopsis-label">Biggest issue</p>
+              <p className="shadow-round-summary-synopsis-detail">No issues flagged this round.</p>
+            </div>
+          )}
+
+          {topPositive ? (
+            <div className="shadow-round-summary-synopsis-row shadow-round-summary-synopsis-row--positive">
+              <p className="shadow-round-summary-synopsis-label">Best moment</p>
+              <p className="shadow-round-summary-synopsis-title">
+                {topPositive.title}
+                {topPositive.count > 1 ? ` (×${topPositive.count})` : ""}
+              </p>
+              <p className="shadow-round-summary-synopsis-detail">{topPositive.detail}</p>
+            </div>
+          ) : (
+            <div className="shadow-round-summary-synopsis-row shadow-round-summary-synopsis-row--positive">
+              <p className="shadow-round-summary-synopsis-label">Best moment</p>
+              <p className="shadow-round-summary-synopsis-detail">No good moments flagged this round.</p>
+            </div>
+          )}
+
+          <div className="shadow-round-summary-synopsis-row">
+            <p className="shadow-round-summary-synopsis-label">Focus next round</p>
+            <p className="shadow-round-summary-synopsis-detail">{result.mechanicalFix}</p>
+          </div>
+        </div>
+      ) : null}
 
       {tab === "issues" ? (
         issues.length > 0 ? (
@@ -192,7 +246,75 @@ export function ShadowRoundSummary({
         >
           Done
         </button>
+        <button
+          type="button"
+          className="shadow-round-summary-full-report-toggle"
+          onClick={() => setShowFullReport((v) => !v)}
+          aria-expanded={showFullReport}
+        >
+          {showFullReport ? "Hide full report" : "Full report"}
+        </button>
       </div>
+
+      {showFullReport ? (
+        <div className="shadow-round-summary-full-report">
+          <p className="shadow-round-summary-body">{result.summary}</p>
+
+          <section className="shadow-moment-section">
+            <p className="shadow-moment-section-label">
+              All issues ({issues.length})
+            </p>
+            {issues.length > 0 ? (
+              <ul className="shadow-moment-list">
+                {issues.map((moment) => (
+                  <ConsolidatedMomentCard key={moment.eventType} moment={moment} />
+                ))}
+              </ul>
+            ) : (
+              <p className="home-flow-empty">No issues flagged this round.</p>
+            )}
+          </section>
+
+          <section className="shadow-moment-section">
+            <p className="shadow-moment-section-label">
+              All good moments ({positives.length})
+            </p>
+            {positives.length > 0 ? (
+              <ul className="shadow-moment-list">
+                {positives.map((moment) => (
+                  <ConsolidatedMomentCard key={moment.eventType} moment={moment} />
+                ))}
+              </ul>
+            ) : (
+              <p className="home-flow-empty">No good moments flagged this round.</p>
+            )}
+          </section>
+
+          {result.recommendMore && result.recommendMore.length > 0 ? (
+            <section className="shadow-moment-section">
+              <p className="shadow-moment-section-label">Combos to do more of</p>
+              <ul className="shadow-moment-list">
+                {result.recommendMore.map((rec) => (
+                  <li key={rec.combo} className="shadow-moment-card shadow-moment-card--combo">
+                    <p className="shadow-moment-card-title">{rec.label}</p>
+                    <p className="shadow-moment-card-detail">{rec.reason}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          <div className="shadow-round-summary-block">
+            <p className="shadow-round-summary-block-label">How to improve</p>
+            <p className="shadow-round-summary-block-body">{result.mechanicalFix}</p>
+          </div>
+
+          <div className="shadow-round-summary-block">
+            <p className="shadow-round-summary-block-label">Drill</p>
+            <p className="shadow-round-summary-block-body">{result.drillName}</p>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
