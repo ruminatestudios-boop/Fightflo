@@ -24,11 +24,18 @@ export function useLiveCameraPose(
     const engine = new AsyncPoseEngine("VIDEO", setLandmarks);
     engine.start();
     engineRef.current = engine;
+    let hasLoggedFailure = false;
 
     const pump = () => {
       const video = videoRef.current;
       if (video && video.readyState >= 2 && video.videoWidth > 0) {
         engine.scheduleFrame(video, performance.now());
+      }
+      if (engine.hasFailed && !hasLoggedFailure) {
+        hasLoggedFailure = true;
+        console.error(
+          "[useLiveCameraPose] Pose detection has failed repeatedly — model/WASM likely failed to load."
+        );
       }
       rafRef.current = requestAnimationFrame(pump);
     };

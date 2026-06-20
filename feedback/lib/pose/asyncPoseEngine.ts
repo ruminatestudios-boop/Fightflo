@@ -18,6 +18,7 @@ export class AsyncPoseEngine {
   private inferring = false;
   private pendingVideo: HTMLVideoElement | null = null;
   private pendingTimestampMs = 0;
+  private consecutiveErrors = 0;
   private landmarkerInit: ReturnType<typeof getClientPoseLandmarker>;
 
   constructor(
@@ -31,6 +32,11 @@ export class AsyncPoseEngine {
 
   start(): void {
     this.active = true;
+  }
+
+  /** True once inference has failed many times in a row — likely WASM/model load issue */
+  get hasFailed(): boolean {
+    return this.consecutiveErrors >= 30;
   }
 
   stop(): void {
@@ -91,13 +97,20 @@ export class AsyncPoseEngine {
         }
 
         if (pose) {
+          this.consecutiveErrors = 0;
           const processed = processLivePoseFrame(pose, this.liveBuffer);
           if (processed) {
             this.onLandmarks(processed);
           }
         }
-      } catch {
-        /* model loading / GPU fallback — retain last landmarks */
+      } catch (error) {
+        this.consecutiveErrors += 1;
+        if (this.consecutiveErrors === 1 || this.consecutiveErrors % 60 === 0) {
+          console.error(
+            `[AsyncPoseEngine] inference failed (${this.consecutiveErrors} consecutive):`,
+            error
+          );
+        }
       } finally {
         this.inferring = false;
       }
