@@ -44,6 +44,7 @@ function CyclingHeadline() {
 }
 import { useRouter } from "next/navigation";
 import { FEED_COPY } from "@/lib/copy";
+import { getStoredAffiliateCode } from "@/lib/storage/client";
 import { HomeFeatureGrid, type HomeFeatureId } from "@/components/home/HomeFeatureGrid";
 import { HomeSettingsChips } from "@/components/home/HomeSettingsChips";
 import {
@@ -360,6 +361,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
         plan: activePaywallMode === "topup" ? "topup" : "pro_monthly",
         userId,
         email: userEmail ?? undefined,
+        affiliateCode: getStoredAffiliateCode() ?? undefined,
       }),
     });
     const data = await res.json();
@@ -638,7 +640,12 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
             const res = await fetch(apiPath("/api/checkout"), {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ plan, userId: resolvedId, email: userEmail ?? undefined }),
+              body: JSON.stringify({
+                plan,
+                userId: resolvedId,
+                email: userEmail ?? undefined,
+                affiliateCode: getStoredAffiliateCode() ?? undefined,
+              }),
             });
             const data = await res.json() as { url?: string; error?: string };
             if (data.url) {

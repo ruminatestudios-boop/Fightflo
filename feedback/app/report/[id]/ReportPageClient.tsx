@@ -14,6 +14,7 @@ import { useReportEmailCapture } from "@/hooks/useReportEmailCapture";
 import { SHARE_CAPTIONS } from "@/config/prompts";
 import { apiPath } from "@/lib/paths";
 import { isClientProUnlocked } from "@/lib/config/proAccess";
+import { getStoredAffiliateCode } from "@/lib/storage/client";
 import type { AnalysisAllowance, Report, Session, SportId } from "@/types";
 
 interface ReportPageClientProps {
@@ -151,6 +152,7 @@ export function ReportPageClient({
           plan,
           userId: storedUserId,
           email: (storedEmail ?? emailCapture.email.trim()) || undefined,
+          affiliateCode: getStoredAffiliateCode() ?? undefined,
         }),
       });
       const data = await res.json();

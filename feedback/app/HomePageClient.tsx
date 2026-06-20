@@ -9,6 +9,7 @@ import {
   isIntroDismissed,
   markIntroDismissed,
   purgeLegacyIntroPersistence,
+  storeAffiliateCode,
   storeCrewToken,
 } from "@/lib/storage/client";
 import { readHomeUrlState } from "@/lib/homeViews";
@@ -32,6 +33,15 @@ export function HomePageClient() {
       window.history.replaceState(null, "", withBasePath(`/${qs ? `?${qs}` : ""}`));
       markIntroDismissed();
       setShowIntro(false);
+    }
+
+    // Affiliate/creator referral — store code and strip from URL
+    const refParam = params.get("ref");
+    if (refParam) {
+      storeAffiliateCode(refParam);
+      params.delete("ref");
+      const qs = params.toString();
+      window.history.replaceState(null, "", withBasePath(`/${qs ? `?${qs}` : ""}`));
     }
     if (params.get("intro") === "skip") {
       markIntroDismissed();

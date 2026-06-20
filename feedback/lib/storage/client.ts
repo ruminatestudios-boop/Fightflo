@@ -3,6 +3,7 @@ const USER_NAME_KEY = "feedback_user_name";
 const INTRO_DISMISSED_KEY = "feedback_intro_dismissed";
 const INTRO_DISMISSED_COOKIE = "feedback_intro_session";
 const CREW_TOKEN_KEY = "feedback_crew_token";
+const AFFILIATE_CODE_KEY = "feedback_affiliate_code";
 
 export function storeCrewToken(token: string): void {
   if (typeof window === "undefined") return;
@@ -12,6 +13,16 @@ export function storeCrewToken(token: string): void {
 export function getStoredCrewToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(CREW_TOKEN_KEY);
+}
+
+export function storeAffiliateCode(code: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(AFFILIATE_CODE_KEY, code);
+}
+
+export function getStoredAffiliateCode(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(AFFILIATE_CODE_KEY);
 }
 
 /** In-memory only — survives report → home remounts, resets on full page load. */

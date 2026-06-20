@@ -37,6 +37,26 @@ export default function AffiliatesAdminPage() {
   const [newCreator, setNewCreator] = useState("");
   const [newType, setNewType] = useState<"percent" | "flat">("percent");
   const [newValue, setNewValue] = useState("10");
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const referralUrl = useCallback(
+    (code: string) => `https://fightflo.app/?ref=${encodeURIComponent(code)}`,
+    []
+  );
+
+  const handleCopyLink = useCallback(
+    async (code: string) => {
+      const url = referralUrl(code);
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopiedCode(code);
+        window.setTimeout(() => setCopiedCode(null), 2000);
+      } catch {
+        window.prompt("Copy link:", url);
+      }
+    },
+    [referralUrl]
+  );
 
   useEffect(() => {
     const stored = typeof window !== "undefined" ? sessionStorage.getItem(SECRET_KEY) : null;
@@ -93,14 +113,16 @@ export default function AffiliatesAdminPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to create");
+      const createdCode = newCode.trim();
       setNewCode("");
       setNewCreator("");
       setNewValue("10");
       await fetchData(secret);
+      void handleCopyLink(createdCode);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create code");
     }
-  }, [newCode, newCreator, newType, newValue, secret, fetchData]);
+  }, [newCode, newCreator, newType, newValue, secret, fetchData, handleCopyLink]);
 
   const handleToggleActive = useCallback(
     async (code: string, active: boolean) => {
@@ -192,7 +214,7 @@ export default function AffiliatesAdminPage() {
     <div style={pageStyle}>
       <div style={{ ...cardStyle, maxWidth: "720px" }}>
         <h1 style={titleStyle}>Affiliate codes</h1>
-        <p style={subStyle}>Pass ?affiliateCode=CODE through to /api/checkout</p>
+        <p style={subStyle}>fightflo.app/?ref=CODE — share this link, code is stored on first visit</p>
 
         {error ? <p style={errorStyle}>{error}</p> : null}
 
@@ -262,7 +284,21 @@ export default function AffiliatesAdminPage() {
                   : `$${c.commission_value} flat per sale`}
                 {!c.active ? " · DEACTIVATED" : ""}
               </p>
+              <p
+                style={{
+                  margin: "0 0 0.6rem",
+                  fontSize: "0.78rem",
+                  opacity: 0.55,
+                  wordBreak: "break-all",
+                  fontFamily: "monospace",
+                }}
+              >
+                {referralUrl(c.code)}
+              </p>
               <div style={{ display: "flex", gap: "0.5rem" }}>
+                <button onClick={() => void handleCopyLink(c.code)} style={smallBtnStyle}>
+                  {copiedCode === c.code ? "Copied!" : "Copy link"}
+                </button>
                 <button onClick={() => void handleToggleActive(c.code, c.active)} style={smallBtnStyle}>
                   {c.active ? "Deactivate" : "Reactivate"}
                 </button>
