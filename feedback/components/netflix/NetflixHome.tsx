@@ -31,7 +31,7 @@ function CyclingHeadline() {
             opacity: fade ? 1 : 0,
             fontFamily: "var(--font-script)",
             fontSize: "1.1em",
-            fontWeight: 700,
+            fontWeight: 400,
             fontStyle: "italic",
           }}
         >
