@@ -9,7 +9,7 @@ export const INTRO_COPY = {
 
 export const FEED_COPY = {
   headline: "Most fighters train hard. Few know what to fix.",
-  body: "Fightflo watches your footage, finds your real faults, and tells you exactly what to work on next.",
+  body: "We break down your footage frame by frame, flag exactly where your technique breaks down, and hand you the drill to fix it.",
   selectPrompt: "Select an option below",
 } as const;
 
