@@ -1041,3 +1041,23 @@ export async function listInviteCodes(): Promise<InviteCodeRecord[]> {
   if (error) return [];
   return (data as InviteCodeRecord[]) ?? [];
 }
+
+export async function updateInviteCode(
+  code: string,
+  updates: { totalLimit?: number; active?: boolean }
+): Promise<InviteCodeRecord> {
+  const supabase = getSupabase();
+  const payload: Record<string, number | boolean> = {};
+  if (updates.totalLimit !== undefined) payload.total_limit = updates.totalLimit;
+  if (updates.active !== undefined) payload.active = updates.active;
+
+  const { data, error } = await supabase
+    .from("invite_codes")
+    .update(payload)
+    .eq("code", code)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as InviteCodeRecord;
+}
