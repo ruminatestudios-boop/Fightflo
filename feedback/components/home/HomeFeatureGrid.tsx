@@ -43,24 +43,24 @@ const FEATURE_HINTS: Record<
   { ready: string; locked: string }
 > = {
   guard: {
-    ready: "Our engine watches live and alerts you every time your hands drop below chin level.",
-    locked: "Our engine watches live and alerts you every time your hands drop below chin level.",
+    ready: "Alerts you the moment your hands drop below chin level.",
+    locked: "Alerts you the moment your hands drop below chin level.",
   },
   shadow: {
-    ready: "Shadowbox for a round. Our engine spots sloppy combos and gives you a breakdown after.",
-    locked: "Shadowbox for a round. Our engine spots sloppy combos and gives you a breakdown after.",
+    ready: "Shadowbox a round, get a breakdown of your combos after.",
+    locked: "Shadowbox a round, get a breakdown of your combos after.",
   },
   weekly: {
-    ready: "Our engine picks the one drill to run this week based on your biggest fault.",
-    locked: "Upload a clip first — our engine will pick your one drill to focus on.",
+    ready: "Picks the one drill to run this week based on your biggest fault.",
+    locked: "Upload a clip first to unlock your weekly drill.",
   },
   reupload: {
-    ready: "Film the same drill again. Our engine compares it and tells you if the fault is fixed.",
-    locked: "Upload your first clip so our engine has something to compare against.",
+    ready: "Film the same drill again to check if your fault is fixed.",
+    locked: "Upload a clip first so we have something to compare.",
   },
   progress: {
-    ready: "Your guard, footwork, and combos charted across every session.",
-    locked: "Upload a clip to start building your progress history.",
+    ready: "See your guard, footwork, and combos charted over time.",
+    locked: "Upload a clip to start tracking your progress.",
   },
 };
 
