@@ -1061,3 +1061,9 @@ export async function updateInviteCode(
   if (error) throw error;
   return data as InviteCodeRecord;
 }
+
+export async function deleteInviteCode(code: string): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase.from("invite_codes").delete().eq("code", code);
+  if (error) throw error;
+}

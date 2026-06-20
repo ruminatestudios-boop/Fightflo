@@ -144,6 +144,23 @@ export default function InviteCodesAdminPage() {
     [secret, fetchCodes]
   );
 
+  const handleDelete = useCallback(
+    async (code: string) => {
+      if (!window.confirm(`Permanently delete "${code}"? This cannot be undone.`)) return;
+      try {
+        const res = await fetch(`/api/admin/invite-codes?code=${encodeURIComponent(code)}`, {
+          method: "DELETE",
+          headers: { "x-admin-secret": secret },
+        });
+        if (!res.ok) throw new Error("Failed to delete");
+        await fetchCodes(secret);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to delete code");
+      }
+    },
+    [secret, fetchCodes]
+  );
+
   if (!authed) {
     return (
       <div style={pageStyle}>
@@ -208,6 +225,11 @@ export default function InviteCodesAdminPage() {
                 <button onClick={() => void handleToggleActive(c.code, c.active)} style={smallBtnStyle}>
                   {c.active ? "Deactivate" : "Reactivate"}
                 </button>
+                {!c.active ? (
+                  <button onClick={() => void handleDelete(c.code)} style={dangerBtnStyle}>
+                    Delete
+                  </button>
+                ) : null}
               </div>
             </div>
           ))}
@@ -301,6 +323,16 @@ const smallBtnStyle: React.CSSProperties = {
   border: "1px solid rgba(255,255,255,0.15)",
   background: "rgba(255,255,255,0.06)",
   color: "#fff",
+  fontSize: "0.78rem",
+  cursor: "pointer",
+};
+
+const dangerBtnStyle: React.CSSProperties = {
+  padding: "0.45rem 0.75rem",
+  borderRadius: "0.5rem",
+  border: "1px solid rgba(250,65,65,0.4)",
+  background: "rgba(250,65,65,0.1)",
+  color: "#fa4141",
   fontSize: "0.78rem",
   cursor: "pointer",
 };

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   createInviteCode,
+  deleteInviteCode,
   listInviteCodes,
   updateInviteCode,
 } from "@/lib/db/queries";
@@ -78,6 +79,27 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to update code" },
+      { status: 400 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  if (!isAuthorized(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const code = request.nextUrl.searchParams.get("code");
+  if (!code) {
+    return NextResponse.json({ error: "code is required" }, { status: 400 });
+  }
+
+  try {
+    await deleteInviteCode(code.trim());
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to delete code" },
       { status: 400 }
     );
   }
