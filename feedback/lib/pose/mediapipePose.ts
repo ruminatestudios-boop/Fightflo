@@ -271,13 +271,27 @@ export function hasCorePoseJoints(landmarks: FrameLandmarks): boolean {
   );
 }
 
+/**
+ * Upper-body-only gate for live shadowboxing — selfie/phone-propped framing
+ * routinely crops out hips, but guard/punch tracking only needs shoulders+wrists.
+ */
+export function hasUpperBodyPoseJoints(landmarks: FrameLandmarks): boolean {
+  const shouldersOk =
+    (landmarks.left_shoulder?.visibility ?? 0) >= 0.35 &&
+    (landmarks.right_shoulder?.visibility ?? 0) >= 0.35;
+  const aWristOk =
+    (landmarks.left_wrist?.visibility ?? 0) >= 0.35 ||
+    (landmarks.right_wrist?.visibility ?? 0) >= 0.35;
+  return shouldersOk && aWristOk;
+}
+
 /** Real-time live path — minimal latency smoothing */
 export function processLivePoseFrame(
   pose: RawMediaPipePoint[],
   liveBuffer: LandmarkLiveBuffer
 ): FrameLandmarks | null {
   const raw = mapRawMediaPipePose(pose);
-  if (!hasCorePoseJoints(raw)) return null;
+  if (!hasUpperBodyPoseJoints(raw)) return null;
 
   const sideAdjusted = applySideViewZCorrection(raw);
   const withWrists = interpolateOccludedWrists(
