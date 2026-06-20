@@ -112,7 +112,6 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
   const [view, setView] = useState<HomeView>("home");
   const [mainTab, setMainTab] = useState<MainTab>("home");
   const [activeCard, setActiveCard] = useState("upload");
-  const [lockedNotice, setLockedNotice] = useState<string | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [isPro, setIsPro] = useState(isClientProUnlocked());
@@ -267,7 +266,6 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
       const hasClip = (insights?.completeCount ?? 0) > 0;
       const requiresClip = id === "reupload" || id === "progress" || id === "weekly";
       if (requiresClip && !hasClip) {
-        setLockedNotice("Upload a clip to unlock this tool.");
         openUpload();
         return;
       }
@@ -287,12 +285,6 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
     },
     [openUpload, homeRoute, insights?.completeCount]
   );
-
-  useEffect(() => {
-    if (!lockedNotice) return;
-    const t = window.setTimeout(() => setLockedNotice(null), 2600);
-    return () => window.clearTimeout(t);
-  }, [lockedNotice]);
 
   const handleShellBack = useCallback(() => {
     if (view !== "home") {
@@ -517,13 +509,6 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
               )}
             </header>
 
-
-            {lockedNotice ? (
-              <p className="glass-followup-banner" role="status">
-                {lockedNotice}
-              </p>
-            ) : null}
-
             <HomeFeatureGrid
               insights={insightsLoading ? null : insights}
               activeId={activeCard}
@@ -659,10 +644,10 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
             if (data.url) {
               window.location.href = data.url;
             } else {
-              setLockedNotice(data.error ?? "Checkout failed. Please try again.");
+              window.alert(data.error ?? "Checkout failed. Please try again.");
             }
           } catch (err) {
-            setLockedNotice(err instanceof Error ? err.message : "Checkout failed. Please check your connection.");
+            window.alert(err instanceof Error ? err.message : "Checkout failed. Please check your connection.");
           }
         }}
       />
