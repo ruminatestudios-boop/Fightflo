@@ -81,6 +81,43 @@ export class ScanCostCollector {
       );
   }
 
+  costBreakdown(): {
+    geminiUsd: number;
+    cloudinaryUsd: number;
+    computeUsd: number;
+    totalUsd: number;
+  } {
+    const sportTokens = this.tokensForLabel("sport_detection");
+    const coachTokens = this.tokensForLabel("coaching");
+
+    const geminiInput =
+      sportTokens.input +
+      coachTokens.input +
+      this.geminiUsages
+        .filter((u) => u.label !== "sport_detection" && u.label !== "coaching")
+        .reduce((n, u) => n + u.promptTokens, 0);
+    const geminiOutput =
+      sportTokens.output +
+      coachTokens.output +
+      this.geminiUsages
+        .filter((u) => u.label !== "sport_detection" && u.label !== "coaching")
+        .reduce((n, u) => n + u.outputTokens, 0);
+
+    const geminiUsd = geminiCostUsd(geminiInput, geminiOutput);
+    const totalBytes =
+      this.sourceVideoBytes + this.clipBytes + this.exportBytes;
+    const cloudinaryUsd = cloudinaryCostUsd(totalBytes);
+    const computeUsd = computeCostUsd(this.durationMs);
+    const totalUsd = geminiUsd + cloudinaryUsd + computeUsd;
+
+    return {
+      geminiUsd: roundUsd(geminiUsd),
+      cloudinaryUsd: roundUsd(cloudinaryUsd),
+      computeUsd: roundUsd(computeUsd),
+      totalUsd: roundUsd(totalUsd),
+    };
+  }
+
   toRow(runningTotalUsd: number): (string | number)[] {
     const sportTokens = this.tokensForLabel("sport_detection");
     const coachTokens = this.tokensForLabel("coaching");
@@ -203,7 +240,28 @@ export async function runWithScanCost(
     void flushScanCostToGoogleSheet(collector).catch((error) => {
       console.error("[scan-cost] Google Sheets flush failed:", error);
     });
+    void persistScanCostToDb(collector).catch((error) => {
+      console.error("[scan-cost] DB persist failed:", error);
+    });
   }
+}
+
+async function persistScanCostToDb(collector: ScanCostCollector): Promise<void> {
+  const { recordScanCost } = await import("@/lib/db/queries");
+  const breakdown = collector.costBreakdown();
+  await recordScanCost({
+    sessionId: collector.sessionId,
+    userId: collector.userId,
+    sport: collector.sport || null,
+    status: collector.status,
+    pipeline: collector.pipeline,
+    videoDurationSec: collector.videoDurationSec,
+    durationSec: Math.round(collector.durationMs / 1000),
+    geminiUsd: breakdown.geminiUsd,
+    cloudinaryUsd: breakdown.cloudinaryUsd,
+    computeUsd: breakdown.computeUsd,
+    totalUsd: breakdown.totalUsd,
+  });
 }
 
 async function flushScanCostToGoogleSheet(

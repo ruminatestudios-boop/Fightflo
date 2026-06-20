@@ -108,3 +108,23 @@ CREATE TABLE IF NOT EXISTS invite_codes (
   active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Per-scan cost breakdown — Gemini + Cloudinary + Vercel compute estimates.
+CREATE TABLE IF NOT EXISTS scan_costs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  session_id UUID,
+  user_id UUID,
+  sport TEXT,
+  status TEXT NOT NULL,
+  pipeline TEXT NOT NULL,
+  video_duration_sec INTEGER NOT NULL DEFAULT 0,
+  duration_sec INTEGER NOT NULL DEFAULT 0,
+  gemini_usd NUMERIC NOT NULL DEFAULT 0,
+  cloudinary_usd NUMERIC NOT NULL DEFAULT 0,
+  compute_usd NUMERIC NOT NULL DEFAULT 0,
+  total_usd NUMERIC NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_scan_costs_user_id ON scan_costs(user_id);
+CREATE INDEX IF NOT EXISTS idx_scan_costs_created_at ON scan_costs(created_at);

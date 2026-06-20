@@ -1067,3 +1067,62 @@ export async function deleteInviteCode(code: string): Promise<void> {
   const { error } = await supabase.from("invite_codes").delete().eq("code", code);
   if (error) throw error;
 }
+
+export interface ScanCostRecord {
+  id: string;
+  session_id: string | null;
+  user_id: string | null;
+  sport: string | null;
+  status: string;
+  pipeline: string;
+  video_duration_sec: number;
+  duration_sec: number;
+  gemini_usd: number;
+  cloudinary_usd: number;
+  compute_usd: number;
+  total_usd: number;
+  created_at: string;
+}
+
+export async function recordScanCost(input: {
+  sessionId: string;
+  userId: string | null;
+  sport: string | null;
+  status: string;
+  pipeline: string;
+  videoDurationSec: number;
+  durationSec: number;
+  geminiUsd: number;
+  cloudinaryUsd: number;
+  computeUsd: number;
+  totalUsd: number;
+}): Promise<void> {
+  if (isDevStoreActive()) return;
+
+  const supabase = getSupabase();
+  await supabase.from("scan_costs").insert({
+    session_id: input.sessionId,
+    user_id: input.userId,
+    sport: input.sport,
+    status: input.status,
+    pipeline: input.pipeline,
+    video_duration_sec: input.videoDurationSec,
+    duration_sec: input.durationSec,
+    gemini_usd: input.geminiUsd,
+    cloudinary_usd: input.cloudinaryUsd,
+    compute_usd: input.computeUsd,
+    total_usd: input.totalUsd,
+  });
+}
+
+export async function listScanCosts(limit = 200): Promise<ScanCostRecord[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("scan_costs")
+    .select()
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) return [];
+  return (data as ScanCostRecord[]) ?? [];
+}
