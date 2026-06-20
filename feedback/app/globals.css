@@ -7494,6 +7494,49 @@ button.stepguide-card-ts:active {
   gap: 1rem;
 }
 
+.shadow-round-summary-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  margin-bottom: -0.25rem;
+}
+
+.shadow-round-summary-back svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.shadow-round-summary-tabs {
+  display: flex;
+  gap: 0.4rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.6rem;
+}
+
+.shadow-round-summary-tab {
+  flex: 1;
+  padding: 0.55rem 0.5rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.shadow-round-summary-tab--active {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
 .shadow-round-summary-kicker {
   margin: 0;
   font-size: 0.75rem;
