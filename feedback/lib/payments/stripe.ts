@@ -31,6 +31,7 @@ export async function createProCheckoutSession(input: {
   email?: string;
   successUrl: string;
   cancelUrl: string;
+  affiliateCode?: string;
 }): Promise<string> {
   const client = getStripe();
 
@@ -41,7 +42,11 @@ export async function createProCheckoutSession(input: {
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
     customer_email: input.email,
-    metadata: { userId: input.userId, plan: "pro_monthly" },
+    metadata: {
+      userId: input.userId,
+      plan: "pro_monthly",
+      ...(input.affiliateCode ? { affiliateCode: input.affiliateCode } : {}),
+    },
     subscription_data: {
       metadata: { userId: input.userId },
     },
@@ -56,6 +61,7 @@ export async function createTopUpCheckoutSession(input: {
   email?: string;
   successUrl: string;
   cancelUrl: string;
+  affiliateCode?: string;
 }): Promise<string> {
   const client = getStripe();
 
@@ -70,6 +76,7 @@ export async function createTopUpCheckoutSession(input: {
       userId: input.userId,
       plan: "topup",
       scans: String(TOPUP_SCAN_PACK),
+      ...(input.affiliateCode ? { affiliateCode: input.affiliateCode } : {}),
     },
   });
 
@@ -95,6 +102,7 @@ export async function createApiCreditsCheckoutSession(input: {
   successUrl: string;
   cancelUrl: string;
   plan: "api_credits_starter" | "api_credits_growth";
+  affiliateCode?: string;
 }): Promise<string> {
   const client = getStripe();
   const isStarter = input.plan === "api_credits_starter";
@@ -113,6 +121,7 @@ export async function createApiCreditsCheckoutSession(input: {
       userId: input.userId,
       plan: input.plan,
       calls: String(isStarter ? API_CREDITS_STARTER_CALLS : API_CREDITS_GROWTH_CALLS),
+      ...(input.affiliateCode ? { affiliateCode: input.affiliateCode } : {}),
     },
   });
 

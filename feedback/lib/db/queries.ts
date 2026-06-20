@@ -1068,6 +1068,149 @@ export async function deleteInviteCode(code: string): Promise<void> {
   if (error) throw error;
 }
 
+export interface AffiliateCodeRecord {
+  code: string;
+  creator_name: string;
+  commission_type: "percent" | "flat";
+  commission_value: number;
+  active: boolean;
+  created_at: string;
+}
+
+export async function getAffiliateCodeByCode(
+  code: string
+): Promise<AffiliateCodeRecord | null> {
+  if (isDevStoreActive()) return null;
+
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("affiliate_codes")
+    .select()
+    .eq("code", code)
+    .eq("active", true)
+    .maybeSingle();
+
+  if (error) return null;
+  return (data as AffiliateCodeRecord) ?? null;
+}
+
+export async function createAffiliateCode(input: {
+  code: string;
+  creatorName: string;
+  commissionType: "percent" | "flat";
+  commissionValue: number;
+}): Promise<AffiliateCodeRecord> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("affiliate_codes")
+    .insert({
+      code: input.code,
+      creator_name: input.creatorName,
+      commission_type: input.commissionType,
+      commission_value: input.commissionValue,
+      active: true,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as AffiliateCodeRecord;
+}
+
+export async function listAffiliateCodes(): Promise<AffiliateCodeRecord[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("affiliate_codes")
+    .select()
+    .order("created_at", { ascending: false });
+
+  if (error) return [];
+  return (data as AffiliateCodeRecord[]) ?? [];
+}
+
+export async function updateAffiliateCode(
+  code: string,
+  updates: {
+    commissionType?: "percent" | "flat";
+    commissionValue?: number;
+    active?: boolean;
+  }
+): Promise<AffiliateCodeRecord> {
+  const supabase = getSupabase();
+  const payload: Record<string, number | boolean | string> = {};
+  if (updates.commissionType !== undefined) payload.commission_type = updates.commissionType;
+  if (updates.commissionValue !== undefined) payload.commission_value = updates.commissionValue;
+  if (updates.active !== undefined) payload.active = updates.active;
+
+  const { data, error } = await supabase
+    .from("affiliate_codes")
+    .update(payload)
+    .eq("code", code)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as AffiliateCodeRecord;
+}
+
+export async function deleteAffiliateCode(code: string): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase.from("affiliate_codes").delete().eq("code", code);
+  if (error) throw error;
+}
+
+export interface AffiliateCommissionRecord {
+  id: string;
+  code: string;
+  creator_name: string;
+  stripe_session_id: string | null;
+  sale_amount_usd: number;
+  commission_usd: number;
+  paid: boolean;
+  paid_at: string | null;
+  created_at: string;
+}
+
+export async function recordAffiliateCommission(input: {
+  code: string;
+  creatorName: string;
+  stripeSessionId: string;
+  saleAmountUsd: number;
+  commissionUsd: number;
+}): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase.from("affiliate_commissions").insert({
+    code: input.code,
+    creator_name: input.creatorName,
+    stripe_session_id: input.stripeSessionId,
+    sale_amount_usd: input.saleAmountUsd,
+    commission_usd: input.commissionUsd,
+    paid: false,
+  });
+  // Ignore unique-violation on stripe_session_id (webhook retried)
+  if (error && error.code !== "23505") throw error;
+}
+
+export async function listAffiliateCommissions(): Promise<AffiliateCommissionRecord[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("affiliate_commissions")
+    .select()
+    .order("created_at", { ascending: false });
+
+  if (error) return [];
+  return (data as AffiliateCommissionRecord[]) ?? [];
+}
+
+export async function markAffiliateCommissionPaid(id: string): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from("affiliate_commissions")
+    .update({ paid: true, paid_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export interface ScanCostRecord {
   id: string;
   session_id: string | null;

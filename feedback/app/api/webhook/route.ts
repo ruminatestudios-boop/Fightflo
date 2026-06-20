@@ -4,7 +4,9 @@ import { constructWebhookEvent } from "@/lib/payments/stripe";
 import {
   addBonusScans,
   addApiCredits,
+  getAffiliateCodeByCode,
   linkStripeCustomer,
+  recordAffiliateCommission,
   setUserPro,
 } from "@/lib/db/queries";
 import { saveUserEmail } from "@/lib/email/notifications";
@@ -30,6 +32,25 @@ export async function POST(request: NextRequest) {
         const plan = session.metadata?.plan;
 
         if (!userId) break;
+
+        const affiliateCode = session.metadata?.affiliateCode;
+        if (affiliateCode) {
+          const affiliate = await getAffiliateCodeByCode(affiliateCode);
+          if (affiliate) {
+            const saleAmountUsd = (session.amount_total ?? 0) / 100;
+            const commissionUsd =
+              affiliate.commission_type === "percent"
+                ? (saleAmountUsd * affiliate.commission_value) / 100
+                : affiliate.commission_value;
+            await recordAffiliateCommission({
+              code: affiliate.code,
+              creatorName: affiliate.creator_name,
+              stripeSessionId: session.id,
+              saleAmountUsd,
+              commissionUsd,
+            });
+          }
+        }
 
         if (session.mode === "payment" && plan === "topup") {
           const scans = Number(session.metadata?.scans) || TOPUP_SCAN_PACK;

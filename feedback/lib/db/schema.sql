@@ -128,3 +128,30 @@ CREATE TABLE IF NOT EXISTS scan_costs (
 
 CREATE INDEX IF NOT EXISTS idx_scan_costs_user_id ON scan_costs(user_id);
 CREATE INDEX IF NOT EXISTS idx_scan_costs_created_at ON scan_costs(created_at);
+
+-- Affiliate/creator codes — each code pays a commission per sale, either a
+-- flat amount or a percentage of the sale, set per creator.
+CREATE TABLE IF NOT EXISTS affiliate_codes (
+  code TEXT PRIMARY KEY,
+  creator_name TEXT NOT NULL,
+  commission_type TEXT NOT NULL DEFAULT 'percent', -- 'percent' or 'flat'
+  commission_value NUMERIC NOT NULL DEFAULT 0,      -- percent (0-100) or flat USD amount
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Ledger of commissions owed/paid per sale attributed to an affiliate code.
+CREATE TABLE IF NOT EXISTS affiliate_commissions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  code TEXT NOT NULL REFERENCES affiliate_codes(code) ON DELETE CASCADE,
+  creator_name TEXT NOT NULL,
+  stripe_session_id TEXT UNIQUE,
+  sale_amount_usd NUMERIC NOT NULL DEFAULT 0,
+  commission_usd NUMERIC NOT NULL DEFAULT 0,
+  paid BOOLEAN NOT NULL DEFAULT FALSE,
+  paid_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_affiliate_commissions_code ON affiliate_commissions(code);
+CREATE INDEX IF NOT EXISTS idx_affiliate_commissions_paid ON affiliate_commissions(paid);

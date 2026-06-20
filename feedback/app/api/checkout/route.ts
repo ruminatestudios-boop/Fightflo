@@ -5,7 +5,7 @@ import {
   createApiCreditsCheckoutSession,
   type CheckoutPlan,
 } from "@/lib/payments/stripe";
-import { getUserById } from "@/lib/db/queries";
+import { getAffiliateCodeByCode, getUserById } from "@/lib/db/queries";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -23,10 +23,16 @@ export async function OPTIONS() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { plan, userId, email } = await request.json();
+    const { plan, userId, email, affiliateCode } = await request.json();
 
     if (!plan || !userId) {
       return json({ error: "plan and userId required" }, 400);
+    }
+
+    let validAffiliateCode: string | undefined;
+    if (affiliateCode) {
+      const found = await getAffiliateCodeByCode(String(affiliateCode).trim());
+      if (found) validAffiliateCode = found.code;
     }
 
     const checkoutPlan = plan as CheckoutPlan;
@@ -61,11 +67,11 @@ export async function POST(request: NextRequest) {
 
     let url: string;
     if (checkoutPlan === "api_credits_starter" || checkoutPlan === "api_credits_growth") {
-      url = await createApiCreditsCheckoutSession({ userId, email, successUrl, cancelUrl, plan: checkoutPlan });
+      url = await createApiCreditsCheckoutSession({ userId, email, successUrl, cancelUrl, plan: checkoutPlan, affiliateCode: validAffiliateCode });
     } else if (checkoutPlan === "topup") {
-      url = await createTopUpCheckoutSession({ userId, email, successUrl, cancelUrl });
+      url = await createTopUpCheckoutSession({ userId, email, successUrl, cancelUrl, affiliateCode: validAffiliateCode });
     } else {
-      url = await createProCheckoutSession({ userId, email, successUrl, cancelUrl });
+      url = await createProCheckoutSession({ userId, email, successUrl, cancelUrl, affiliateCode: validAffiliateCode });
     }
 
     return json({ url });
