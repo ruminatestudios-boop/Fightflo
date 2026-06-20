@@ -9,14 +9,13 @@ import { materializeVideoToPath } from "@/lib/video/materializeVideo";
 import { renderOverlayFrameSequence } from "@/lib/video/burnPoseOverlay";
 import { probeVideo } from "@/lib/video/videoProbe";
 import { hasExportableLandmarks } from "@/components/video/landmarkPlayback";
-
-const WATERMARK_FILTER =
-  "drawtext=text='FIGHTFLO.':fontcolor=white@0.82:fontsize=32:x=(w-tw)/2:y=h-th-28:shadowcolor=black@0.55:shadowx=2:shadowy=2";
+import { watermarkFilters } from "@/lib/video/watermark";
 
 export interface ExportVideoOptions {
   landmarkTimeline?: LandmarkTimeline | null;
   guardCalibration?: GuardCalibration | null;
   confirmedEvents?: ConfirmedPoseEvent[];
+  isPro?: boolean;
 }
 
 /** Export session video with pose overlay + FIGHTFLO. watermark burned in */
@@ -48,10 +47,11 @@ export async function exportWatermarkedVideo(
       }
     );
 
+    const marks = watermarkFilters(Boolean(options?.isPro));
     const filterComplex = [
       `[1:v][0:v]scale2ref=force_original_aspect_ratio=disable[ovl][base]`,
       "[base][ovl]overlay=0:0:format=auto:shortest=1:eof_action=pass[v]",
-      `[v]${WATERMARK_FILTER}[out]`,
+      marks.length > 0 ? `[v]${marks[0]}[out]` : "[v]copy[out]",
     ].join(";");
 
     await new Promise<void>((resolve, reject) => {
@@ -90,7 +90,7 @@ export async function exportWatermarkedVideo(
   } else {
     await new Promise<void>((resolve, reject) => {
       ffmpeg(sourcePath)
-        .videoFilters([WATERMARK_FILTER])
+        .videoFilters(watermarkFilters(Boolean(options?.isPro)))
         .outputOptions([
           "-c:v",
           "libx264",

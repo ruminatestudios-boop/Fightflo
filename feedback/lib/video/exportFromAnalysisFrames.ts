@@ -25,9 +25,7 @@ import {
 } from "@/lib/video/poseOverlayDraw";
 import { computeVideoContentRect } from "@/components/video/videoLayout";
 import { probeVideo } from "@/lib/video/videoProbe";
-
-const WATERMARK_FILTER =
-  "drawtext=text='FIGHTFLO.':fontcolor=white@0.82:fontsize=32:x=(w-tw)/2:y=h-th-28:shadowcolor=black@0.55:shadowx=2:shadowy=2";
+import { watermarkFilters } from "@/lib/video/watermark";
 
 function guardAlertAtTime(
   guardDropped: boolean,
@@ -60,6 +58,7 @@ export async function exportFromAnalysisFrames(
   options?: {
     guardCalibration?: GuardCalibration | null;
     confirmedEvents?: ConfirmedPoseEvent[];
+    isPro?: boolean;
   }
 ): Promise<Buffer> {
   const workDir = join(tmpdir(), "feedback-export", sessionId);
@@ -226,7 +225,7 @@ export async function exportFromAnalysisFrames(
         ];
 
     command
-      .videoFilters([WATERMARK_FILTER])
+      .videoFilters(watermarkFilters(Boolean(options?.isPro)))
       .outputOptions(outputOptions)
       .output(outputPath)
       .on("end", () => resolve())

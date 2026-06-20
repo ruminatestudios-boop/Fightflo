@@ -11,6 +11,7 @@ import { parseGuardCalibration } from "@/lib/analysis/guardCalibration";
 import {
   getReportBySessionId,
   getSessionById,
+  getUserById,
   updateReportExportUrl,
 } from "@/lib/db/queries";
 import { isCloudinaryConfigured } from "@/lib/config/env";
@@ -79,7 +80,8 @@ async function buildExportBuffer(
   guardCalibration: ReturnType<typeof parseGuardCalibration>,
   confirmedEvents: ConfirmedPoseEvent[],
   framePaths?: string[],
-  clientProvidedTimeline = false
+  clientProvidedTimeline = false,
+  isPro = false
 ): Promise<{ buffer: Buffer; skeletonBurned: boolean }> {
   const hasClientPose =
     hasExportableLandmarks(timeline) || timelineHasStoredLandmarks(timeline);
@@ -96,7 +98,7 @@ async function buildExportBuffer(
       sessionId,
       resolvedFrames,
       timeline,
-      { guardCalibration, confirmedEvents }
+      { guardCalibration, confirmedEvents, isPro }
     );
 
     return { buffer, skeletonBurned: true };
@@ -110,6 +112,7 @@ async function buildExportBuffer(
         landmarkTimeline: timeline,
         guardCalibration,
         confirmedEvents,
+        isPro,
       }
     );
     return { buffer: result.buffer, skeletonBurned: true };
@@ -140,14 +143,14 @@ async function buildExportBuffer(
       sessionId,
       resolvedFrames,
       exportTimeline,
-      { guardCalibration, confirmedEvents }
+      { guardCalibration, confirmedEvents, isPro }
     );
 
     const drawable = countDrawableLandmarkFrames(exportTimeline);
     return { buffer, skeletonBurned: drawable >= 2 };
   }
 
-  const result = await exportWatermarkedVideo(session.video_url, sessionId);
+  const result = await exportWatermarkedVideo(session.video_url, sessionId, { isPro });
   return { buffer: result.buffer, skeletonBurned: false };
 }
 
@@ -174,6 +177,9 @@ export async function cacheExportVideo(
     parseGuardCalibration(report.landmark_summary);
   const confirmedEvents = options?.confirmedEvents ?? report.confirmed_events ?? [];
 
+  const user = session.user_id ? await getUserById(session.user_id) : null;
+  const isPro = Boolean(user?.is_pro);
+
   const { buffer, skeletonBurned } = await buildExportBuffer(
     sessionId,
     session,
@@ -181,7 +187,8 @@ export async function cacheExportVideo(
     guardCalibration,
     confirmedEvents,
     options?.framePaths,
-    Boolean(options?.timeline)
+    Boolean(options?.timeline),
+    isPro
   );
 
   if (!skeletonBurned) {
