@@ -52,7 +52,7 @@ export function useShadowRoundTracking({
       return;
     }
 
-    if (phase === "active" && calibration) {
+    if (phase === "active") {
       setStats((prev) => {
         const next = ingestShadowboxingFrame(prev, landmarks, calibration, elapsedSec);
         const metricsDropped =

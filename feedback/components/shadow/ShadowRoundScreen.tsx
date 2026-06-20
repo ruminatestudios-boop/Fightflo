@@ -91,7 +91,7 @@ export function ShadowRoundScreen({
   });
 
   const liveNote =
-    screenPhase === "round" && liveLandmarks && calibration
+    screenPhase === "round" && liveLandmarks
       ? liveShadowboxingNote(computeFrameMetrics(liveLandmarks, calibration))
       : null;
 
