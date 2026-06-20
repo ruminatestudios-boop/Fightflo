@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const CYCLING_WORDS = ["fix", "improve", "sharpen", "correct"];
+const CYCLING_WORDS = ["Fix", "Improve", "Sharpen", "Correct"];
 
 function CyclingHeadline() {
   const [index, setIndex] = useState(0);
@@ -21,9 +21,8 @@ function CyclingHeadline() {
 
   return (
     <h1 className="glass-greeting-title" style={{ maxWidth: "none" }}>
-      <span style={{ display: "block" }}>Most fighters train hard.</span>
+      <span style={{ display: "block" }}>Train hard.</span>
       <span style={{ display: "block", whiteSpace: "nowrap" }}>
-        {"Few know what to "}
         <span
           style={{
             color: "#e53e3e",
@@ -36,8 +35,9 @@ function CyclingHeadline() {
             fontStyle: "italic",
           }}
         >
-          {CYCLING_WORDS[index]}.
+          {CYCLING_WORDS[index]}
         </span>
+        {" what's actually wrong."}
       </span>
     </h1>
   );

@@ -8,8 +8,8 @@ export const INTRO_COPY = {
 } as const;
 
 export const FEED_COPY = {
-  headline: "Most fighters train hard. Few know what to fix.",
-  body: "We break down your footage, flag where your technique breaks down, and give you the drill to fix it.",
+  headline: "Train hard. Fix what's actually wrong.",
+  body: "Fightflo finds it in your footage, automatically.",
   selectPrompt: "Select an option below",
 } as const;
 
