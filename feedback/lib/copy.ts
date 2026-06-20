@@ -8,7 +8,7 @@ export const INTRO_COPY = {
 } as const;
 
 export const FEED_COPY = {
-  headline: "Train hard. Fix what's actually wrong.",
+  headline: "Train smart, not just hard. Fix what's actually wrong.",
   body: "Fightflo finds it in your footage, automatically.",
   selectPrompt: "Select an option below",
 } as const;

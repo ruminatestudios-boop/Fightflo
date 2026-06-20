@@ -21,7 +21,7 @@ function CyclingHeadline() {
 
   return (
     <h1 className="glass-greeting-title" style={{ maxWidth: "none" }}>
-      <span style={{ display: "block" }}>Train hard.</span>
+      <span style={{ display: "block" }}>Train smart, not just hard.</span>
       <span style={{ display: "block", whiteSpace: "nowrap" }}>
         <span
           style={{
