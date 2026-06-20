@@ -969,3 +969,75 @@ export async function listUsersForScheduledEmails(): Promise<
 
   return rows;
 }
+
+export interface InviteCodeRecord {
+  code: string;
+  label: string | null;
+  total_limit: number;
+  used_count: number;
+  active: boolean;
+  created_at: string;
+}
+
+/** Selective beta invite link with its own capped scan budget */
+export async function getInviteCodeByCode(
+  code: string
+): Promise<InviteCodeRecord | null> {
+  if (isDevStoreActive()) return null;
+
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("invite_codes")
+    .select()
+    .eq("code", code)
+    .maybeSingle();
+
+  if (error) return null;
+  return (data as InviteCodeRecord) ?? null;
+}
+
+export async function incrementInviteCodeUsage(code: string): Promise<void> {
+  if (isDevStoreActive()) return;
+
+  const existing = await getInviteCodeByCode(code);
+  if (!existing) return;
+
+  const supabase = getSupabase();
+  await supabase
+    .from("invite_codes")
+    .update({ used_count: existing.used_count + 1 })
+    .eq("code", code);
+}
+
+export async function createInviteCode(input: {
+  code: string;
+  label?: string | null;
+  totalLimit: number;
+}): Promise<InviteCodeRecord> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("invite_codes")
+    .insert({
+      code: input.code,
+      label: input.label ?? null,
+      total_limit: input.totalLimit,
+      used_count: 0,
+      active: true,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as InviteCodeRecord;
+}
+
+export async function listInviteCodes(): Promise<InviteCodeRecord[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("invite_codes")
+    .select()
+    .order("created_at", { ascending: false });
+
+  if (error) return [];
+  return (data as InviteCodeRecord[]) ?? [];
+}

@@ -10,8 +10,10 @@ import {
   decrementBonusScans,
   getMonthlySessionCount,
   getDailySessionCount,
+  getInviteCodeByCode,
   getUserById,
   incrementFreeAnalyses,
+  incrementInviteCodeUsage,
   createSession,
   getSessionById,
   getUserSessions,
@@ -58,6 +60,23 @@ export async function getAnalysisAllowance(
       bonusScans: 0,
       message: canAnalyse ? "" : `Daily limit of ${CREW_DAILY_LIMIT} uploads reached. Resets tomorrow.`,
     };
+  }
+
+  if (crewToken) {
+    const invite = await getInviteCodeByCode(crewToken.trim());
+    if (invite && invite.active) {
+      const canAnalyse = invite.used_count < invite.total_limit;
+      return {
+        canAnalyse,
+        isPro: true,
+        used: invite.used_count,
+        limit: invite.total_limit,
+        bonusScans: 0,
+        message: canAnalyse
+          ? ""
+          : `This invite link has used all ${invite.total_limit} scans. Ask for a new link.`,
+      };
+    }
   }
 
   const user = await getUserById(userId);
@@ -112,7 +131,18 @@ export async function canUserAnalyse(userId: string): Promise<boolean> {
   return allowance.canAnalyse;
 }
 
-export async function recordAnalysisUsed(userId: string): Promise<void> {
+export async function recordAnalysisUsed(
+  userId: string,
+  crewToken?: string | null
+): Promise<void> {
+  if (crewToken && !isValidCrewToken(crewToken)) {
+    const invite = await getInviteCodeByCode(crewToken.trim());
+    if (invite) {
+      await incrementInviteCodeUsage(invite.code);
+      return;
+    }
+  }
+
   const user = await getUserById(userId);
   if (!user) return;
 

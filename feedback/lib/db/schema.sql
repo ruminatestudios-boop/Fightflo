@@ -97,3 +97,14 @@ CREATE INDEX IF NOT EXISTS idx_clips_report_id ON clips(report_id);
 -- ALTER TABLE reports ADD COLUMN IF NOT EXISTS follow_up_comparison JSONB;
 -- ALTER TABLE reports ADD COLUMN IF NOT EXISTS export_video_url TEXT;
 ALTER TABLE reports ADD COLUMN IF NOT EXISTS secondary_weaknesses JSONB NOT NULL DEFAULT '[]';
+
+-- Selective beta invite links — each code has its own capped scan budget,
+-- separate from the single CREW_ACCESS_TOKEN (which stays unlimited/daily for personal testing).
+CREATE TABLE IF NOT EXISTS invite_codes (
+  code TEXT PRIMARY KEY,
+  label TEXT,
+  total_limit INTEGER NOT NULL,
+  used_count INTEGER NOT NULL DEFAULT 0,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
