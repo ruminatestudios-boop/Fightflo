@@ -23,6 +23,26 @@ export default function InviteCodesAdminPage() {
   const [newCode, setNewCode] = useState("");
   const [newLabel, setNewLabel] = useState("");
   const [newLimit, setNewLimit] = useState("10");
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const inviteUrl = useCallback(
+    (code: string) => `https://fightflo.app/feed?crew=${encodeURIComponent(code)}`,
+    []
+  );
+
+  const handleCopyLink = useCallback(
+    async (code: string) => {
+      const url = inviteUrl(code);
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopiedCode(code);
+        window.setTimeout(() => setCopiedCode(null), 2000);
+      } catch {
+        window.prompt("Copy link:", url);
+      }
+    },
+    [inviteUrl]
+  );
 
   useEffect(() => {
     const stored = typeof window !== "undefined" ? sessionStorage.getItem(SECRET_KEY) : null;
@@ -74,14 +94,16 @@ export default function InviteCodesAdminPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to create");
+      const createdCode = newCode.trim();
       setNewCode("");
       setNewLabel("");
       setNewLimit("10");
       await fetchCodes(secret);
+      void handleCopyLink(createdCode);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create code");
     }
-  }, [newCode, newLabel, newLimit, secret, fetchCodes]);
+  }, [newCode, newLabel, newLimit, secret, fetchCodes, handleCopyLink]);
 
   const handleBump = useCallback(
     async (code: string, currentLimit: number) => {
@@ -165,7 +187,21 @@ export default function InviteCodesAdminPage() {
                 {c.used_count} / {c.total_limit} used
                 {!c.active ? " · DEACTIVATED" : ""}
               </p>
+              <p
+                style={{
+                  margin: "0 0 0.6rem",
+                  fontSize: "0.78rem",
+                  opacity: 0.55,
+                  wordBreak: "break-all",
+                  fontFamily: "monospace",
+                }}
+              >
+                {inviteUrl(c.code)}
+              </p>
               <div style={{ display: "flex", gap: "0.5rem" }}>
+                <button onClick={() => void handleCopyLink(c.code)} style={smallBtnStyle}>
+                  {copiedCode === c.code ? "Copied!" : "Copy link"}
+                </button>
                 <button onClick={() => void handleBump(c.code, c.total_limit)} style={smallBtnStyle}>
                   Bump limit
                 </button>
