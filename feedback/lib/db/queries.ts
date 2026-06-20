@@ -1081,6 +1081,7 @@ export interface ScanCostRecord {
   cloudinary_usd: number;
   compute_usd: number;
   total_usd: number;
+  invite_code: string | null;
   created_at: string;
 }
 
@@ -1096,6 +1097,7 @@ export async function recordScanCost(input: {
   cloudinaryUsd: number;
   computeUsd: number;
   totalUsd: number;
+  inviteCode: string | null;
 }): Promise<void> {
   if (isDevStoreActive()) return;
 
@@ -1112,6 +1114,7 @@ export async function recordScanCost(input: {
     cloudinary_usd: input.cloudinaryUsd,
     compute_usd: input.computeUsd,
     total_usd: input.totalUsd,
+    invite_code: input.inviteCode,
   });
 }
 
@@ -1125,4 +1128,14 @@ export async function listScanCosts(limit = 200): Promise<ScanCostRecord[]> {
 
   if (error) return [];
   return (data as ScanCostRecord[]) ?? [];
+}
+
+export async function setSessionInviteCode(
+  sessionId: string,
+  code: string
+): Promise<void> {
+  if (isDevStoreActive()) return;
+
+  const supabase = getSupabase();
+  await supabase.from("sessions").update({ invite_code: code }).eq("id", sessionId);
 }

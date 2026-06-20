@@ -33,11 +33,25 @@ export async function GET(request: NextRequest) {
 
   const perUser = Array.from(byUser.values()).sort((a, b) => b.totalUsd - a.totalUsd);
 
+  const byTier = new Map<string, { inviteCode: string; scanCount: number; totalUsd: number }>();
+  for (const row of rows) {
+    const key = row.invite_code ?? "(no code)";
+    const existing = byTier.get(key);
+    if (existing) {
+      existing.scanCount += 1;
+      existing.totalUsd += Number(row.total_usd);
+    } else {
+      byTier.set(key, { inviteCode: key, scanCount: 1, totalUsd: Number(row.total_usd) });
+    }
+  }
+  const perTier = Array.from(byTier.values()).sort((a, b) => b.totalUsd - a.totalUsd);
+
   return NextResponse.json({
     totalUsd,
     scanCount: rows.length,
     avgUsd,
     perUser,
+    perTier,
     recent: rows.slice(0, 50),
   });
 }

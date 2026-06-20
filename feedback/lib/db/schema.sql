@@ -128,3 +128,6 @@ CREATE TABLE IF NOT EXISTS scan_costs (
 
 CREATE INDEX IF NOT EXISTS idx_scan_costs_user_id ON scan_costs(user_id);
 CREATE INDEX IF NOT EXISTS idx_scan_costs_created_at ON scan_costs(created_at);
+
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS invite_code TEXT;
+ALTER TABLE scan_costs ADD COLUMN IF NOT EXISTS invite_code TEXT;

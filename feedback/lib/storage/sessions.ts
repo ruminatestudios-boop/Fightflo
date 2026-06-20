@@ -14,6 +14,7 @@ import {
   getUserById,
   incrementFreeAnalyses,
   incrementInviteCodeUsage,
+  setSessionInviteCode,
   createSession,
   getSessionById,
   getUserSessions,
@@ -133,12 +134,14 @@ export async function canUserAnalyse(userId: string): Promise<boolean> {
 
 export async function recordAnalysisUsed(
   userId: string,
-  crewToken?: string | null
+  crewToken?: string | null,
+  sessionId?: string | null
 ): Promise<void> {
   if (crewToken && !isValidCrewToken(crewToken)) {
     const invite = await getInviteCodeByCode(crewToken.trim());
     if (invite) {
       await incrementInviteCodeUsage(invite.code);
+      if (sessionId) await setSessionInviteCode(sessionId, invite.code);
       return;
     }
   }

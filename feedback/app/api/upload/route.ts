@@ -75,7 +75,7 @@ async function handleCloudinaryComplete(request: NextRequest) {
     message: "Pulling frames from your video at 12 fps…",
   });
 
-  await recordAnalysisUsed(userId, crewToken);
+  await recordAnalysisUsed(userId, crewToken, session.id);
   scheduleAnalysisPipeline(session.id);
 
   return NextResponse.json({
@@ -136,7 +136,7 @@ async function handleDirectUpload(request: NextRequest) {
     message: "Pulling frames from your video at 12 fps…",
   });
 
-  await recordAnalysisUsed(userId, crewToken);
+  await recordAnalysisUsed(userId, crewToken, session.id);
   scheduleAnalysisPipeline(session.id);
 
   return NextResponse.json({
