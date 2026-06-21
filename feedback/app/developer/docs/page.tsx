@@ -217,7 +217,7 @@ export default function DocsPage() {
         <h2 className="docs-section-title">Rate limits &amp; pricing</h2>
         <p className="docs-text">
           Free tier: 3 lifetime analyses. Paid plans available — contact{" "}
-          <a className="docs-link" href="mailto:hello@fightflo.app">hello@fightflo.app</a>{" "}
+          <a className="docs-link" href="mailto:support@fightflo.app">support@fightflo.app</a>{" "}
           for volume pricing, white-label options, or enterprise agreements.
         </p>
       </section>

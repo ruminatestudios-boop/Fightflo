@@ -185,10 +185,10 @@ export function HomeSettingsModals({
           <button
             type="button"
             className="home-settings-hub-row"
-            onClick={() => { onClose(); window.location.href = "mailto:hello@fightflo.app?subject=Fightflo%20Feedback"; }}
+            onClick={() => { onClose(); window.location.href = "mailto:support@fightflo.app?subject=Fightflo%20Feedback"; }}
           >
             <span className="home-settings-hub-row-kicker">Contact Us</span>
-            <span className="home-settings-hub-row-value">hello@fightflo.app</span>
+            <span className="home-settings-hub-row-value">support@fightflo.app</span>
           </button>
 
           <p className="home-settings-hub-version">Fightflo · Video analysis for serious fighters · v1.0</p>
