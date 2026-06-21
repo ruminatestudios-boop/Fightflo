@@ -220,6 +220,30 @@ export function ReportPageClient({
     );
   }
 
+  // From the 2nd free report onward, email is required to view results —
+  // the 1st free report stays frictionless so first-time tries don't bounce.
+  const mustCaptureEmailFirst =
+    !isPro && hasEmail === false && session.session_number >= 2;
+
+  if (mustCaptureEmailFirst) {
+    return (
+      <GlassPage innerClassName="glass-home-inner glass-home-inner--busy">
+        <div className="glass-floating-sheet-inner">
+          <ReportEmailCapture
+            email={emailCapture.email}
+            onEmailChange={(v) => {
+              emailCapture.setEmail(v);
+              emailCapture.resetError();
+            }}
+            status={emailCapture.status}
+            onSubmit={() => void emailCapture.submit()}
+            mainFinding={report.main_weakness.title}
+          />
+        </div>
+      </GlassPage>
+    );
+  }
+
   return (
     <>
       {clipsLoading && (
@@ -261,6 +285,14 @@ export function ReportPageClient({
         bonusScans={bonusScans}
         onClose={() => setShowPaywall(false)}
         onCheckout={handlePaywallCheckout}
+        hasEmail={Boolean(hasEmail)}
+        email={emailCapture.email}
+        onEmailChange={(v) => {
+          emailCapture.setEmail(v);
+          emailCapture.resetError();
+        }}
+        emailStatus={emailCapture.status}
+        onEmailSubmit={() => void emailCapture.submit()}
       />
 
       <PwaInstallModal triggerRef={pwaRef} />

@@ -1344,3 +1344,56 @@ export async function setUserIsPro(userId: string, isPro: boolean): Promise<void
   const supabase = getSupabase();
   await supabase.from("users").update({ is_pro: isPro }).eq("id", userId);
 }
+
+export interface ConversionFunnel {
+  totalUsers: number;
+  withEmail: number;
+  hitFreeLimit: number;
+  hitFreeLimitWithEmail: number;
+  proUsers: number;
+  recentSignups: { id: string; email: string | null; created_at: string }[];
+}
+
+/** Funnel: signup -> email captured -> hit free limit -> paid (is_pro) */
+export async function getConversionFunnel(): Promise<ConversionFunnel> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("users")
+    .select("id,email,is_pro,free_analyses_used,free_analyses_limit,created_at")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    return {
+      totalUsers: 0,
+      withEmail: 0,
+      hitFreeLimit: 0,
+      hitFreeLimitWithEmail: 0,
+      proUsers: 0,
+      recentSignups: [],
+    };
+  }
+
+  const rows = data as Array<{
+    id: string;
+    email: string | null;
+    is_pro: boolean;
+    free_analyses_used: number;
+    free_analyses_limit: number;
+    created_at: string;
+  }>;
+
+  const hitLimitRows = rows.filter((u) => u.free_analyses_used >= u.free_analyses_limit);
+
+  return {
+    totalUsers: rows.length,
+    withEmail: rows.filter((u) => Boolean(u.email)).length,
+    hitFreeLimit: hitLimitRows.length,
+    hitFreeLimitWithEmail: hitLimitRows.filter((u) => Boolean(u.email)).length,
+    proUsers: rows.filter((u) => u.is_pro).length,
+    recentSignups: rows.slice(0, 20).map((u) => ({
+      id: u.id,
+      email: u.email,
+      created_at: u.created_at,
+    })),
+  };
+}
