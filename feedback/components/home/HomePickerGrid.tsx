@@ -43,7 +43,12 @@ export function HomePickerGrid({
             aria-pressed={selected}
           >
             <span className="home-picker-row-icon" aria-hidden>{option.icon}</span>
-            <span className="home-picker-row-label">{option.label}</span>
+            <span className="home-picker-row-text">
+              <span className="home-picker-row-label">{option.label}</span>
+              {option.hint ? (
+                <span className="home-picker-row-hint">{option.hint}</span>
+              ) : null}
+            </span>
             {selected && (
               <span className="home-picker-row-check" aria-hidden>✓</span>
             )}
