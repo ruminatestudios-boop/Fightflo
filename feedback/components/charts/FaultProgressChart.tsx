@@ -13,11 +13,17 @@ import {
 } from "recharts";
 import type { ProgressDataPoint, WeaknessTrend } from "@/types";
 
-const TREND_BAR: Record<WeaknessTrend, string> = {
-  improving: "#34d399",
-  stable: "rgba(255, 255, 255, 0.55)",
-  worse: "#fa4141",
-};
+/** Color each bar by how good/bad that session's value was, not just overall trend */
+function barColorForCount(count: number, yMax: number, lowerIsBetter: boolean): string {
+  if (count === 0) return lowerIsBetter ? "#34d399" : "#fa4141";
+
+  const ratio = count / yMax;
+  const bad = lowerIsBetter ? ratio : 1 - ratio;
+
+  if (bad <= 0.34) return "#34d399";
+  if (bad <= 0.67) return "#fbbf24";
+  return "#fa4141";
+}
 
 interface FaultProgressChartProps {
   points: ProgressDataPoint[];
@@ -82,7 +88,6 @@ export function FaultProgressChart({
     return Math.max(3, peak + 1);
   }, [chartPoints]);
 
-  const barColor = TREND_BAR[trend];
   const lastSession = chartPoints[chartPoints.length - 1]?.session;
   const trimmed = maxSessions && points.length > maxSessions;
 
@@ -123,13 +128,12 @@ export function FaultProgressChart({
             dataKey="count"
             radius={[6, 6, 0, 0]}
             maxBarSize={40}
-            activeBar={{ fill: barColor, opacity: 0.95 }}
           >
             {chartPoints.map((point) => (
               <Cell
                 key={point.session}
-                fill={barColor}
-                opacity={point.session === lastSession ? 1 : 0.72}
+                fill={barColorForCount(point.count, yMax, lowerIsBetter)}
+                opacity={point.session === lastSession ? 1 : 0.78}
               />
             ))}
           </Bar>
