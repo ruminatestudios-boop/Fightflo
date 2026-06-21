@@ -101,6 +101,29 @@ export default function UsersAdminPage() {
     [secret, search, fetchUsers]
   );
 
+  const handleExportCsv = useCallback(
+    async (emailsOnly: boolean) => {
+      try {
+        const res = await fetch(`/api/admin/users/export?emailsOnly=${emailsOnly}`, {
+          headers: { "x-admin-secret": secret },
+        });
+        if (!res.ok) throw new Error("Export failed");
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `fightflo-users-${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Export failed");
+      }
+    },
+    [secret]
+  );
+
   if (!authed) {
     return (
       <div style={pageStyle}>
@@ -153,6 +176,15 @@ export default function UsersAdminPage() {
           />
           <button onClick={() => void fetchUsers(secret, search)} style={smallBtnStyle}>
             Search
+          </button>
+        </div>
+
+        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem" }}>
+          <button onClick={() => void handleExportCsv(true)} style={smallBtnStyle}>
+            Export emails (CSV)
+          </button>
+          <button onClick={() => void handleExportCsv(false)} style={smallBtnStyle}>
+            Export all users (CSV)
           </button>
         </div>
 

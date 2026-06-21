@@ -1397,3 +1397,35 @@ export async function getConversionFunnel(): Promise<ConversionFunnel> {
     })),
   };
 }
+
+export interface UserExportRow {
+  id: string;
+  email: string | null;
+  sport: string;
+  level: string;
+  is_pro: boolean;
+  subscription_status: string;
+  free_analyses_used: number;
+  free_analyses_limit: number;
+  bonus_scans: number;
+  created_at: string;
+}
+
+/** All users for CSV export — unpaginated, email signups only if filterHasEmail */
+export async function listAllUsersForExport(
+  filterHasEmail = false
+): Promise<UserExportRow[]> {
+  const supabase = getSupabase();
+  let query = supabase
+    .from("users")
+    .select(
+      "id,email,sport,level,is_pro,subscription_status,free_analyses_used,free_analyses_limit,bonus_scans,created_at"
+    )
+    .order("created_at", { ascending: false });
+
+  if (filterHasEmail) query = query.not("email", "is", null);
+
+  const { data, error } = await query;
+  if (error) return [];
+  return (data as UserExportRow[]) ?? [];
+}
