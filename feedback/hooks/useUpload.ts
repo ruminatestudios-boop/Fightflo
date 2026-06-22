@@ -194,6 +194,26 @@ function uploadToCloudinary(
   });
 }
 
+/** Mobile connections drop mid-upload often enough to retry once automatically. */
+async function uploadToCloudinaryWithRetry(
+  file: File,
+  params: NonNullable<CloudinarySignResponse["cloudinary"]>,
+  onProgress: (percent: number) => void,
+  onXhrReady?: (xhr: XMLHttpRequest) => void
+): Promise<CloudinaryUploadResult> {
+  try {
+    return await uploadToCloudinary(file, params, onProgress, onXhrReady);
+  } catch (error) {
+    const isTransientNetworkError =
+      error instanceof Error && error.message.includes("Network error during upload");
+    if (!isTransientNetworkError) throw error;
+
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    onProgress(1);
+    return uploadToCloudinary(file, params, onProgress, onXhrReady);
+  }
+}
+
 export function useUpload() {
   const [state, setState] = useState<UploadState>({
     phase: "idle",
@@ -303,7 +323,7 @@ export function useUpload() {
             message: "Uploading your video...",
           }));
 
-          const cloudinaryResult = await uploadToCloudinary(
+          const cloudinaryResult = await uploadToCloudinaryWithRetry(
             file,
             sign.cloudinary,
             (percent) => {

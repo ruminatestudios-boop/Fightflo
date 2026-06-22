@@ -81,6 +81,11 @@ function IconBadge({ onPhoto = false, children }: { onPhoto?: boolean; children:
   );
 }
 
+const CARD_PHOTO_GRADIENT =
+  "linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.72) 32%, rgba(0,0,0,0.18) 58%, rgba(0,0,0,0) 100%)";
+const CARD_PHOTO_GRADIENT_HERO =
+  "linear-gradient(to top, #000 0%, rgba(0,0,0,0.82) 42%, rgba(0,0,0,0.35) 72%, rgba(0,0,0,0.18) 100%)";
+
 function CardPhoto({
   id,
   variant = "default",
@@ -89,24 +94,19 @@ function CardPhoto({
   variant?: "default" | "hero";
 }) {
   const { src, position } = homeCardImage(id);
+  const gradient = variant === "hero" ? CARD_PHOTO_GRADIENT_HERO : CARD_PHOTO_GRADIENT;
 
   return (
     <span
       className={`home-card-photo ${variant === "hero" ? "home-card-photo--hero" : ""}`}
       aria-hidden
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt=""
-        style={{ objectPosition: position }}
-        loading="eager"
-        onLoad={(e) => (e.currentTarget as HTMLImageElement).classList.add("img-loaded")}
-      />
-      <span
-        className={`home-card-photo-overlay ${variant === "hero" ? "home-card-photo-overlay--hero" : ""}`}
-      />
-    </span>
+      style={{
+        backgroundImage: `${gradient}, url("${src}")`,
+        backgroundSize: "100% 100%, cover",
+        backgroundPosition: `0 0, ${position}`,
+        backgroundRepeat: "no-repeat, no-repeat",
+      }}
+    />
   );
 }
 

@@ -39,15 +39,23 @@ function IconBadge({ children }: { children: ReactNode }) {
   );
 }
 
+const CARD_PHOTO_GRADIENT =
+  "linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.72) 32%, rgba(0,0,0,0.18) 58%, rgba(0,0,0,0) 100%)";
+
 function CardPhoto({ id, active = false }: { id: HomeFeatureId; active?: boolean }) {
   const { src, position } = homeCardImage(id);
 
   return (
-    <span className={`home-card-photo ${active ? "home-card-photo--active" : ""}`} aria-hidden>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="" style={{ objectPosition: position }} loading="lazy" />
-      <span className="home-card-photo-overlay" />
-    </span>
+    <span
+      className={`home-card-photo ${active ? "home-card-photo--active" : ""}`}
+      aria-hidden
+      style={{
+        backgroundImage: `${CARD_PHOTO_GRADIENT}, url("${src}")`,
+        backgroundSize: "100% 100%, cover",
+        backgroundPosition: `0 0, ${position}`,
+        backgroundRepeat: "no-repeat, no-repeat",
+      }}
+    />
   );
 }
 

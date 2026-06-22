@@ -3121,15 +3121,7 @@ button.stepguide-card-ts:active {
   overflow: hidden;
   border-radius: inherit;
   background: #0d0d0d;
-}
-
-.home-card-photo img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
   transform: scale(1.02);
-  opacity: 1;
 }
 
 .home-card-gradient {
@@ -3210,28 +3202,6 @@ button.stepguide-card-ts:active {
   color: rgba(255, 255, 255, 0.78);
 }
 
-.home-card-photo-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.96) 0%,
-    rgba(0, 0, 0, 0.72) 32%,
-    rgba(0, 0, 0, 0.18) 58%,
-    rgba(0, 0, 0, 0) 100%
-  );
-}
-
-.home-card-photo-overlay--hero {
-  background: linear-gradient(
-    to top,
-    #000 0%,
-    rgba(0, 0, 0, 0.82) 42%,
-    rgba(0, 0, 0, 0.35) 72%,
-    rgba(0, 0, 0, 0.18) 100%
-  );
-}
 
 .home-card-photo-content {
   position: relative;
@@ -3281,17 +3251,8 @@ button.stepguide-card-ts:active {
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
 }
 
-.glass-card--photo.glass-card--disabled .home-card-photo-overlay {
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.92) 0%,
-    rgba(0, 0, 0, 0.74) 52%,
-    rgba(0, 0, 0, 0.5) 100%
-  );
-}
-
-.glass-card--photo.glass-card--disabled .home-card-photo img {
-  filter: grayscale(0.25) brightness(0.75) contrast(1.05);
+.glass-card--photo.glass-card--disabled .home-card-photo {
+  filter: grayscale(0.25) brightness(0.65) contrast(1.05);
 }
 
 .glass-card--photo.home-upload-card .home-upload-headline {
@@ -4385,7 +4346,7 @@ button.stepguide-card-ts:active {
     box-shadow 0.5s ease;
 }
 
-.home-card-photo--active img {
+.home-card-photo--active {
   animation: home-carousel-photo-drift 7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
@@ -4459,7 +4420,7 @@ button.stepguide-card-ts:active {
 @media (prefers-reduced-motion: reduce) {
   .home-feature-carousel--fullscreen .home-feature-carousel-backdrop-image,
   .home-feature-carousel--fullscreen .home-feature-carousel-backdrop-gradient,
-  .home-feature-carousel--fullscreen .home-card-photo--active img,
+  .home-feature-carousel--fullscreen .home-card-photo--active,
   .home-feature-carousel--fullscreen .home-card-gradient--active .home-card-gradient-shine,
   .home-feature-carousel--fullscreen .home-feature-carousel-slide--active .home-card-photo-content > *,
   .home-feature-carousel--fullscreen .home-feature-carousel-slide--active .glass-card-icon--on-photo,
