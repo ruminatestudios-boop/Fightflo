@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Barlow_Condensed, Playfair_Display, Instrument_Sans, Inter, Oswald } from "next/font/google";
-import { Analytics } from "@/components/shared/Analytics";
+import { Analytics as PlausibleAnalytics } from "@/components/shared/Analytics";
+import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
 import { NavigationTracker } from "@/components/shared/NavigationTracker";
 import { PWARegister } from "@/components/shared/PWARegister";
 import "./globals.css";
@@ -86,7 +87,8 @@ export default function RootLayout({
           <NavigationTracker />
         </Suspense>
         <PWARegister />
-        <Analytics />
+        <PlausibleAnalytics />
+        <VercelAnalytics />
         {children}
       </body>
     </html>
