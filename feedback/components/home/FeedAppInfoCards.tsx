@@ -53,11 +53,13 @@ export function FeedAppInfoCards({
             <p className="feed-action-card-title">TRAIN SMARTER.</p>
             {crewRemaining !== null ? (
               <p className={`feed-action-card-usage${crewAlmostOut ? " feed-action-card-usage--warn" : ""}`}>
-                {crewRemaining} team scan{crewRemaining === 1 ? "" : "s"} left
+                <span style={{ color: "#fa4141" }}>{crewRemaining}</span> team scan
+                {crewRemaining === 1 ? "" : "s"} left
               </p>
             ) : showUsage ? (
               <p className={`feed-action-card-usage${almostOut ? " feed-action-card-usage--warn" : ""}`}>
-                {remaining} free {remaining === 1 ? "analysis" : "analyses"} left
+                <span style={{ color: "#fa4141" }}>{remaining}</span> free{" "}
+                {remaining === 1 ? "analysis" : "analyses"} left
               </p>
             ) : (
               <p className="feed-action-card-desc">Film bag work, pads, or sparring.</p>
