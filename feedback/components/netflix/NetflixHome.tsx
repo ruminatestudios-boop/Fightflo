@@ -132,6 +132,9 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
   const [shadowRoundSeconds, setShadowRoundSeconds] = useState<ShadowRoundLength | null>(
     null
   );
+  const [crewAllowance, setCrewAllowance] = useState<{ used: number; limit: number } | null>(
+    null
+  );
   const { phase, progress, message, error, paywallMode, upload, cancel, reset } =
     useUpload();
   const isBusy = phase === "uploading" || phase === "processing";
@@ -334,17 +337,36 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
     const userId = localStorage.getItem("feedback_anon_user_id");
     if (!userId) return;
 
-    void fetch(apiPath(`/api/user/status?userId=${userId}`))
+    const crewToken = getStoredCrewToken();
+    const qs = crewToken
+      ? `?userId=${userId}&crewToken=${encodeURIComponent(crewToken)}`
+      : `?userId=${userId}`;
+
+    void fetch(apiPath(`/api/user/status${qs}`))
       .then((res) => res.json())
-      .then((data: { isPro?: boolean; email?: string | null }) => {
-        if (data.isPro) setIsActuallyPro(true);
-        if (data.isPro || isClientProUnlocked()) setIsPro(true);
-        if (data.email) setUserEmail(data.email);
-        if (!getStoredUserName()) {
-          const name = displayNameFromEmail(data.email);
-          if (name) setUserName(name);
+      .then(
+        (data: {
+          isPro?: boolean;
+          email?: string | null;
+          used?: number;
+          limit?: number;
+        }) => {
+          if (data.isPro) setIsActuallyPro(true);
+          if (data.isPro || isClientProUnlocked()) setIsPro(true);
+          if (data.email) setUserEmail(data.email);
+          if (!getStoredUserName()) {
+            const name = displayNameFromEmail(data.email);
+            if (name) setUserName(name);
+          }
+          if (
+            crewToken &&
+            typeof data.used === "number" &&
+            typeof data.limit === "number"
+          ) {
+            setCrewAllowance({ used: data.used, limit: data.limit });
+          }
         }
-      })
+      )
       .catch(() => {});
   }, []);
 
@@ -520,6 +542,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
               onRecord={openLiveRecord}
               onPricing={() => setShowPricingModal(true)}
               isPro={isPro}
+              crewAllowance={crewAllowance}
             />
 
             {error && (

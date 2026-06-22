@@ -35,6 +35,7 @@ interface HomeFeatureGridProps {
   onRecord?: () => void;
   onPricing?: () => void;
   isPro?: boolean;
+  crewAllowance?: { used: number; limit: number } | null;
 }
 
 /** Short subheading on each home card — what the tool does, not session stats. */
@@ -118,6 +119,7 @@ export function HomeFeatureGrid({
   onRecord,
   onPricing,
   isPro = false,
+  crewAllowance = null,
 }: HomeFeatureGridProps) {
   const isFeed = variant === "feed";
   const feedUploadUsesPhoto = false;
@@ -249,6 +251,7 @@ export function HomeFeatureGrid({
               lastSessionDaysAgo={insights?.latestComplete
                 ? Math.floor((Date.now() - new Date((insights.latestComplete as { created_at: string }).created_at).getTime()) / 86400000)
                 : null}
+              crewAllowance={crewAllowance}
             />
           </>
         ) : (

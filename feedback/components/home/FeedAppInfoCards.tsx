@@ -9,6 +9,8 @@ interface FeedAppInfoCardsProps {
   isPro?: boolean;
   completeCount?: number;
   lastSessionDaysAgo?: number | null;
+  /** Crew/invite-code scan budget — overrides the free-tier counter when present */
+  crewAllowance?: { used: number; limit: number } | null;
 }
 
 function returnVisitorMessage(daysAgo: number): string {
@@ -26,12 +28,18 @@ export function FeedAppInfoCards({
   isPro = false,
   completeCount = 0,
   lastSessionDaysAgo = null,
+  crewAllowance = null,
 }: FeedAppInfoCardsProps) {
   const isFirstVisit = completeCount === 0;
   const isReturning = completeCount > 0 && lastSessionDaysAgo !== null;
   const remaining = Math.max(0, FREE_ANALYSIS_LIMIT - completeCount);
   const showUsage = !isPro && completeCount > 0 && completeCount < FREE_ANALYSIS_LIMIT;
   const almostOut = !isPro && remaining === 1 && completeCount > 0;
+
+  const crewRemaining = crewAllowance
+    ? Math.max(0, crewAllowance.limit - crewAllowance.used)
+    : null;
+  const crewAlmostOut = crewRemaining !== null && crewRemaining <= 2;
 
   return (
     <section className="feed-action-cards" aria-label="Get started">
@@ -43,7 +51,11 @@ export function FeedAppInfoCards({
         <div className="feed-action-card-top">
           <div className="feed-action-card-copy">
             <p className="feed-action-card-title">TRAIN SMARTER.</p>
-            {showUsage ? (
+            {crewRemaining !== null ? (
+              <p className={`feed-action-card-usage${crewAlmostOut ? " feed-action-card-usage--warn" : ""}`}>
+                {crewRemaining} team scan{crewRemaining === 1 ? "" : "s"} left
+              </p>
+            ) : showUsage ? (
               <p className={`feed-action-card-usage${almostOut ? " feed-action-card-usage--warn" : ""}`}>
                 {remaining} free {remaining === 1 ? "analysis" : "analyses"} left
               </p>
@@ -66,13 +78,17 @@ export function FeedAppInfoCards({
             </button>
           </div>
         </div>
-        <div className="feed-action-card-divider" />
-        <button type="button" className="feed-action-card-pricing" onClick={onPricing}>
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          <span>Unlock full AI coaching — <span style={{ color: "#fa4141" }}>See Plans</span></span>
-        </button>
+        {crewAllowance === null ? (
+          <>
+            <div className="feed-action-card-divider" />
+            <button type="button" className="feed-action-card-pricing" onClick={onPricing}>
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>Unlock full AI coaching — <span style={{ color: "#fa4141" }}>See Plans</span></span>
+            </button>
+          </>
+        ) : null}
       </div>
     </section>
   );

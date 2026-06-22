@@ -6,6 +6,7 @@ import { getUserById } from "@/lib/db/queries";
 
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get("userId");
+  const crewToken = request.nextUrl.searchParams.get("crewToken");
   if (!userId) {
     return NextResponse.json({ error: "userId required" }, { status: 400 });
   }
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const allowance = await getAnalysisAllowance(userId);
+  const allowance = await getAnalysisAllowance(userId, crewToken);
 
   return NextResponse.json({
     ...allowance,
