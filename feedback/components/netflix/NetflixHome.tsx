@@ -125,8 +125,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
     null
   );
   const [followUpParentId, setFollowUpParentId] = useState<string | null>(null);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [longVideoWarning, setLongVideoWarning] = useState(false);
+  const [longVideoNotice, setLongVideoNotice] = useState(false);
   const [offlineWarning, setOfflineWarning] = useState(false);
   const [liveRecordOpen, setLiveRecordOpen] = useState(false);
   const [shadowRoundSeconds, setShadowRoundSeconds] = useState<ShadowRoundLength | null>(
@@ -201,9 +200,10 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
 
       const duration = await checkDuration();
       if (duration > 180) {
-        setPendingFile(file);
-        setLongVideoWarning(true);
-        return;
+        // Don't block upload with a confirmation tap — just let them know
+        // and proceed. The pipeline analyzes the whole clip regardless.
+        setLongVideoNotice(true);
+        window.setTimeout(() => setLongVideoNotice(false), 4000);
       }
 
       await doUpload(file);
@@ -693,30 +693,10 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
         onCheckout={() => void handlePaywallCheckout()}
       />
 
-      {/* Long video warning */}
-      {longVideoWarning && (
-        <div className="ux-sheet-backdrop" onClick={() => setLongVideoWarning(false)}>
-          <div className="ux-sheet" onClick={(e) => e.stopPropagation()}>
-            <p className="ux-sheet-title">Long video detected</p>
-            <p className="ux-sheet-body">
-              For the sharpest coaching, we recommend clips under 3 minutes. Longer videos
-              still work but analysis takes longer and focuses on fewer moments.
-            </p>
-            <button
-              type="button"
-              className="ux-sheet-btn-primary"
-              onClick={() => { setLongVideoWarning(false); void doUpload(pendingFile!); }}
-            >
-              Upload anyway
-            </button>
-            <button
-              type="button"
-              className="ux-sheet-btn-secondary"
-              onClick={() => { setLongVideoWarning(false); setPendingFile(null); uploadRef.current?.open(); }}
-            >
-              Pick a shorter clip
-            </button>
-          </div>
+      {/* Long video notice — informational only, upload already proceeds */}
+      {longVideoNotice && (
+        <div className="ux-toast" role="status">
+          Long clip — for the sharpest coaching, try clips under 3 minutes next time.
         </div>
       )}
 
