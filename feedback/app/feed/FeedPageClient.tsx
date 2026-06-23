@@ -19,7 +19,11 @@ function replaceQuery(params: URLSearchParams) {
 }
 
 export function FeedPageClient() {
-  const [showHowItWorks, setShowHowItWorks] = useState(() => !hasSeenHowItWorks());
+  // Always false on initial render so server and client markup match —
+  // localStorage isn't available server-side, so deciding this in the
+  // useState initializer caused a hydration mismatch (server always
+  // renders the main app, client could immediately want the other screen).
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [upgradeNotice, setUpgradeNotice] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -30,6 +34,10 @@ export function FeedPageClient() {
     if (params.get("preview") === "how-it-works") {
       setShowHowItWorks(true);
       return;
+    }
+
+    if (!hasSeenHowItWorks()) {
+      setShowHowItWorks(true);
     }
 
     // Crew access — store token and strip from URL
