@@ -939,7 +939,7 @@ body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
 }
@@ -963,7 +963,7 @@ body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -2493,7 +2493,7 @@ button.stepguide-card-ts:active {
   padding: calc(var(--ff-topbar-offset) + 1.25rem) 1.25rem
     calc(5.75rem + env(safe-area-inset-bottom));
   overflow-y: auto;
-  overscroll-behavior: contain;
+  overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   scrollbar-width: none;
