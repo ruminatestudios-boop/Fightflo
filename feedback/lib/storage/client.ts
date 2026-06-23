@@ -4,6 +4,18 @@ const INTRO_DISMISSED_KEY = "feedback_intro_dismissed";
 const INTRO_DISMISSED_COOKIE = "feedback_intro_session";
 const CREW_TOKEN_KEY = "feedback_crew_token";
 const AFFILIATE_CODE_KEY = "feedback_affiliate_code";
+const HOW_IT_WORKS_SEEN_KEY = "feedback_how_it_works_seen";
+
+/** Real persistent flag — shown once ever, survives reloads (unlike the intro screen). */
+export function hasSeenHowItWorks(): boolean {
+  if (typeof window === "undefined") return true;
+  return localStorage.getItem(HOW_IT_WORKS_SEEN_KEY) === "true";
+}
+
+export function markHowItWorksSeen(): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(HOW_IT_WORKS_SEEN_KEY, "true");
+}
 
 export function storeCrewToken(token: string): void {
   if (typeof window === "undefined") return;

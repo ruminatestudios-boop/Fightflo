@@ -3,10 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NetflixHome } from "@/components/netflix/NetflixHome";
 import { FeedbackIntroScreen } from "@/components/screens/FeedbackIntroScreen";
+import { HowItWorksScreen } from "@/components/screens/HowItWorksScreen";
 import { PwaInstallModal } from "@/components/shared/PwaInstallModal";
 import {
   clearIntroDismissed,
+  hasSeenHowItWorks,
   isIntroDismissed,
+  markHowItWorksSeen,
   markIntroDismissed,
   purgeLegacyIntroPersistence,
   storeAffiliateCode,
@@ -17,6 +20,7 @@ import { apiPath, withBasePath } from "@/lib/paths";
 
 export function HomePageClient() {
   const [showIntro, setShowIntro] = useState(() => !isIntroDismissed());
+  const [showHowItWorks, setShowHowItWorks] = useState(() => !hasSeenHowItWorks());
   const [upgradeNotice, setUpgradeNotice] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -33,6 +37,8 @@ export function HomePageClient() {
       window.history.replaceState(null, "", withBasePath(`/${qs ? `?${qs}` : ""}`));
       markIntroDismissed();
       setShowIntro(false);
+      markHowItWorksSeen();
+      setShowHowItWorks(false);
     }
 
     // Affiliate/creator referral — store code and strip from URL
@@ -46,6 +52,8 @@ export function HomePageClient() {
     if (params.get("intro") === "skip") {
       markIntroDismissed();
       setShowIntro(false);
+      markHowItWorksSeen();
+      setShowHowItWorks(false);
       params.delete("intro");
       const qs = params.toString();
       window.history.replaceState(null, "", withBasePath(`/${qs ? `?${qs}` : ""}`));
@@ -60,6 +68,8 @@ export function HomePageClient() {
     if (params.get("topup") === "success") {
       markIntroDismissed();
       setShowIntro(false);
+      markHowItWorksSeen();
+      setShowHowItWorks(false);
       setUpgradeNotice("Scan pack added! Your bonus scans are ready.");
       params.delete("topup");
       const qs = params.toString();
@@ -70,6 +80,8 @@ export function HomePageClient() {
     if (params.get("upgraded") === "true") {
       markIntroDismissed();
       setShowIntro(false);
+      markHowItWorksSeen();
+      setShowHowItWorks(false);
       setUpgradeNotice("Activating your Pro plan…");
       params.delete("upgraded");
       const qs = params.toString();
@@ -102,6 +114,7 @@ export function HomePageClient() {
     }
     if (readHomeUrlState().view !== "home") {
       setShowIntro(false);
+      setShowHowItWorks(false);
     }
   }, []);
 
@@ -112,8 +125,17 @@ export function HomePageClient() {
     setShowIntro(false);
   }, []);
 
+  const dismissHowItWorks = useCallback(() => {
+    markHowItWorksSeen();
+    setShowHowItWorks(false);
+  }, []);
+
   if (showIntro) {
     return <FeedbackIntroScreen onGetStarted={dismissIntro} />;
+  }
+
+  if (showHowItWorks) {
+    return <HowItWorksScreen onGetStarted={dismissHowItWorks} />;
   }
 
   return (
