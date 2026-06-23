@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
   stripe_customer_id TEXT,
   subscription_status TEXT NOT NULL DEFAULT 'none',
   free_analyses_used INTEGER NOT NULL DEFAULT 0,
-  free_analyses_limit INTEGER NOT NULL DEFAULT 1,  -- lifetime cap for free tier; Pro capped via monthly session count (15/mo)
+  free_analyses_limit INTEGER NOT NULL DEFAULT 3,  -- lifetime cap for free tier; Pro capped via monthly session count (15/mo)
   bonus_scans INTEGER NOT NULL DEFAULT 0  -- Pro top-up credits (used after monthly 15)
 );
 
@@ -158,3 +158,8 @@ CREATE INDEX IF NOT EXISTS idx_affiliate_commissions_paid ON affiliate_commissio
 
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS invite_code TEXT;
 ALTER TABLE scan_costs ADD COLUMN IF NOT EXISTS invite_code TEXT;
+
+-- Free tier is 3 scans, not 1 — fix the default for new signups and bump
+-- existing free users who hadn't already used more than 1.
+ALTER TABLE users ALTER COLUMN free_analyses_limit SET DEFAULT 3;
+UPDATE users SET free_analyses_limit = 3 WHERE free_analyses_limit < 3;
