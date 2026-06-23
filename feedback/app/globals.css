@@ -3795,6 +3795,12 @@ button.stepguide-card-ts:active {
   animation: ux-toast-in-out 4s ease forwards;
 }
 
+.ux-toast--error {
+  border-color: rgba(250, 65, 65, 0.4);
+  color: #fff;
+  animation: ux-toast-in-out 6s ease forwards;
+}
+
 @keyframes ux-toast-in-out {
   0% { opacity: 0; transform: translate(-50%, 8px); }
   10% { opacity: 1; transform: translate(-50%, 0); }

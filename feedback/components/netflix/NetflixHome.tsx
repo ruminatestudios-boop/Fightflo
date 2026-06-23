@@ -105,6 +105,30 @@ interface NetflixHomeProps {
   homeRoute?: HomeRoute;
 }
 
+/** Translate any technical/coded error into plain English + a next step */
+function humanizeUploadError(raw: string): string {
+  const lower = raw.toLowerCase();
+  if (lower.includes("network") || lower.includes("fetch failed")) {
+    return "Connection dropped during upload. Check your Wi‑Fi or signal and try again.";
+  }
+  if (lower.includes("timed out") || lower.includes("timeout")) {
+    return "Upload took too long and timed out. Try a shorter clip or a stronger connection.";
+  }
+  if (lower.includes("abort")) {
+    return "Upload didn't go through. Tap Upload to try again.";
+  }
+  if (lower.includes("free analyses used") || lower.includes("upgrade")) {
+    return raw; // already plain English with a clear next step
+  }
+  if (lower.includes("not enough pose data") || lower.includes("full body")) {
+    return raw; // already plain English
+  }
+  if (raw.trim().length === 0) {
+    return "Something went wrong with that upload. Tap Upload to try again.";
+  }
+  return raw;
+}
+
 export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
   const router = useRouter();
   const uploadRef = useRef<UploadZoneHandle>(null);
@@ -134,6 +158,7 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
   const [crewAllowance, setCrewAllowance] = useState<{ used: number; limit: number } | null>(
     null
   );
+  const [errorToast, setErrorToast] = useState<string | null>(null);
   const { phase, progress, message, error, paywallMode, upload, cancel, reset } =
     useUpload();
   const isBusy = phase === "uploading" || phase === "processing";
@@ -332,6 +357,15 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
       if (!crewToken) setShowPaywall(true);
     }
   }, [error, paywallMode]);
+
+  // Always surface a plain-English toast when something goes wrong, even if
+  // the screen that triggered it (e.g. live record) has already closed.
+  useEffect(() => {
+    if (!error) return;
+    setErrorToast(humanizeUploadError(error));
+    const t = window.setTimeout(() => setErrorToast(null), 6000);
+    return () => window.clearTimeout(t);
+  }, [error]);
 
   useEffect(() => {
     const userId = localStorage.getItem("feedback_anon_user_id");
@@ -697,6 +731,12 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
       {longVideoNotice && (
         <div className="ux-toast" role="status">
           Long clip — for the sharpest coaching, try clips under 3 minutes next time.
+        </div>
+      )}
+
+      {errorToast && (
+        <div className="ux-toast ux-toast--error" role="status">
+          {errorToast}
         </div>
       )}
 

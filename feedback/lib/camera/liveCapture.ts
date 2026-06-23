@@ -4,8 +4,8 @@ import { sportsCameraVideoConstraints } from "@/lib/pose/mediapipeConfig";
 
 export type CameraFacing = "user" | "environment";
 
-/** Max live record length — 3 minute round */
-export const MAX_LIVE_RECORD_SECONDS = 180;
+/** Max live record length — 5 minute round */
+export const MAX_LIVE_RECORD_SECONDS = 300;
 
 const CAMERA_RELEASE_MS = 200;
 
