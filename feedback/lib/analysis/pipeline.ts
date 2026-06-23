@@ -271,6 +271,16 @@ export async function runAnalysisPipeline(sessionId: string): Promise<void> {
       });
     } catch (exportError) {
       console.error("[pipeline] export cache failed:", exportError);
+      const { recordClientError } = await import("@/lib/db/queries");
+      await recordClientError({
+        message:
+          exportError instanceof Error
+            ? exportError.message
+            : "Export cache failed (unknown error)",
+        stack: exportError instanceof Error ? exportError.stack : undefined,
+        context: "export-cache",
+        userId: session.user_id,
+      }).catch(() => undefined);
     }
 
     const publicId = (session as { cloudinary_public_id?: string })

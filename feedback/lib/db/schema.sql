@@ -178,3 +178,10 @@ CREATE TABLE IF NOT EXISTS client_errors (
 );
 
 CREATE INDEX IF NOT EXISTS idx_client_errors_created_at ON client_errors(created_at);
+
+-- These two were never actually applied to production (left as commented
+-- templates above by mistake), so every report save silently fell back to
+-- a smaller payload that also dropped landmark_summary/follow_up_comparison/
+-- secondary_weaknesses (same insert, one missing column fails the whole row).
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS pose_quality JSONB;
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS confirmed_events JSONB NOT NULL DEFAULT '[]';
