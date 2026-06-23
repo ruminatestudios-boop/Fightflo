@@ -16,6 +16,7 @@ import {
 } from "@/lib/camera/liveCapture";
 import { liveGuardDropLabel } from "@/lib/guard/guardAnalysis";
 import { useLiveCameraPose } from "@/hooks/useLiveCameraPose";
+import { PersonLockOverlay } from "@/components/live/PersonLockOverlay";
 
 interface LiveRecordScreenProps {
   onClose: () => void;
@@ -49,8 +50,13 @@ export function LiveRecordScreen({
   const [elapsedSec, setElapsedSec] = useState(0);
   const [facing, setFacing] = useState<CameraFacing>("environment");
   const [introDismissed, setIntroDismissed] = useState(false);
+  const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
 
-  const liveLandmarks = useLiveCameraPose(videoRef, ready);
+  const { landmarks: liveLandmarks, candidates, lockOnto } = useLiveCameraPose(
+    videoRef,
+    ready
+  );
 
   const liveNote = liveLandmarks
     ? liveGuardDropLabel(computeFrameMetrics(liveLandmarks))
@@ -116,6 +122,14 @@ export function LiveRecordScreen({
     void startCamera();
     return () => stopCamera();
   }, [introDismissed, startCamera, stopCamera]);
+
+  useEffect(() => {
+    const updateViewport = () =>
+      setViewportSize({ width: window.innerWidth, height: window.innerHeight });
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
 
   const flipCamera = useCallback(() => {
     if (recording) return;
@@ -223,7 +237,23 @@ export function LiveRecordScreen({
         autoPlay
         muted
         playsInline
+        onLoadedMetadata={(e) => {
+          const v = e.currentTarget;
+          setVideoSize({ width: v.videoWidth, height: v.videoHeight });
+        }}
       />
+
+      {candidates.length > 1 && videoSize.width > 0 && (
+        <PersonLockOverlay
+          candidates={candidates}
+          videoWidth={videoSize.width}
+          videoHeight={videoSize.height}
+          containerWidth={viewportSize.width}
+          containerHeight={viewportSize.height}
+          mirror={facing === "user"}
+          onSelect={(candidate) => lockOnto(candidate.pose)}
+        />
+      )}
 
       {ready && (
         <OverlayCanvas

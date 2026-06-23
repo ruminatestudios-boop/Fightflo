@@ -7,6 +7,7 @@ import { ShadowGuardFlash } from "@/components/shadow/ShadowGuardFlash";
 import { ShadowRoundSummary } from "@/components/shadow/ShadowRoundSummary";
 import { useShadowRoundTracking } from "@/hooks/useShadowRoundTracking";
 import { useLiveCameraPose } from "@/hooks/useLiveCameraPose";
+import { PersonLockOverlay } from "@/components/live/PersonLockOverlay";
 import { liveShadowboxingNote } from "@/lib/shadow/shadowboxingCopy";
 import { computeFrameMetrics } from "@/lib/analysis/poseMetrics";
 import {
@@ -61,6 +62,8 @@ export function ShadowRoundScreen({
   const [elapsedSec, setElapsedSec] = useState(0);
   const [result, setResult] = useState<ShadowRoundResult | null>(null);
   const [recordingFile, setRecordingFile] = useState<File | null>(null);
+  const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
 
   const trackingPhase =
     screenPhase === "calibrate"
@@ -71,7 +74,10 @@ export function ShadowRoundScreen({
           ? "done"
           : "idle";
 
-  const liveLandmarks = useLiveCameraPose(videoRef, ready && screenPhase !== "summary");
+  const { landmarks: liveLandmarks, candidates, lockOnto } = useLiveCameraPose(
+    videoRef,
+    ready && screenPhase !== "summary"
+  );
 
   const {
     calibration,
@@ -147,6 +153,14 @@ export function ShadowRoundScreen({
     void startCamera();
     return () => stopCamera();
   }, [startCamera, stopCamera]);
+
+  useEffect(() => {
+    const updateViewport = () =>
+      setViewportSize({ width: window.innerWidth, height: window.innerHeight });
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
 
   const startRecording = useCallback(() => {
     const stream = streamRef.current;
@@ -300,7 +314,23 @@ export function ShadowRoundScreen({
         autoPlay
         muted
         playsInline
+        onLoadedMetadata={(e) => {
+          const v = e.currentTarget;
+          setVideoSize({ width: v.videoWidth, height: v.videoHeight });
+        }}
       />
+
+      {candidates.length > 1 && videoSize.width > 0 && (
+        <PersonLockOverlay
+          candidates={candidates}
+          videoWidth={videoSize.width}
+          videoHeight={videoSize.height}
+          containerWidth={viewportSize.width}
+          containerHeight={viewportSize.height}
+          mirror={facing === "user"}
+          onSelect={(candidate) => lockOnto(candidate.pose)}
+        />
+      )}
 
       {ready && screenPhase !== "camera" && (
         <OverlayCanvas

@@ -2,10 +2,15 @@
 
 import { getClientPoseLandmarker } from "@/lib/pose/clientPoseLandmarker";
 import { LandmarkLiveBuffer, processLivePoseFrame } from "@/lib/pose/mediapipePose";
-import { PersonLockTracker } from "@/lib/pose/personLock";
+import { PersonLockTracker, type RawPose } from "@/lib/pose/personLock";
 import type { FrameLandmarks } from "@/types";
 
 type RunningMode = "IMAGE" | "VIDEO";
+
+export interface PersonCandidate {
+  pose: RawPose;
+  isAutoPick: boolean;
+}
 
 /**
  * Non-blocking pose inference — always consumes the freshest frame.
@@ -14,6 +19,7 @@ type RunningMode = "IMAGE" | "VIDEO";
 export class AsyncPoseEngine {
   private readonly mode: RunningMode;
   private readonly onLandmarks: (landmarks: FrameLandmarks | null) => void;
+  private readonly onCandidates?: (candidates: PersonCandidate[], calibrating: boolean) => void;
   private readonly liveBuffer = new LandmarkLiveBuffer();
   private readonly personLock = new PersonLockTracker();
   private active = false;
@@ -25,16 +31,23 @@ export class AsyncPoseEngine {
 
   constructor(
     mode: RunningMode,
-    onLandmarks: (landmarks: FrameLandmarks | null) => void
+    onLandmarks: (landmarks: FrameLandmarks | null) => void,
+    onCandidates?: (candidates: PersonCandidate[], calibrating: boolean) => void
   ) {
     this.mode = mode;
     this.onLandmarks = onLandmarks;
+    this.onCandidates = onCandidates;
     this.landmarkerInit = getClientPoseLandmarker(mode, mode === "VIDEO");
   }
 
   start(): void {
     this.active = true;
     this.personLock.reset();
+  }
+
+  /** User tapped a specific detected person during the scan window */
+  lockOnto(pose: RawPose): void {
+    this.personLock.forceLock(pose);
   }
 
   /** True once inference has failed many times in a row — likely WASM/model load issue */
@@ -88,6 +101,15 @@ export class AsyncPoseEngine {
             timestampMs || performance.now()
           );
           pose = this.personLock.select(result.landmarks);
+
+          if (this.onCandidates) {
+            const calibrating = this.personLock.isCalibrating();
+            const autoPickIndex = this.personLock.autoPickIndex;
+            this.onCandidates(
+              result.landmarks.map((p, i) => ({ pose: p, isAutoPick: i === autoPickIndex })),
+              calibrating
+            );
+          }
         } else if (video.videoWidth > 0 && video.videoHeight > 0) {
           const canvas = document.createElement("canvas");
           canvas.width = video.videoWidth;

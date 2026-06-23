@@ -45,12 +45,35 @@ export class PersonLockTracker {
   private startedAt = performance.now();
   private lockedCentroid: { x: number; y: number } | null = null;
   private lastSeenAt = performance.now();
+  private lastAutoPickIndex = 0;
+  private forcedUntilLocked = false;
 
   /** Restart calibration — call when starting a new live session */
   reset(): void {
     this.startedAt = performance.now();
     this.lockedCentroid = null;
     this.lastSeenAt = performance.now();
+    this.forcedUntilLocked = false;
+  }
+
+  /** True while still scanning for the most prominent person (no tap override yet) */
+  isCalibrating(): boolean {
+    if (this.forcedUntilLocked) return false;
+    return performance.now() - this.startedAt < CALIBRATION_MS;
+  }
+
+  /** Index (within the most recent select() call) of the auto-picked candidate */
+  get autoPickIndex(): number {
+    return this.lastAutoPickIndex;
+  }
+
+  /** User tapped a specific person during the scan window — lock onto them now */
+  forceLock(pose: RawPose): void {
+    const centroid = torsoCentroid(pose);
+    if (!centroid) return;
+    this.lockedCentroid = centroid;
+    this.lastSeenAt = performance.now();
+    this.forcedUntilLocked = true;
   }
 
   /** Pick the candidate pose belonging to the locked-on fighter, if any */
@@ -62,24 +85,28 @@ export class PersonLockTracker {
         this.lockedCentroid = centroid;
         this.lastSeenAt = performance.now();
       }
+      this.lastAutoPickIndex = 0;
       return poses[0];
     }
 
     const now = performance.now();
-    const calibrating = now - this.startedAt < CALIBRATION_MS;
+    const calibrating = !this.forcedUntilLocked && now - this.startedAt < CALIBRATION_MS;
     const lostTooLong = now - this.lastSeenAt > LOST_RESET_MS;
 
     if (calibrating || !this.lockedCentroid || lostTooLong) {
       // Lock onto whoever is most prominent (largest/closest to camera)
       let best: RawPose | null = null;
       let bestArea = -1;
-      for (const pose of poses) {
+      let bestIndex = 0;
+      poses.forEach((pose, i) => {
         const area = boundingBoxArea(pose);
         if (area > bestArea) {
           bestArea = area;
           best = pose;
+          bestIndex = i;
         }
-      }
+      });
+      this.lastAutoPickIndex = bestIndex;
       if (best) {
         const centroid = torsoCentroid(best);
         if (centroid) {
@@ -93,20 +120,23 @@ export class PersonLockTracker {
     // Locked — stick with whoever is closest to the last known position
     let closest: RawPose | null = null;
     let closestDist = Infinity;
-    for (const pose of poses) {
+    let closestIndex = 0;
+    poses.forEach((pose, i) => {
       const centroid = torsoCentroid(pose);
-      if (!centroid) continue;
-      const d = distance(centroid, this.lockedCentroid);
+      if (!centroid) return;
+      const d = distance(centroid, this.lockedCentroid!);
       if (d < closestDist) {
         closestDist = d;
         closest = pose;
+        closestIndex = i;
       }
-    }
+    });
 
     if (closest && closestDist <= MAX_JUMP_DISTANCE) {
       const centroid = torsoCentroid(closest);
       if (centroid) this.lockedCentroid = centroid;
       this.lastSeenAt = now;
+      this.lastAutoPickIndex = closestIndex;
       return closest;
     }
 
