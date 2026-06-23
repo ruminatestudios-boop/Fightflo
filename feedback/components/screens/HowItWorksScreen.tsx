@@ -39,6 +39,7 @@ export function HowItWorksScreen({ onGetStarted }: HowItWorksScreenProps) {
         >
           Get started
         </button>
+        <p className="how-it-works-cta-note">Your first scan is free — no card needed</p>
       </div>
     </div>
   );

@@ -9648,3 +9648,10 @@ button.stepguide-card-ts:active {
 .how-it-works-cta {
   width: 100%;
 }
+
+.how-it-works-cta-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.45);
+}
