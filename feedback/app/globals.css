@@ -7150,6 +7150,18 @@ button.stepguide-card-ts:active {
   border-radius: 9999px;
   background: #fa4141;
   box-shadow: 0 0 0 6px rgba(250, 65, 65, 0.18);
+  animation: live-record-intro-dot-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes live-record-intro-dot-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(250, 65, 65, 0.18);
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 10px rgba(250, 65, 65, 0.1);
+  }
 }
 
 .live-record-intro-title {
