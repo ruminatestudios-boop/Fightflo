@@ -81,7 +81,7 @@ export function HowItWorksScreen({ onGetStarted }: HowItWorksScreenProps) {
         >
           Get started
         </button>
-        <p className="how-it-works-cta-note">Your first scan is free — no card needed</p>
+        <p className="how-it-works-cta-note">3 free scans — no card needed</p>
       </div>
     </div>
   );
