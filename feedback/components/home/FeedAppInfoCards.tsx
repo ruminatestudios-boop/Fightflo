@@ -33,7 +33,7 @@ export function FeedAppInfoCards({
   const isFirstVisit = completeCount === 0;
   const isReturning = completeCount > 0 && lastSessionDaysAgo !== null;
   const remaining = Math.max(0, FREE_ANALYSIS_LIMIT - completeCount);
-  const showUsage = !isPro && completeCount > 0 && completeCount < FREE_ANALYSIS_LIMIT;
+  const showUsage = !isPro && completeCount < FREE_ANALYSIS_LIMIT;
   const almostOut = !isPro && remaining === 1 && completeCount > 0;
 
   const crewRemaining = crewAllowance
