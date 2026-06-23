@@ -66,6 +66,20 @@ export const metadata: Metadata = {
     title: "Fightflo: Video analysis for serious fighters",
     description:
       "Upload any training video. Get timestamped technical coaching in minutes.",
+    images: [
+      {
+        url: `${basePath}/og-image.jpg`,
+        width: 1200,
+        height: 630,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Fightflo: Video analysis for serious fighters",
+    description:
+      "Upload any training video. Get timestamped technical coaching in minutes.",
+    images: [`${basePath}/og-image.jpg`],
   },
 };
 
