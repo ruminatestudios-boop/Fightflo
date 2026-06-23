@@ -9,7 +9,45 @@ import { formatDisplayName } from "@/lib/user/displayName";
 import { storeUserName } from "@/lib/storage/client";
 import type { SkillLevel, SportId } from "@/types";
 
-export type HomeSettingsModal = "hub" | "name" | "sport" | "level" | null;
+export type HomeSettingsModal = "hub" | "name" | "sport" | "level" | "guide" | null;
+
+const GUIDE_STEPS = [
+  {
+    title: "Upload or record a clip",
+    body: "Film bag work, pads, or sparring — or use Live Guard to track your guard in real time while you train.",
+  },
+  {
+    title: "Get your coaching report",
+    body: "Our engine reads your footage and gives you timestamped fixes — exactly what's wrong, and when it happened.",
+  },
+  {
+    title: "Try the drill it gives you",
+    body: "Every report ends with one specific drill targeting your biggest fault — not generic advice.",
+  },
+  {
+    title: "Re-upload to check progress",
+    body: "Film the same drill again. We compare it to your last clip and tell you if the fault is actually fixed.",
+  },
+];
+
+const GUIDE_FEATURES = [
+  {
+    title: "Live Guard",
+    body: "Real-time camera tracking — buzzes the moment your hands drop below chin level.",
+  },
+  {
+    title: "Shadowboxing",
+    body: "Record a round live and get a full combo and mechanics breakdown after.",
+  },
+  {
+    title: "Re-upload",
+    body: "Check whether your last session's main fault has actually improved.",
+  },
+  {
+    title: "Progress",
+    body: "See your guard, footwork, and combos charted across every session.",
+  },
+];
 
 const LEVELS: { id: SkillLevel; label: string; hint: string }[] = [
   {
@@ -136,6 +174,14 @@ export function HomeSettingsModals({
         bodyClassName="home-settings-modal-body"
       >
         <div className="home-settings-hub-list">
+          <button
+            type="button"
+            className="home-settings-hub-row"
+            onClick={() => onNavigate?.("guide")}
+          >
+            <span className="home-settings-hub-row-kicker">How to use Fightflo</span>
+            <span className="home-settings-hub-row-value">Quick guide →</span>
+          </button>
           <button
             type="button"
             className="home-settings-hub-row"
@@ -280,6 +326,38 @@ export function HomeSettingsModals({
           }}
           options={LEVEL_OPTIONS}
         />
+      </ModalShell>
+
+      <ModalShell
+        open={open === "guide"}
+        onClose={onClose}
+        compact
+        subtitle="Quick guide"
+        title="How to use Fightflo"
+        titleId="home-guide-modal-title"
+        bodyClassName="home-settings-modal-body"
+      >
+        <div className="home-guide-steps">
+          {GUIDE_STEPS.map((step, i) => (
+            <div key={step.title} className="home-guide-step">
+              <span className="home-guide-step-number">{i + 1}</span>
+              <div className="home-guide-step-text">
+                <p className="home-guide-step-title">{step.title}</p>
+                <p className="home-guide-step-body">{step.body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="home-guide-section-label">What each tool does</p>
+        <div className="home-guide-features">
+          {GUIDE_FEATURES.map((feature) => (
+            <div key={feature.title} className="home-guide-feature">
+              <p className="home-guide-feature-title">{feature.title}</p>
+              <p className="home-guide-feature-body">{feature.body}</p>
+            </div>
+          ))}
+        </div>
       </ModalShell>
     </>
   );
