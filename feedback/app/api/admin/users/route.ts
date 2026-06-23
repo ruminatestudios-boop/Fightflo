@@ -20,12 +20,22 @@ export async function GET(request: NextRequest) {
   }
 
   const search = request.nextUrl.searchParams.get("q")?.trim();
-  const users = search ? await searchUsers(search) : await listRecentUsers(50);
+  const users = search ? await searchUsers(search) : await listRecentUsers(100);
 
   const withSessionCounts = await Promise.all(
     users.map(async (u) => {
       const sessions = await getUserSessions(u.id);
-      return { ...u, sessionCount: sessions.length };
+      const sorted = [...sessions].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      const latest = sorted[0];
+      return {
+        ...u,
+        sessionCount: sessions.length,
+        inviteCode: (latest as { invite_code?: string | null } | undefined)?.invite_code ?? null,
+        lastActiveAt: latest?.created_at ?? null,
+        lastSessionId: latest?.id ?? null,
+      };
     })
   );
 

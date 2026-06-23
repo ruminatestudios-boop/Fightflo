@@ -14,6 +14,9 @@ interface UserRow {
   bonus_scans: number;
   created_at: string;
   sessionCount: number;
+  inviteCode: string | null;
+  lastActiveAt: string | null;
+  lastSessionId: string | null;
 }
 
 const SECRET_KEY = "fightflo_admin_secret";
@@ -25,6 +28,7 @@ export default function UsersAdminPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [activeOnly, setActiveOnly] = useState(true);
 
   useEffect(() => {
     const stored = typeof window !== "undefined" ? sessionStorage.getItem(SECRET_KEY) : null;
@@ -179,20 +183,33 @@ export default function UsersAdminPage() {
           </button>
         </div>
 
-        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem" }}>
+        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem", alignItems: "center" }}>
           <button onClick={() => void handleExportCsv(true)} style={smallBtnStyle}>
             Export emails (CSV)
           </button>
           <button onClick={() => void handleExportCsv(false)} style={smallBtnStyle}>
             Export all users (CSV)
           </button>
+          <button
+            onClick={() => setActiveOnly((v) => !v)}
+            style={activeOnly ? activeFilterBtnStyle : smallBtnStyle}
+          >
+            {activeOnly ? "Showing active only" : "Showing all"}
+          </button>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-          {users.length === 0 ? (
-            <p style={{ fontSize: "0.85rem", opacity: 0.6 }}>No users found.</p>
-          ) : (
-            users.map((u) => (
+          {(() => {
+            const filtered = activeOnly ? users.filter((u) => u.sessionCount > 0) : users;
+            const sorted = [...filtered].sort((a, b) => b.sessionCount - a.sessionCount);
+            if (sorted.length === 0) {
+              return (
+                <p style={{ fontSize: "0.85rem", opacity: 0.6 }}>
+                  {activeOnly ? "No users with sessions yet." : "No users found."}
+                </p>
+              );
+            }
+            return sorted.map((u) => (
               <div key={u.id} style={rowStyle}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                   <span style={{ fontSize: "0.8rem", fontFamily: "monospace", opacity: 0.8 }}>
@@ -208,20 +225,34 @@ export default function UsersAdminPage() {
                   {u.sport} · {u.level} · {u.sessionCount} session{u.sessionCount === 1 ? "" : "s"} ·{" "}
                   {u.free_analyses_used}/{u.free_analyses_limit} free used · {u.bonus_scans} bonus
                 </p>
+                <p style={{ margin: "0.2rem 0 0", fontSize: "0.72rem", color: "#fa4141" }}>
+                  {u.inviteCode ? `via ${u.inviteCode}` : "no invite code"}
+                  {u.lastActiveAt ? ` · last active ${new Date(u.lastActiveAt).toLocaleDateString()}` : ""}
+                </p>
                 <p style={{ margin: "0.2rem 0 0.6rem", fontSize: "0.68rem", opacity: 0.4 }}>
                   {u.id} · joined {new Date(u.created_at).toLocaleDateString()}
                 </p>
-                <div style={{ display: "flex", gap: "0.5rem" }}>
+                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
                   <button onClick={() => void handleGrantPro(u.id, u.is_pro)} style={smallBtnStyle}>
                     {u.is_pro ? "Revoke Pro" : "Grant Pro"}
                   </button>
                   <button onClick={() => void handleAddBonusScans(u.id, u.bonus_scans)} style={smallBtnStyle}>
                     Set bonus scans
                   </button>
+                  {u.lastSessionId ? (
+                    <a
+                      href={`/report/${u.lastSessionId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ ...smallBtnStyle, textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+                    >
+                      View last report
+                    </a>
+                  ) : null}
                 </div>
               </div>
-            ))
-          )}
+            ));
+          })()}
         </div>
       </div>
     </div>
@@ -287,6 +318,12 @@ const smallBtnStyle: React.CSSProperties = {
   fontSize: "0.8rem",
   cursor: "pointer",
   whiteSpace: "nowrap",
+};
+
+const activeFilterBtnStyle: React.CSSProperties = {
+  ...smallBtnStyle,
+  background: "#fa4141",
+  borderColor: "#fa4141",
 };
 
 const rowStyle: React.CSSProperties = {
