@@ -43,9 +43,13 @@ async function createLandmarker(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
   );
 
+  // VIDEO mode = live camera — detect multiple candidates so we can lock
+  // onto one fighter instead of whichever person MediaPipe finds first.
+  const numPoses = runningMode === "VIDEO" ? 4 : 1;
   const options = createSportsPoseLandmarkerOptions(
     runningMode,
-    preferGpu ? "GPU" : "CPU"
+    preferGpu ? "GPU" : "CPU",
+    numPoses
   );
 
   try {

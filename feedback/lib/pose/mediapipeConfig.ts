@@ -97,7 +97,8 @@ export const POSE_KICK_NODES: (keyof FrameLandmarks)[] = [
 
 export function createSportsPoseLandmarkerOptions(
   runningMode: "IMAGE" | "VIDEO",
-  delegate: "GPU" | "CPU" = "GPU"
+  delegate: "GPU" | "CPU" = "GPU",
+  numPoses = 1
 ): PoseLandmarkerOptions {
   return {
     baseOptions: {
@@ -105,7 +106,7 @@ export function createSportsPoseLandmarkerOptions(
       delegate,
     },
     runningMode,
-    numPoses: 1,
+    numPoses,
     minPoseDetectionConfidence: POSE_SPORTS_DETECTION_CONFIDENCE,
     minPosePresenceConfidence: POSE_SPORTS_PRESENCE_CONFIDENCE,
     minTrackingConfidence: POSE_SPORTS_TRACKING_CONFIDENCE,
