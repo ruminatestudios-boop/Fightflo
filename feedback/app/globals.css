@@ -9621,13 +9621,9 @@ button.stepguide-card-ts:active {
   z-index: -1;
 }
 
-.how-it-works-copy {
-  margin-bottom: 1.5rem;
-}
-
 .how-it-works-headline {
-  margin: 0 0 0.75rem;
-  font-size: 1.85rem;
+  margin: 0 0 1rem;
+  font-size: 1.55rem;
   font-weight: 700;
   line-height: 1.2;
   color: #fff;
@@ -9637,12 +9633,53 @@ button.stepguide-card-ts:active {
   color: #fa4141;
 }
 
-.how-it-works-body {
+.how-it-works-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.how-it-works-step {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 10, 10, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+.how-it-works-step-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(250, 65, 65, 0.4);
+  background: rgba(250, 65, 65, 0.12);
+  color: #fa4141;
+}
+
+.how-it-works-step-icon svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.how-it-works-step-title {
   margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.65);
-  max-width: 26rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.how-it-works-step-body {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .how-it-works-cta {
