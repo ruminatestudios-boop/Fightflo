@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Barlow_Condensed, Playfair_Display, Instrument_Sans, Inter, Oswald } from "next/font/google";
 import { Analytics as PlausibleAnalytics } from "@/components/shared/Analytics";
 import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
+import { ErrorReporter } from "@/components/shared/ErrorReporter";
 import { NavigationTracker } from "@/components/shared/NavigationTracker";
 import { PWARegister } from "@/components/shared/PWARegister";
 import "./globals.css";
@@ -93,6 +94,7 @@ export default function RootLayout({
         <PWARegister />
         <PlausibleAnalytics />
         <VercelAnalytics />
+        <ErrorReporter />
         {children}
       </body>
     </html>

@@ -163,3 +163,18 @@ ALTER TABLE scan_costs ADD COLUMN IF NOT EXISTS invite_code TEXT;
 -- existing free users who hadn't already used more than 1.
 ALTER TABLE users ALTER COLUMN free_analyses_limit SET DEFAULT 3;
 UPDATE users SET free_analyses_limit = 3 WHERE free_analyses_limit < 3;
+
+-- Client-side error log — lets the operator see real user errors without
+-- needing device access or a support ticket.
+CREATE TABLE IF NOT EXISTS client_errors (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  message TEXT NOT NULL,
+  stack TEXT,
+  context TEXT,
+  url TEXT,
+  user_agent TEXT,
+  user_id TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_client_errors_created_at ON client_errors(created_at);

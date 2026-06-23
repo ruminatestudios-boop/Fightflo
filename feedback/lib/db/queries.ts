@@ -1429,3 +1429,47 @@ export async function listAllUsersForExport(
   if (error) return [];
   return (data as UserExportRow[]) ?? [];
 }
+
+export interface ClientErrorRecord {
+  id: string;
+  message: string;
+  stack: string | null;
+  context: string | null;
+  url: string | null;
+  user_agent: string | null;
+  user_id: string | null;
+  created_at: string;
+}
+
+export async function recordClientError(input: {
+  message: string;
+  stack?: string | null;
+  context?: string | null;
+  url?: string | null;
+  userAgent?: string | null;
+  userId?: string | null;
+}): Promise<void> {
+  if (isDevStoreActive()) return;
+
+  const supabase = getSupabase();
+  await supabase.from("client_errors").insert({
+    message: input.message.slice(0, 2000),
+    stack: input.stack?.slice(0, 4000) ?? null,
+    context: input.context ?? null,
+    url: input.url ?? null,
+    user_agent: input.userAgent?.slice(0, 500) ?? null,
+    user_id: input.userId ?? null,
+  });
+}
+
+export async function listClientErrors(limit = 200): Promise<ClientErrorRecord[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("client_errors")
+    .select()
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) return [];
+  return (data as ClientErrorRecord[]) ?? [];
+}

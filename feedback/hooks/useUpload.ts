@@ -230,6 +230,9 @@ export function useUpload() {
 
   const failUpload = useCallback(
     (message: string, allowance?: AnalysisAllowance) => {
+      void import("@/components/shared/ErrorReporter").then(({ reportClientError }) =>
+        reportClientError(message, { context: "upload" })
+      );
       setState((s) => ({
         ...s,
         phase: "error",
@@ -448,7 +451,10 @@ export function useUpload() {
       } catch (error) {
         stopSignProgress();
         const message = error instanceof Error ? error.message : "Upload failed";
-        if (message === "Upload cancelled") {
+        const isAbort =
+          error instanceof Error &&
+          (error.name === "AbortError" || message.toLowerCase().includes("aborted"));
+        if (message === "Upload cancelled" || isAbort) {
           setState({
             phase: "idle",
             progress: 0,
