@@ -49,6 +49,10 @@ export const metadata: Metadata = {
   description:
     "Film your training. AI tracks your movement and tells you exactly what to improve.",
   manifest: `${basePath}/manifest.webmanifest`,
+  icons: {
+    icon: `${basePath}/icon.svg`,
+    apple: `${basePath}/icon.svg`,
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
