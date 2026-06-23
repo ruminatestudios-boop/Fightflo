@@ -9590,7 +9590,7 @@ button.stepguide-card-ts:active {
   right: 1.25rem;
   z-index: 10;
   padding: 0.5rem 0.9rem;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   border: 1px solid rgba(255, 255, 255, 0.3);
   background: rgba(0, 0, 0, 0.35);
   color: #fff;
