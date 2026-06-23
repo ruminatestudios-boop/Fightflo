@@ -55,7 +55,7 @@ export function HowItWorksScreen({ onGetStarted }: HowItWorksScreenProps) {
         <div className="how-it-works-gradient" aria-hidden />
 
         <h1 className="how-it-works-headline">
-          Upload footage.
+          Upload your fight footage.
           <br />
           <span className="how-it-works-headline-accent">Know exactly</span> what to fix.
         </h1>
