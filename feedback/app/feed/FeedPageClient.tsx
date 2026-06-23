@@ -1,17 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NetflixHome } from "@/components/netflix/NetflixHome";
-import { FeedbackIntroScreen } from "@/components/screens/FeedbackIntroScreen";
 import { HowItWorksScreen } from "@/components/screens/HowItWorksScreen";
 import { PwaInstallModal } from "@/components/shared/PwaInstallModal";
 import {
-  clearIntroDismissed,
   hasSeenHowItWorks,
-  isIntroDismissed,
   markHowItWorksSeen,
-  markIntroDismissed,
-  purgeLegacyIntroPersistence,
   storeAffiliateCode,
   storeCrewToken,
 } from "@/lib/storage/client";
@@ -24,18 +19,15 @@ function replaceQuery(params: URLSearchParams) {
 }
 
 export function FeedPageClient() {
-  const [showIntro, setShowIntro] = useState(() => !isIntroDismissed());
   const [showHowItWorks, setShowHowItWorks] = useState(() => !hasSeenHowItWorks());
   const [upgradeNotice, setUpgradeNotice] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    purgeLegacyIntroPersistence();
     const params = new URLSearchParams(window.location.search);
 
     // Dev preview — force the how-it-works screen regardless of state
     if (params.get("preview") === "how-it-works") {
-      setShowIntro(false);
       setShowHowItWorks(true);
       return;
     }
@@ -46,8 +38,6 @@ export function FeedPageClient() {
       storeCrewToken(crewParam);
       params.delete("crew");
       replaceQuery(params);
-      markIntroDismissed();
-      setShowIntro(false);
       markHowItWorksSeen();
       setShowHowItWorks(false);
     }
@@ -60,24 +50,7 @@ export function FeedPageClient() {
       replaceQuery(params);
     }
 
-    if (params.get("intro") === "skip") {
-      markIntroDismissed();
-      setShowIntro(false);
-      markHowItWorksSeen();
-      setShowHowItWorks(false);
-      params.delete("intro");
-      replaceQuery(params);
-      return;
-    }
-    if (params.get("reset") === "intro") {
-      clearIntroDismissed();
-      window.history.replaceState(null, "", window.location.pathname);
-      setShowIntro(true);
-      return;
-    }
     if (params.get("topup") === "success") {
-      markIntroDismissed();
-      setShowIntro(false);
       markHowItWorksSeen();
       setShowHowItWorks(false);
       setUpgradeNotice("Scan pack added! Your bonus scans are ready.");
@@ -87,8 +60,6 @@ export function FeedPageClient() {
       return;
     }
     if (params.get("upgraded") === "true") {
-      markIntroDismissed();
-      setShowIntro(false);
       markHowItWorksSeen();
       setShowHowItWorks(false);
       setUpgradeNotice("Activating your Pro plan…");
@@ -121,29 +92,21 @@ export function FeedPageClient() {
       return;
     }
     if (readHomeUrlState().view !== "home") {
-      setShowIntro(false);
       setShowHowItWorks(false);
     }
   }, []);
 
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
-  const dismissIntro = useCallback(() => {
-    markIntroDismissed();
-    setShowIntro(false);
-  }, []);
-
-  const dismissHowItWorks = useCallback(() => {
-    markHowItWorksSeen();
-    setShowHowItWorks(false);
-  }, []);
-
-  if (showIntro) {
-    return <FeedbackIntroScreen onGetStarted={dismissIntro} />;
-  }
-
   if (showHowItWorks) {
-    return <HowItWorksScreen onGetStarted={dismissHowItWorks} />;
+    return (
+      <HowItWorksScreen
+        onGetStarted={() => {
+          markHowItWorksSeen();
+          setShowHowItWorks(false);
+        }}
+      />
+    );
   }
 
   return (

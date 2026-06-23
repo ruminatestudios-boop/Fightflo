@@ -1,12 +1,5 @@
 /** Product copy — AI video coaching */
 
-export const INTRO_COPY = {
-  headline: "Turn footage into fight IQ",
-  subtitle:
-    "Upload your shadowboxing or fight video. Get AI-powered breakdowns of your defense, timing, footwork, and habits—so you know exactly what to fix next.",
-  getStartedLabel: "Get your FREE analysis",
-} as const;
-
 export const FEED_COPY = {
   headline: "Train smart, not just hard. Fix what's actually wrong.",
   body: "Know exactly what to fix, before your next round.",
