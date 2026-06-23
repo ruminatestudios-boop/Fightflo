@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getScanCostCollector } from "@/lib/telemetry/scanCost";
 
-const DEFAULT_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+const DEFAULT_MODEL = process.env.GEMINI_MODEL ?? "gemini-3.5-flash";
 
 let client: GoogleGenerativeAI | null = null;
 
