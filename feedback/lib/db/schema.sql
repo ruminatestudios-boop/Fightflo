@@ -213,3 +213,14 @@ CREATE TABLE IF NOT EXISTS content_links (
 
 CREATE INDEX IF NOT EXISTS idx_content_links_created_at ON content_links(created_at);
 CREATE INDEX IF NOT EXISTS idx_content_links_tags ON content_links USING GIN(tags);
+
+-- Personal task list — two buckets (now / later). Checking a task off
+-- deletes it rather than marking it done; this is a scratchpad, not history.
+CREATE TABLE IF NOT EXISTS tasks (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  text TEXT NOT NULL,
+  bucket TEXT NOT NULL DEFAULT 'now', -- 'now' or 'later'
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_tasks_bucket ON tasks(bucket);

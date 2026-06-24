@@ -1585,3 +1585,35 @@ export async function deleteContentLink(id: string): Promise<void> {
   const supabase = getSupabase();
   await supabase.from("content_links").delete().eq("id", id);
 }
+
+export interface TaskRecord {
+  id: string;
+  text: string;
+  bucket: "now" | "later";
+  created_at: string;
+}
+
+export async function createTask(input: { text: string; bucket: "now" | "later" }): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase.from("tasks").insert({
+    text: input.text.trim(),
+    bucket: input.bucket,
+  });
+  if (error) throw error;
+}
+
+export async function listTasks(): Promise<TaskRecord[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("tasks")
+    .select()
+    .order("created_at", { ascending: true });
+
+  if (error) return [];
+  return (data as TaskRecord[]) ?? [];
+}
+
+export async function deleteTask(id: string): Promise<void> {
+  const supabase = getSupabase();
+  await supabase.from("tasks").delete().eq("id", id);
+}
