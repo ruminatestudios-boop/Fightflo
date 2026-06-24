@@ -185,3 +185,16 @@ CREATE INDEX IF NOT EXISTS idx_client_errors_created_at ON client_errors(created
 -- secondary_weaknesses (same insert, one missing column fails the whole row).
 ALTER TABLE reports ADD COLUMN IF NOT EXISTS pose_quality JSONB;
 ALTER TABLE reports ADD COLUMN IF NOT EXISTS confirmed_events JSONB NOT NULL DEFAULT '[]';
+
+-- Public testimonial submissions — link goes out to real users so the
+-- operator doesn't have to text each person individually for a review.
+CREATE TABLE IF NOT EXISTS testimonials (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT,
+  body TEXT NOT NULL,
+  rating INTEGER,
+  approved BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_testimonials_created_at ON testimonials(created_at);

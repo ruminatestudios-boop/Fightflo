@@ -1473,3 +1473,48 @@ export async function listClientErrors(limit = 200): Promise<ClientErrorRecord[]
   if (error) return [];
   return (data as ClientErrorRecord[]) ?? [];
 }
+
+export interface TestimonialRecord {
+  id: string;
+  name: string | null;
+  body: string;
+  rating: number | null;
+  approved: boolean;
+  created_at: string;
+}
+
+export async function createTestimonial(input: {
+  name?: string | null;
+  body: string;
+  rating?: number | null;
+}): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase.from("testimonials").insert({
+    name: input.name?.trim().slice(0, 80) || null,
+    body: input.body.trim().slice(0, 600),
+    rating: input.rating ?? null,
+  });
+  if (error) throw error;
+}
+
+export async function listTestimonials(limit = 200): Promise<TestimonialRecord[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("testimonials")
+    .select()
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) return [];
+  return (data as TestimonialRecord[]) ?? [];
+}
+
+export async function setTestimonialApproved(id: string, approved: boolean): Promise<void> {
+  const supabase = getSupabase();
+  await supabase.from("testimonials").update({ approved }).eq("id", id);
+}
+
+export async function deleteTestimonial(id: string): Promise<void> {
+  const supabase = getSupabase();
+  await supabase.from("testimonials").delete().eq("id", id);
+}
