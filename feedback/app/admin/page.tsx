@@ -8,6 +8,7 @@ const TABS = [
   { id: "invite-codes", label: "Invite codes", path: "/admin/invite-codes" },
   { id: "scan-costs", label: "Scan costs", path: "/admin/scan-costs" },
   { id: "errors", label: "Errors", path: "/admin/errors" },
+  { id: "accuracy", label: "Accuracy", path: "/admin/accuracy" },
   { id: "users", label: "Users", path: "/admin/users" },
   { id: "sessions", label: "Sessions", path: "/admin/sessions" },
   { id: "conversions", label: "Conversions", path: "/admin/conversions" },

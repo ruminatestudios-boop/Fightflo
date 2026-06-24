@@ -227,6 +227,24 @@ CREATE TABLE IF NOT EXISTS tasks (
 CREATE INDEX IF NOT EXISTS idx_tasks_bucket ON tasks(bucket);
 CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project);
 
+-- Manual accuracy review — each row is one judged claim (a report's main
+-- weakness, or one of its positives) cross-checked against the actual
+-- video frame. claim_id is stable per report+slot so re-reviewing updates
+-- rather than duplicates. Drives the hit-rate tracker in /admin/accuracy.
+CREATE TABLE IF NOT EXISTS claim_reviews (
+  claim_id TEXT PRIMARY KEY,
+  report_id UUID NOT NULL,
+  session_id UUID NOT NULL,
+  claim_kind TEXT NOT NULL, -- 'weakness' or 'positive'
+  weakness_type TEXT,
+  verdict TEXT NOT NULL, -- 'match' | 'no_match' | 'unsure'
+  fail_reason TEXT,
+  reviewed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_claim_reviews_verdict ON claim_reviews(verdict);
+CREATE INDEX IF NOT EXISTS idx_claim_reviews_weakness_type ON claim_reviews(weakness_type);
+
 -- Was missing on the first version of this table.
 ALTER TABLE tasks ADD COLUMN IF NOT EXISTS project TEXT NOT NULL DEFAULT 'fightflo';
 

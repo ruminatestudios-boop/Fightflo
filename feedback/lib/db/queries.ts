@@ -1657,3 +1657,56 @@ export async function deleteTask(id: string): Promise<void> {
   const supabase = getSupabase();
   await supabase.from("tasks").delete().eq("id", id);
 }
+
+export interface ClaimReviewRecord {
+  claim_id: string;
+  report_id: string;
+  session_id: string;
+  claim_kind: "weakness" | "positive";
+  weakness_type: string | null;
+  verdict: "match" | "no_match" | "unsure";
+  fail_reason: string | null;
+  reviewed_at: string;
+}
+
+export async function listRecentReportsForReview(limit = 30): Promise<Report[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("reports")
+    .select()
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) return [];
+  return (data as Report[]) ?? [];
+}
+
+export async function listClaimReviews(): Promise<ClaimReviewRecord[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase.from("claim_reviews").select();
+  if (error) return [];
+  return (data as ClaimReviewRecord[]) ?? [];
+}
+
+export async function upsertClaimReview(input: {
+  claimId: string;
+  reportId: string;
+  sessionId: string;
+  claimKind: "weakness" | "positive";
+  weaknessType?: string | null;
+  verdict: "match" | "no_match" | "unsure";
+  failReason?: string | null;
+}): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase.from("claim_reviews").upsert({
+    claim_id: input.claimId,
+    report_id: input.reportId,
+    session_id: input.sessionId,
+    claim_kind: input.claimKind,
+    weakness_type: input.weaknessType ?? null,
+    verdict: input.verdict,
+    fail_reason: input.failReason ?? null,
+    reviewed_at: new Date().toISOString(),
+  });
+  if (error) throw error;
+}
