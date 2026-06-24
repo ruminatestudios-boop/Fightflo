@@ -22,12 +22,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await request.json()) as { text?: string; bucket?: "now" | "later" };
+  const body = (await request.json()) as {
+    text?: string;
+    bucket?: "now" | "later";
+    project?: "fightflo" | "synclyst";
+  };
   if (!body.text?.trim()) {
     return NextResponse.json({ error: "text required" }, { status: 400 });
   }
 
-  await createTask({ text: body.text, bucket: body.bucket === "later" ? "later" : "now" });
+  await createTask({
+    text: body.text,
+    bucket: body.bucket === "later" ? "later" : "now",
+    project: body.project === "synclyst" ? "synclyst" : "fightflo",
+  });
   return NextResponse.json({ ok: true });
 }
 

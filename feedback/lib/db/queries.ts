@@ -1586,18 +1586,26 @@ export async function deleteContentLink(id: string): Promise<void> {
   await supabase.from("content_links").delete().eq("id", id);
 }
 
+export type TaskProject = "fightflo" | "synclyst";
+
 export interface TaskRecord {
   id: string;
   text: string;
   bucket: "now" | "later";
+  project: TaskProject;
   created_at: string;
 }
 
-export async function createTask(input: { text: string; bucket: "now" | "later" }): Promise<void> {
+export async function createTask(input: {
+  text: string;
+  bucket: "now" | "later";
+  project: TaskProject;
+}): Promise<void> {
   const supabase = getSupabase();
   const { error } = await supabase.from("tasks").insert({
     text: input.text.trim(),
     bucket: input.bucket,
+    project: input.project,
   });
   if (error) throw error;
 }

@@ -220,7 +220,12 @@ CREATE TABLE IF NOT EXISTS tasks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   text TEXT NOT NULL,
   bucket TEXT NOT NULL DEFAULT 'now', -- 'now' or 'later'
+  project TEXT NOT NULL DEFAULT 'fightflo', -- 'fightflo' or 'synclyst'
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_tasks_bucket ON tasks(bucket);
+CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project);
+
+-- Was missing on the first version of this table.
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS project TEXT NOT NULL DEFAULT 'fightflo';

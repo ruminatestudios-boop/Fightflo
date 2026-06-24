@@ -2,14 +2,22 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+type Project = "fightflo" | "synclyst";
+
 interface Task {
   id: string;
   text: string;
   bucket: "now" | "later";
+  project: Project;
   created_at: string;
 }
 
 const SECRET_KEY = "fightflo_admin_secret";
+
+const PROJECTS: { id: Project; label: string }[] = [
+  { id: "fightflo", label: "Fightflo" },
+  { id: "synclyst", label: "Synclyst" },
+];
 
 export default function TasksAdminPage() {
   const [secret, setSecret] = useState("");
@@ -18,8 +26,7 @@ export default function TasksAdminPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [newNow, setNewNow] = useState("");
-  const [newLater, setNewLater] = useState("");
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const stored = typeof window !== "undefined" ? sessionStorage.getItem(SECRET_KEY) : null;
@@ -55,24 +62,24 @@ export default function TasksAdminPage() {
   }, [authed]);
 
   const addTask = useCallback(
-    async (bucket: "now" | "later") => {
-      const text = bucket === "now" ? newNow : newLater;
-      if (!text.trim()) return;
+    async (project: Project, bucket: "now" | "later") => {
+      const key = `${project}-${bucket}`;
+      const text = drafts[key];
+      if (!text?.trim()) return;
       try {
         const res = await fetch("/api/admin/tasks", {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-admin-secret": secret },
-          body: JSON.stringify({ text, bucket }),
+          body: JSON.stringify({ text, bucket, project }),
         });
         if (!res.ok) throw new Error("Failed to add");
-        if (bucket === "now") setNewNow("");
-        else setNewLater("");
+        setDrafts((prev) => ({ ...prev, [key]: "" }));
         await fetchItems(secret);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to add");
       }
     },
-    [newNow, newLater, secret, fetchItems]
+    [drafts, secret, fetchItems]
   );
 
   const completeTask = useCallback(
@@ -91,9 +98,6 @@ export default function TasksAdminPage() {
     },
     [secret, fetchItems]
   );
-
-  const nowTasks = useMemo(() => items.filter((t) => t.bucket === "now"), [items]);
-  const laterTasks = useMemo(() => items.filter((t) => t.bucket === "later"), [items]);
 
   if (!authed) {
     return (
@@ -121,28 +125,36 @@ export default function TasksAdminPage() {
 
   return (
     <div style={pageStyle}>
-      <div style={{ ...cardStyle, maxWidth: "760px" }}>
+      <div style={{ ...cardStyle, maxWidth: "1080px" }}>
         <h1 style={titleStyle}>Task list</h1>
         {error ? <p style={errorStyle}>{error}</p> : null}
 
-        <div style={columnsStyle}>
-          <TaskColumn
-            title="To do"
-            tasks={nowTasks}
-            value={newNow}
-            onChange={setNewNow}
-            onAdd={() => void addTask("now")}
-            onComplete={completeTask}
-          />
-          <TaskColumn
-            title="To do later"
-            tasks={laterTasks}
-            value={newLater}
-            onChange={setNewLater}
-            onAdd={() => void addTask("later")}
-            onComplete={completeTask}
-          />
-        </div>
+        {PROJECTS.map((proj) => {
+          const projTasks = items.filter((t) => t.project === proj.id);
+          return (
+            <div key={proj.id} style={projectSectionStyle}>
+              <h2 style={projectTitleStyle}>{proj.label}</h2>
+              <div style={columnsStyle}>
+                <TaskColumn
+                  title="To do"
+                  tasks={projTasks.filter((t) => t.bucket === "now")}
+                  value={drafts[`${proj.id}-now`] ?? ""}
+                  onChange={(v) => setDrafts((prev) => ({ ...prev, [`${proj.id}-now`]: v }))}
+                  onAdd={() => void addTask(proj.id, "now")}
+                  onComplete={completeTask}
+                />
+                <TaskColumn
+                  title="To do later"
+                  tasks={projTasks.filter((t) => t.bucket === "later")}
+                  value={drafts[`${proj.id}-later`] ?? ""}
+                  onChange={(v) => setDrafts((prev) => ({ ...prev, [`${proj.id}-later`]: v }))}
+                  onAdd={() => void addTask(proj.id, "later")}
+                  onComplete={completeTask}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -165,7 +177,7 @@ function TaskColumn({
 }) {
   return (
     <div style={columnStyle}>
-      <h2 style={columnTitleStyle}>{title}</h2>
+      <h3 style={columnTitleStyle}>{title}</h3>
       <div style={{ display: "flex", gap: "0.4rem", marginBottom: "0.75rem" }}>
         <input
           type="text"
@@ -219,7 +231,18 @@ const cardStyle: React.CSSProperties = {
 const titleStyle: React.CSSProperties = {
   fontSize: "1.5rem",
   fontWeight: 700,
-  marginBottom: "1rem",
+  marginBottom: "1.5rem",
+};
+
+const projectSectionStyle: React.CSSProperties = {
+  marginBottom: "2.25rem",
+};
+
+const projectTitleStyle: React.CSSProperties = {
+  fontSize: "1.1rem",
+  fontWeight: 700,
+  marginBottom: "0.85rem",
+  color: "#fa4141",
 };
 
 const columnsStyle: React.CSSProperties = {
