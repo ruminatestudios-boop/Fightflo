@@ -235,13 +235,19 @@ const titleStyle: React.CSSProperties = {
 };
 
 const projectSectionStyle: React.CSSProperties = {
-  marginBottom: "2.25rem",
+  marginBottom: "1.75rem",
+  padding: "1.25rem",
+  borderRadius: "0.9rem",
+  border: "1px solid rgba(255,255,255,0.14)",
+  background: "rgba(255,255,255,0.02)",
 };
 
 const projectTitleStyle: React.CSSProperties = {
   fontSize: "1.1rem",
   fontWeight: 700,
   marginBottom: "0.85rem",
+  paddingBottom: "0.6rem",
+  borderBottom: "1px solid rgba(255,255,255,0.1)",
   color: "#fa4141",
 };
 
