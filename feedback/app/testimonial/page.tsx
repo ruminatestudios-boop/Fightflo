@@ -10,6 +10,11 @@ export default function TestimonialPage() {
   const [error, setError] = useState("");
 
   const handleSubmit = useCallback(async () => {
+    if (!name.trim()) {
+      setError("Please add your name");
+      setStatus("error");
+      return;
+    }
     setStatus("submitting");
     setError("");
     try {
@@ -51,13 +56,14 @@ export default function TestimonialPage() {
         </p>
 
         <label style={labelStyle}>
-          Your name (optional)
+          Your name
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Alex"
             style={inputStyle}
+            required
             maxLength={80}
           />
         </label>

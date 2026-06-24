@@ -17,8 +17,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const name = body.name?.trim();
+    if (!name) {
+      return NextResponse.json({ error: "Please add your name" }, { status: 400 });
+    }
+
     await createTestimonial({
-      name: body.name,
+      name,
       body: text,
       rating: body.rating,
     });
