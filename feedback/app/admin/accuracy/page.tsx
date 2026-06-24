@@ -41,10 +41,6 @@ interface Review {
 
 const SECRET_KEY = "fightflo_admin_secret";
 
-function frameUrl(clipUrl: string): string {
-  return clipUrl.replace("/video/upload/", "/video/upload/so_1/").replace(/\.mp4($|\?)/, ".jpg$1");
-}
-
 type Claim = {
   claimId: string;
   reportId: string;
@@ -256,13 +252,16 @@ export default function AccuracyAdminPage() {
               <div key={claim.claimId} style={claimRowStyle}>
                 <div style={{ display: "flex", gap: "0.75rem" }}>
                   {claim.clip ? (
-                    <img
-                      src={frameUrl(claim.clip.clip_url)}
-                      alt={claim.title}
-                      style={{ width: "90px", height: "120px", objectFit: "cover", borderRadius: "0.5rem", flexShrink: 0 }}
+                    <video
+                      src={claim.clip.clip_url}
+                      controls
+                      loop
+                      muted
+                      playsInline
+                      style={{ width: "150px", height: "200px", objectFit: "cover", borderRadius: "0.5rem", flexShrink: 0, background: "#000" }}
                     />
                   ) : (
-                    <div style={{ width: "90px", height: "120px", borderRadius: "0.5rem", background: "#000", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", opacity: 0.4 }}>
+                    <div style={{ width: "150px", height: "200px", borderRadius: "0.5rem", background: "#000", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", opacity: 0.4 }}>
                       no clip
                     </div>
                   )}
