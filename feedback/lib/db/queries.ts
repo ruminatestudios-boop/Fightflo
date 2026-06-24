@@ -347,6 +347,38 @@ export async function updateSessionStatus(
     .eq("id", sessionId);
 }
 
+/**
+ * Claims the right to re-kick a stuck pipeline for this session. Returns
+ * true only if no kick has been recorded in the last `cooldownMs` — used
+ * to stop /api/report's polling-driven retry from firing a duplicate
+ * pipeline run on every single poll (each one racing the others' frame
+ * extraction and corrupting the landmark timeline).
+ */
+export async function claimPipelineRekick(
+  sessionId: string,
+  cooldownMs = 90_000
+): Promise<boolean> {
+  if (isDevStoreActive()) return true;
+
+  const supabase = getSupabase();
+  const { data } = await supabase
+    .from("sessions")
+    .select("pipeline_kicked_at")
+    .eq("id", sessionId)
+    .maybeSingle();
+
+  const lastKick = data?.pipeline_kicked_at
+    ? new Date(data.pipeline_kicked_at as string).getTime()
+    : 0;
+  if (Date.now() - lastKick < cooldownMs) return false;
+
+  await supabase
+    .from("sessions")
+    .update({ pipeline_kicked_at: new Date().toISOString() })
+    .eq("id", sessionId);
+  return true;
+}
+
 export async function updateSessionSport(
   sessionId: string,
   sport: SportId

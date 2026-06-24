@@ -209,6 +209,33 @@ function makeMomentFromCluster(
   };
 }
 
+/** Above this, a sustained low-hand position reads as a held stance (clinch,
+ * break, rest between rounds) rather than a coachable guard lapse — a real
+ * guard drop is a brief dynamic gap around a strike, not a multi-second hold. */
+const MAX_COACHABLE_DROP_SECONDS = 2.5;
+const STATIC_HOLD_VELOCITY = 0.004;
+
+function isStaticHold(cluster: GuardCluster): boolean {
+  if (cluster.endTime - cluster.startTime <= MAX_COACHABLE_DROP_SECONDS) return false;
+
+  let totalMovement = 0;
+  let samples = 0;
+  for (let i = 1; i < cluster.landmarks.length; i++) {
+    const prev = cluster.landmarks[i - 1];
+    const curr = cluster.landmarks[i];
+    for (const joint of ["left_wrist", "right_wrist"] as const) {
+      const a = prev[joint];
+      const b = curr[joint];
+      if (a && b) {
+        totalMovement += Math.hypot(b.x - a.x, b.y - a.y);
+        samples++;
+      }
+    }
+  }
+  const avgVelocity = samples > 0 ? totalMovement / samples : 0;
+  return avgVelocity < STATIC_HOLD_VELOCITY;
+}
+
 function flushCluster(
   cluster: GuardCluster,
   moments: GuardDropMoment[],
@@ -217,6 +244,7 @@ function flushCluster(
 ) {
   const duration = cluster.endTime - cluster.startTime;
   if (duration < 0.15 || cluster.frames.length < 3) return;
+  if (isStaticHold(cluster)) return;
 
   if (
     cluster.startTime - lastEnd.value < minGapSeconds &&

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDevDatabaseReady } from "@/lib/db/devFallback";
 import {
+  claimPipelineRekick,
   getReportById,
   getReportBySessionId,
   getSessionById,
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
           step === "uploading" ||
           (step === "extracting_frames" && ageMs > 45_000));
 
-      if (stuckEarly) {
+      if (stuckEarly && (await claimPipelineRekick(sessionId))) {
         scheduleAnalysisPipeline(sessionId);
       }
 
@@ -52,7 +53,11 @@ export async function GET(request: NextRequest) {
         !report &&
         session.status === "processing"
       ) {
-        if (ageMs > 20_000 && (step === "generating_clips" || message.includes("final touches"))) {
+        if (
+          ageMs > 20_000 &&
+          (step === "generating_clips" || message.includes("final touches")) &&
+          (await claimPipelineRekick(sessionId))
+        ) {
           scheduleAnalysisPipeline(sessionId);
           report = await getReportBySessionId(sessionId);
         }

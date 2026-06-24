@@ -229,3 +229,9 @@ CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project);
 
 -- Was missing on the first version of this table.
 ALTER TABLE tasks ADD COLUMN IF NOT EXISTS project TEXT NOT NULL DEFAULT 'fightflo';
+
+-- Stops /api/report's polling-driven retry from re-kicking a duplicate
+-- analysis pipeline run on every single poll once a session is past the
+-- "stuck" threshold — duplicate runs raced each other extracting frames,
+-- corrupting the landmark timeline and silently degrading report quality.
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS pipeline_kicked_at TIMESTAMPTZ;
