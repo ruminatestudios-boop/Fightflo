@@ -59,6 +59,7 @@ import { WeeklyFocusFlow } from "@/components/home/flows/WeeklyFocusFlow";
 import { BackButton } from "@/components/shared/BackButton";
 import { DevModeBanner } from "@/components/shared/DevModeBanner";
 import { HomePricingFooter } from "@/components/home/HomePricingFooter";
+import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { PaywallSheet } from "@/components/shared/PaywallSheet";
 import { PricingModal } from "@/components/shared/PricingModal";
 import { HomeStickyNav } from "@/components/netflix/HomeStickyNav";
@@ -128,6 +129,10 @@ function humanizeUploadError(raw: string): string {
   }
   return raw;
 }
+
+// Wired up but not shown yet — flip to true once there are enough
+// approved testimonials worth surfacing on the home feed.
+const SHOW_TESTIMONIALS = false;
 
 export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
   const router = useRouter();
@@ -601,6 +606,8 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
                 )}
               </div>
             )}
+
+            {SHOW_TESTIMONIALS ? <TestimonialsSection /> : null}
 
             {homeRoute === "feed" ? null : (
               <HomePricingFooter onPlansClick={() => setShowPricingModal(true)} />

@@ -1509,6 +1509,20 @@ export async function listTestimonials(limit = 200): Promise<TestimonialRecord[]
   return (data as TestimonialRecord[]) ?? [];
 }
 
+/** Public-facing — only approved testimonials, no admin auth required. */
+export async function listApprovedTestimonials(limit = 20): Promise<TestimonialRecord[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("testimonials")
+    .select()
+    .eq("approved", true)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) return [];
+  return (data as TestimonialRecord[]) ?? [];
+}
+
 export async function setTestimonialApproved(id: string, approved: boolean): Promise<void> {
   const supabase = getSupabase();
   await supabase.from("testimonials").update({ approved }).eq("id", id);
