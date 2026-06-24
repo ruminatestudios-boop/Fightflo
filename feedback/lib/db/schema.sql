@@ -198,3 +198,18 @@ CREATE TABLE IF NOT EXISTS testimonials (
 );
 
 CREATE INDEX IF NOT EXISTS idx_testimonials_created_at ON testimonials(created_at);
+
+-- Personal content-research tool — saved social media links (TikTok/IG/etc)
+-- with a label + tags, unrelated to the app itself. Just a swipe file.
+CREATE TABLE IF NOT EXISTS content_links (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  url TEXT NOT NULL,
+  platform TEXT NOT NULL DEFAULT 'other',
+  label TEXT,
+  tags TEXT[] NOT NULL DEFAULT '{}',
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_content_links_created_at ON content_links(created_at);
+CREATE INDEX IF NOT EXISTS idx_content_links_tags ON content_links USING GIN(tags);

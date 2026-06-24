@@ -1532,3 +1532,56 @@ export async function deleteTestimonial(id: string): Promise<void> {
   const supabase = getSupabase();
   await supabase.from("testimonials").delete().eq("id", id);
 }
+
+export interface ContentLinkRecord {
+  id: string;
+  url: string;
+  platform: string;
+  label: string | null;
+  tags: string[];
+  notes: string | null;
+  created_at: string;
+}
+
+function detectPlatform(url: string): string {
+  const lower = url.toLowerCase();
+  if (lower.includes("tiktok.com")) return "tiktok";
+  if (lower.includes("instagram.com")) return "instagram";
+  if (lower.includes("youtube.com") || lower.includes("youtu.be")) return "youtube";
+  if (lower.includes("twitter.com") || lower.includes("x.com")) return "x";
+  return "other";
+}
+
+export async function createContentLink(input: {
+  url: string;
+  label?: string | null;
+  tags?: string[];
+  notes?: string | null;
+}): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase.from("content_links").insert({
+    url: input.url.trim(),
+    platform: detectPlatform(input.url),
+    label: input.label?.trim() || null,
+    tags: input.tags?.map((t) => t.trim().toLowerCase()).filter(Boolean) ?? [],
+    notes: input.notes?.trim() || null,
+  });
+  if (error) throw error;
+}
+
+export async function listContentLinks(limit = 500): Promise<ContentLinkRecord[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("content_links")
+    .select()
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) return [];
+  return (data as ContentLinkRecord[]) ?? [];
+}
+
+export async function deleteContentLink(id: string): Promise<void> {
+  const supabase = getSupabase();
+  await supabase.from("content_links").delete().eq("id", id);
+}
