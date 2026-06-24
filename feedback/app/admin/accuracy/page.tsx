@@ -223,7 +223,7 @@ export default function AccuracyAdminPage() {
       <div style={{ ...cardStyle, maxWidth: "720px" }}>
         <h1 style={titleStyle}>Accuracy tracker</h1>
         <p style={subStyle}>
-          Look at each frame, judge if the claim matches what's actually happening, mark it.
+          Look at each frame, judge if the claim matches what&apos;s actually happening, mark it.
         </p>
         {error ? <p style={errorStyle}>{error}</p> : null}
 
