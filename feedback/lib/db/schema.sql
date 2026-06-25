@@ -253,3 +253,13 @@ ALTER TABLE tasks ADD COLUMN IF NOT EXISTS project TEXT NOT NULL DEFAULT 'fightf
 -- "stuck" threshold — duplicate runs raced each other extracting frames,
 -- corrupting the landmark timeline and silently degrading report quality.
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS pipeline_kicked_at TIMESTAMPTZ;
+
+-- Tracks which external service usage alerts (Cloudinary credits, etc)
+-- have already been emailed this billing cycle, so the daily cron only
+-- sends one warning per service per cycle instead of every single day.
+CREATE TABLE IF NOT EXISTS usage_alerts (
+  service TEXT PRIMARY KEY,
+  cycle_key TEXT NOT NULL,
+  last_alert_percent NUMERIC,
+  last_alert_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

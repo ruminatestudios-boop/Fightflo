@@ -1710,3 +1710,27 @@ export async function upsertClaimReview(input: {
   });
   if (error) throw error;
 }
+
+export async function getUsageAlertCycle(service: string): Promise<string | null> {
+  const supabase = getSupabase();
+  const { data } = await supabase
+    .from("usage_alerts")
+    .select("cycle_key")
+    .eq("service", service)
+    .maybeSingle();
+  return data?.cycle_key ?? null;
+}
+
+export async function recordUsageAlert(
+  service: string,
+  cycleKey: string,
+  percent: number
+): Promise<void> {
+  const supabase = getSupabase();
+  await supabase.from("usage_alerts").upsert({
+    service,
+    cycle_key: cycleKey,
+    last_alert_percent: percent,
+    last_alert_at: new Date().toISOString(),
+  });
+}

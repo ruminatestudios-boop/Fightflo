@@ -18,6 +18,7 @@ import {
   getUserById,
   listUsersForScheduledEmails,
 } from "@/lib/db/queries";
+import { runUsageAlertCheck } from "@/lib/monitoring/usageAlerts";
 import type { CoachingFeedback, SportId } from "@/types";
 
 function appUrl(): string {
@@ -109,8 +110,17 @@ export async function runScheduledEmails(): Promise<{
   upgrade: number;
   comeback: number;
   weekly: number;
+  usageAlerted: string[];
 }> {
-  const stats = { upgrade: 0, comeback: 0, weekly: 0 };
+  const stats = { upgrade: 0, comeback: 0, weekly: 0, usageAlerted: [] as string[] };
+
+  try {
+    const usageResult = await runUsageAlertCheck();
+    stats.usageAlerted = usageResult.alerted;
+  } catch (error) {
+    console.error("[runScheduledEmails] usage alert check failed:", error);
+  }
+
   const isSunday = new Date().getUTCDay() === 0;
   const weekKey = currentIsoWeekKey();
   const uploadUrl = appUrl();
