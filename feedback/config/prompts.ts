@@ -98,7 +98,14 @@ export const SHARE_CAPTIONS: Record<string, string> = {
 };
 
 export const UPLOAD_CONFIG = {
-  maxSizeBytes: 500 * 1024 * 1024,
+  // Must match the current Cloudinary plan's actual video file size cap —
+  // Free plan hard-caps at 100MB regardless of chunked upload (chunking
+  // only avoids per-request payload limits, not the account-wide cap).
+  // Raise this the moment the Cloudinary plan is upgraded (Plus = 2GB,
+  // Advanced = 4GB) — until then, anything bigger silently fails upload
+  // with a connection-reset that looks like a network error, not a
+  // clear "file too large" message.
+  maxSizeBytes: 95 * 1024 * 1024,
   acceptedMimeTypes: [
     "video/mp4",
     "video/webm",

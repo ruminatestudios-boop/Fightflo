@@ -47,7 +47,9 @@ export function validateUploadFile(file: File): string | null {
     return "Could not read that video. Try another clip from your camera roll.";
   }
   if (file.size > UPLOAD_CONFIG.maxSizeBytes) {
-    return "Video must be under 500MB";
+    const sizeMb = Math.round(file.size / (1024 * 1024));
+    const limitMb = Math.round(UPLOAD_CONFIG.maxSizeBytes / (1024 * 1024));
+    return `That clip is ${sizeMb}MB — over the current ${limitMb}MB limit. Try a shorter clip or lower the camera's recording quality.`;
   }
   if (!isAcceptableUploadFile(file)) {
     return "Accepted formats: MP4, MOV, M4V, AVI";
