@@ -214,6 +214,113 @@ async function uploadToCloudinaryWithRetry(
   }
 }
 
+const CHUNK_SIZE = 6_000_000; // Cloudinary's recommended chunk size
+const CHUNK_TIMEOUT_MS = 60_000;
+const MAX_CHUNK_ATTEMPTS = 4;
+
+function uploadChunk(
+  chunk: Blob,
+  start: number,
+  end: number,
+  total: number,
+  uniqueUploadId: string,
+  params: NonNullable<CloudinarySignResponse["cloudinary"]>,
+  onXhrReady?: (xhr: XMLHttpRequest) => void
+): Promise<CloudinaryUploadResult> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    onXhrReady?.(xhr);
+
+    xhr.addEventListener("load", () => {
+      try {
+        const data = JSON.parse(xhr.responseText) as CloudinaryUploadResult;
+        if (xhr.status >= 400 || data.error) {
+          reject(new Error(data.error?.message ?? `Cloudinary chunk upload failed (${xhr.status})`));
+          return;
+        }
+        resolve(data);
+      } catch {
+        reject(new Error("Cloudinary chunk upload failed — invalid response"));
+      }
+    });
+
+    xhr.addEventListener("error", () => {
+      reject(new Error("Network error during upload — try Wi‑Fi or a shorter clip"));
+    });
+
+    xhr.addEventListener("timeout", () => {
+      reject(new Error("Upload timed out — check your connection and try again"));
+    });
+
+    xhr.addEventListener("abort", () => {
+      reject(new Error("Upload cancelled"));
+    });
+
+    xhr.open("POST", params.uploadUrl);
+    xhr.timeout = CHUNK_TIMEOUT_MS;
+    xhr.setRequestHeader("X-Unique-Upload-Id", uniqueUploadId);
+    xhr.setRequestHeader("Content-Range", `bytes ${start}-${end - 1}/${total}`);
+
+    const formData = new FormData();
+    formData.append("file", chunk);
+    formData.append("api_key", params.apiKey);
+    formData.append("timestamp", String(params.timestamp));
+    formData.append("signature", params.signature);
+    formData.append("folder", params.folder);
+    formData.append("public_id", params.publicId);
+
+    xhr.send(formData);
+  });
+}
+
+/**
+ * Splits the upload into ~6MB pieces so a dropped connection only loses the
+ * current chunk, not the whole video — a flaky gym wifi blip mid-upload no
+ * longer means re-sending 50+MB from byte zero. Each chunk gets its own
+ * retry budget. Files smaller than one chunk just use the plain path.
+ */
+async function uploadToCloudinaryChunked(
+  file: File,
+  params: NonNullable<CloudinarySignResponse["cloudinary"]>,
+  onProgress: (percent: number) => void,
+  onXhrReady?: (xhr: XMLHttpRequest) => void
+): Promise<CloudinaryUploadResult> {
+  if (file.size <= CHUNK_SIZE) {
+    return uploadToCloudinaryWithRetry(file, params, onProgress, onXhrReady);
+  }
+
+  const uniqueUploadId = `chunk-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  let lastResult: CloudinaryUploadResult | null = null;
+
+  for (let start = 0; start < file.size; start += CHUNK_SIZE) {
+    const end = Math.min(start + CHUNK_SIZE, file.size);
+    const chunk = file.slice(start, end);
+
+    let attempt = 0;
+    while (true) {
+      try {
+        lastResult = await uploadChunk(chunk, start, end, file.size, uniqueUploadId, params, onXhrReady);
+        break;
+      } catch (error) {
+        attempt++;
+        const isTransient =
+          error instanceof Error &&
+          (error.message.includes("Network error during upload") ||
+            error.message.includes("timed out"));
+        if (!isTransient || attempt >= MAX_CHUNK_ATTEMPTS) throw error;
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+
+    onProgress(Math.round((end / file.size) * 100));
+  }
+
+  if (!lastResult?.secure_url || !lastResult.public_id) {
+    throw new Error("Cloudinary upload returned incomplete data");
+  }
+  return lastResult;
+}
+
 export function useUpload() {
   const [state, setState] = useState<UploadState>({
     phase: "idle",
@@ -326,7 +433,7 @@ export function useUpload() {
             message: "Uploading your video...",
           }));
 
-          const cloudinaryResult = await uploadToCloudinaryWithRetry(
+          const cloudinaryResult = await uploadToCloudinaryChunked(
             file,
             sign.cloudinary,
             (percent) => {
