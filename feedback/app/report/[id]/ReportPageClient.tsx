@@ -131,7 +131,12 @@ export function ReportPageClient({
     const text = `${caption}\n\n${report.main_weakness.title}\n${report.main_weakness.frequency}`;
 
     if (navigator.share) {
-      await navigator.share({ title: "Fightflo AI Coaching", text });
+      try {
+        await navigator.share({ title: "Fightflo AI Coaching", text });
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+        throw error;
+      }
     } else {
       await navigator.clipboard.writeText(text);
       setNotice("Caption copied to clipboard");
