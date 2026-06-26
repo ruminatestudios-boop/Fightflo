@@ -5,6 +5,7 @@ import {
   getReportById,
   getReportBySessionId,
   getSessionById,
+  updateSessionStatus,
 } from "@/lib/db/queries";
 import { scheduleAnalysisPipeline } from "@/lib/analysis/startPipeline";
 
@@ -45,6 +46,29 @@ export async function GET(request: NextRequest) {
 
       if (stuckEarly && (await claimPipelineRekick(sessionId))) {
         scheduleAnalysisPipeline(sessionId);
+      }
+
+      // Self-heal: the report is the part that matters and it already saved.
+      // If clip generation/export died silently after that (serverless
+      // timeout kills the function before the pipeline's own catch block
+      // can run), the session is left stuck on "processing" forever and
+      // the client polls indefinitely showing "Cutting your highlight
+      // clips…" with no way out. Past a generous grace period, just mark
+      // it complete — clips are a nice-to-have, not the report itself.
+      if (
+        report &&
+        session.status === "processing" &&
+        ageMs > 3 * 60_000 &&
+        ["generating_clips", "writing_report", "preparing_download"].includes(step)
+      ) {
+        await updateSessionStatus(sessionId, "complete", {
+          step: "complete",
+          message: "Your report is ready.",
+        });
+        session.status = "complete";
+        (session as { progress_step?: string }).progress_step = "complete";
+        (session as { progress_message?: string }).progress_message =
+          "Your report is ready.";
       }
 
       // Local dev resilience: if a session is stuck on late steps, re-kick once.
