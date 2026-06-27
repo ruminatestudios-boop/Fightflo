@@ -53,6 +53,7 @@ export interface ExtensionPeak {
   hand: "lead" | "rear";
   maxReach: number;
   elbowAngle: number | null;
+  hipRotationDeg: number | null;
   lateral: number;
   forward: number;
 }
@@ -118,6 +119,7 @@ export function updateExtensionPeak(
       hand: sample.hand,
       maxReach: sample.reach,
       elbowAngle: sample.elbow,
+      hipRotationDeg: metrics.hip_rotation_deg,
       lateral: sample.lateral,
       forward: sample.forward,
     };

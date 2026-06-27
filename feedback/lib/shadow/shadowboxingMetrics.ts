@@ -47,8 +47,14 @@ const ELBOW_FLARE_ANGLE = 152;
 const ELBOW_TUCK_ANGLE = 168;
 const FLAT_HIP_DEG = 22;
 const GOOD_HIP_DEG = 30;
-const FLAT_HIP_MIN_EXTENSION_FRAMES = 4;
 const STANCE_DRIFT_THRESHOLD = 0.09;
+// A real punch is a brief extend-and-retract. Some stances/camera angles
+// keep wrist-to-shoulder distance above the extension threshold
+// continuously (hands just held out, not glued to the body), which would
+// otherwise leave inExtension stuck true for the rest of the round and
+// never resolve into a classified punch. Past this many frames, give up
+// on it resolving into a punch and reset.
+const MAX_EXTENSION_STREAK_FRAMES = 90;
 const EVENT_DEBOUNCE_SEC = 1.0;
 const CHIN_UP_CONFIRM_FRAMES = 8;
 const CHIN_GOOD_STREAK_FRAMES = 45;
@@ -208,10 +214,6 @@ function comboContext(chain: DetectedPunch[]): ShadowMomentContext {
   };
 }
 
-function punchLabelForHand(hand: "lead" | "rear"): string {
-  return hand === "lead" ? "jab" : "cross";
-}
-
 export function ingestShadowboxingFrame(
   stats: ShadowboxingStats,
   landmarks: FrameLandmarks,
@@ -291,94 +293,16 @@ export function ingestShadowboxingFrame(
 
   const extending = isWristExtended(landmarks);
 
-  if (extending) {
+  if (extending && next.extensionStreak >= MAX_EXTENSION_STREAK_FRAMES) {
+    // Held position, not a punch — give up without classifying anything.
+    next.inExtension = false;
+    next.extensionStreak = 0;
+    next.extensionPeak = null;
+    next.activeDropStreak = 0;
+  } else if (extending) {
     next.extensionStreak += 1;
     next.inExtension = true;
     next.extensionPeak = updateExtensionPeak(next.extensionPeak, landmarks, metrics);
-
-    const rightFlared =
-      metrics.right_elbow_angle !== null && metrics.right_elbow_angle < ELBOW_FLARE_ANGLE;
-    const leftFlared =
-      metrics.left_elbow_angle !== null && metrics.left_elbow_angle < ELBOW_FLARE_ANGLE;
-
-    if (rightFlared && canEmitEvent(next, "elbow_flare_on_cross", elapsedSec)) {
-      const peakHand = next.extensionPeak?.hand ?? "rear";
-      next = pushMoment(
-        next,
-        makeShadowIssueMoment(
-          "elbow_flare_on_cross",
-          elapsedSec,
-          next.moments.length,
-          "right_elbow",
-          {
-            ...comboContext(next.comboChain),
-            punchLabel: punchLabelForHand(peakHand),
-          }
-        ),
-        elapsedSec
-      );
-    } else if (
-      metrics.right_elbow_angle !== null &&
-      metrics.right_elbow_angle >= ELBOW_TUCK_ANGLE &&
-      canEmitEvent(next, "elbow_tucked", elapsedSec)
-    ) {
-      next = pushMoment(
-        next,
-        makeShadowPositiveMoment("elbow_tucked", elapsedSec, next.moments.length),
-        elapsedSec
-      );
-    }
-
-    if (leftFlared && canEmitEvent(next, "elbow_flare_lead", elapsedSec)) {
-      next = pushMoment(
-        next,
-        makeShadowIssueMoment(
-          "elbow_flare_on_cross",
-          elapsedSec,
-          next.moments.length,
-          "left_elbow",
-          {
-            ...comboContext(next.comboChain),
-            punchLabel: "lead hook",
-          }
-        ),
-        elapsedSec
-      );
-      next.lastEventAtSec = { ...next.lastEventAtSec, elbow_flare_lead: elapsedSec };
-    }
-
-    if (metrics.hip_rotation_deg !== null && metrics.hip_rotation_deg < FLAT_HIP_DEG) {
-      next.flatHipStreak += 1;
-      if (
-        next.flatHipStreak >= FLAT_HIP_MIN_EXTENSION_FRAMES &&
-        canEmitEvent(next, "flat_hips", elapsedSec)
-      ) {
-        next = pushMoment(
-          next,
-          makeShadowIssueMoment("flat_hips", elapsedSec, next.moments.length, "right_hip", {
-            ...comboContext(next.comboChain),
-            punchLabel: next.extensionPeak
-              ? punchLabelForHand(next.extensionPeak.hand)
-              : undefined,
-          }),
-          elapsedSec
-        );
-        next.flatHipStreak = 0;
-      }
-    } else {
-      next.flatHipStreak = 0;
-      if (
-        metrics.hip_rotation_deg !== null &&
-        metrics.hip_rotation_deg >= GOOD_HIP_DEG &&
-        canEmitEvent(next, "good_hip_turn", elapsedSec)
-      ) {
-        next = pushMoment(
-          next,
-          makeShadowPositiveMoment("good_hip_turn", elapsedSec, next.moments.length),
-          elapsedSec
-        );
-      }
-    }
 
     if (metrics.guard_dropped && metrics.guard_confidence >= 0.45) {
       next.activeDropStreak += 1;
@@ -422,6 +346,67 @@ export function ingestShadowboxingFrame(
       const punch = stampPunch(classified, elapsedSec);
       next.punches = [...next.punches, punch];
       next.comboChain = appendPunchToChain(next.comboChain, punch);
+
+      // Elbow/hip checks only mean something for a punch that actually
+      // happened — evaluated once, at the peak of this confirmed punch,
+      // not continuously throughout any reach (which fired repeatedly on
+      // slow, non-punch arm movement that never resolved to a real punch).
+      const peak = next.extensionPeak;
+      const elbowAngle = peak?.elbowAngle ?? null;
+      const isLead = classified.hand === "lead";
+
+      if (elbowAngle !== null && elbowAngle < ELBOW_FLARE_ANGLE) {
+        const eventType = isLead ? "elbow_flare_lead" : "elbow_flare_on_cross";
+        if (canEmitEvent(next, eventType, elapsedSec)) {
+          next = pushMoment(
+            next,
+            makeShadowIssueMoment(
+              "elbow_flare_on_cross",
+              elapsedSec,
+              next.moments.length,
+              isLead ? "left_elbow" : "right_elbow",
+              {
+                ...comboContext(next.comboChain),
+                punchLabel: punch.label,
+              }
+            ),
+            elapsedSec
+          );
+          next.lastEventAtSec = { ...next.lastEventAtSec, [eventType]: elapsedSec };
+        }
+      } else if (
+        elbowAngle !== null &&
+        elbowAngle >= ELBOW_TUCK_ANGLE &&
+        canEmitEvent(next, "elbow_tucked", elapsedSec)
+      ) {
+        next = pushMoment(
+          next,
+          makeShadowPositiveMoment("elbow_tucked", elapsedSec, next.moments.length),
+          elapsedSec
+        );
+      }
+
+      const hipRotation = peak?.hipRotationDeg ?? null;
+      if (hipRotation !== null && hipRotation < FLAT_HIP_DEG && canEmitEvent(next, "flat_hips", elapsedSec)) {
+        next = pushMoment(
+          next,
+          makeShadowIssueMoment("flat_hips", elapsedSec, next.moments.length, "right_hip", {
+            ...comboContext(next.comboChain),
+            punchLabel: punch.label,
+          }),
+          elapsedSec
+        );
+      } else if (
+        hipRotation !== null &&
+        hipRotation >= GOOD_HIP_DEG &&
+        canEmitEvent(next, "good_hip_turn", elapsedSec)
+      ) {
+        next = pushMoment(
+          next,
+          makeShadowPositiveMoment("good_hip_turn", elapsedSec, next.moments.length),
+          elapsedSec
+        );
+      }
     }
 
     if (
