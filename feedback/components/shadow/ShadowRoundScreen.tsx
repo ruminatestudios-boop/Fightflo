@@ -8,8 +8,9 @@ import { ShadowRoundSummary } from "@/components/shadow/ShadowRoundSummary";
 import { useShadowRoundTracking } from "@/hooks/useShadowRoundTracking";
 import { useLiveCameraPose } from "@/hooks/useLiveCameraPose";
 import { PersonLockOverlay } from "@/components/live/PersonLockOverlay";
-import { liveShadowboxingNote } from "@/lib/shadow/shadowboxingCopy";
-import { computeFrameMetrics } from "@/lib/analysis/poseMetrics";
+import type { ShadowMoment } from "@/lib/shadow/shadowboxingCopy";
+import { playCoachingSound, soundCategoryForEventType } from "@/lib/shadow/liveCoachingSounds";
+import { SoundLegendModal } from "@/components/shadow/SoundLegendModal";
 import {
   attachStreamToVideo,
   detachVideoStream,
@@ -64,6 +65,7 @@ export function ShadowRoundScreen({
   const [recordingFile, setRecordingFile] = useState<File | null>(null);
   const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const [showSoundLegend, setShowSoundLegend] = useState(false);
 
   const trackingPhase =
     screenPhase === "calibrate"
@@ -81,6 +83,7 @@ export function ShadowRoundScreen({
 
   const {
     calibration,
+    stats,
     calibrateFrames,
     activeWarning,
     finishCalibration,
@@ -96,67 +99,39 @@ export function ShadowRoundScreen({
     roundSeconds,
   });
 
-  // Hands naturally dip below guard for a beat during real punching/recovery —
-  // flagging every brief dip as "wrist dropped" drowns out every other check
-  // (chin, elbow, hips) since guard is evaluated first. Only surface it once
-  // the drop has actually persisted, so genuinely sustained exposure still
-  // gets caught but normal recovery motion doesn't dominate every callout.
-  const guardDropSinceRef = useRef<number | null>(null);
-  const GUARD_DROP_MIN_MS = 350;
-
-  let liveNote: ReturnType<typeof liveShadowboxingNote> = null;
-  if (screenPhase === "round" && liveLandmarks) {
-    const metrics = computeFrameMetrics(liveLandmarks, calibration);
-
-    if (metrics.guard_dropped) {
-      if (guardDropSinceRef.current === null) guardDropSinceRef.current = Date.now();
-    } else {
-      guardDropSinceRef.current = null;
-    }
-
-    const guardDropSustained =
-      metrics.guard_dropped &&
-      guardDropSinceRef.current !== null &&
-      Date.now() - guardDropSinceRef.current >= GUARD_DROP_MIN_MS;
-
-    const effectiveMetrics =
-      metrics.guard_dropped && !guardDropSustained
-        ? { ...metrics, guard_dropped: false }
-        : metrics;
-
-    liveNote = liveShadowboxingNote(effectiveMetrics);
-  } else {
-    guardDropSinceRef.current = null;
-  }
-
-  // Raw liveNote is recomputed every frame and can change faster than a
-  // human can read it. Hold whatever's currently displayed for a minimum
-  // duration before swapping to a new message, so callouts are actually
-  // readable instead of flickering between messages mid-sentence.
-  const NOTE_MIN_DISPLAY_MS = 1500;
-  const [displayedNote, setDisplayedNote] = useState<ReturnType<typeof liveShadowboxingNote>>(null);
-  const lastNoteChangeAtRef = useRef(0);
+  // Text-on-screen during a live round fights the activity itself — eyes are
+  // on your hands/coach, not the phone, so by the time text could be read the
+  // moment's already passed. Live feedback is now sound + a screen flash only
+  // (instant, no reading required); the readable explanation moves to the
+  // post-round summary where there's actually time to read it. Triggered off
+  // stats.moments — the same properly-debounced event log driving the HUD
+  // issue/positive counters — not the raw per-frame metrics.
+  const [flashMoment, setFlashMoment] = useState<ShadowMoment | null>(null);
+  const lastMomentCountRef = useRef(0);
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const now = Date.now();
-    const sameTitle = displayedNote?.title === liveNote?.title;
-    if (sameTitle) return;
-
-    const elapsedSinceLastChange = now - lastNoteChangeAtRef.current;
-    if (elapsedSinceLastChange >= NOTE_MIN_DISPLAY_MS) {
-      setDisplayedNote(liveNote);
-      lastNoteChangeAtRef.current = now;
+    if (screenPhase !== "round") {
+      lastMomentCountRef.current = 0;
       return;
     }
+    const moments = stats.moments;
+    if (moments.length <= lastMomentCountRef.current) return;
 
-    const remaining = NOTE_MIN_DISPLAY_MS - elapsedSinceLastChange;
-    const timeoutId = window.setTimeout(() => {
-      setDisplayedNote(liveNote);
-      lastNoteChangeAtRef.current = Date.now();
-    }, remaining);
-    return () => window.clearTimeout(timeoutId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [liveNote?.title]);
+    const newest = moments[moments.length - 1];
+    lastMomentCountRef.current = moments.length;
+
+    playCoachingSound(soundCategoryForEventType(newest.eventType));
+    setFlashMoment(newest);
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    flashTimerRef.current = setTimeout(() => setFlashMoment(null), 450);
+  }, [stats.moments, screenPhase]);
+
+  useEffect(() => {
+    return () => {
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    };
+  }, []);
 
   const remainingSec = Math.max(0, roundSeconds - elapsedSec);
 
@@ -402,8 +377,8 @@ export function ShadowRoundScreen({
           guardCalibration={calibration}
           videoFit="cover"
           mirrorLandmarks={facing === "user"}
-          highlightJoint={liveNote?.joint ?? null}
-          highlightKind={liveNote?.kind ?? "issue"}
+          highlightJoint={flashMoment?.joint ?? null}
+          highlightKind={flashMoment?.kind ?? "issue"}
         />
       )}
 
@@ -455,22 +430,25 @@ export function ShadowRoundScreen({
             starts automatically when the countdown ends.
             {calibrateFrames > 0 ? ` (${calibrateFrames} frames)` : ""}
           </p>
+          <button
+            type="button"
+            className="shadow-round-sound-legend-btn"
+            onClick={() => setShowSoundLegend(true)}
+          >
+            🔊 What do the sounds mean?
+          </button>
         </div>
       )}
 
-      {displayedNote && screenPhase === "round" && (
-        <>
-          <p
-            className={`stepguide-cinema-pill stepguide-cinema-pill--${
-              displayedNote.kind === "positive" ? "green" : "red"
-            } live-record-note`}
-          >
-            {displayedNote.title}
-          </p>
-          <p className="stepguide-cinema-pill stepguide-cinema-pill--detail live-record-note">
-            {displayedNote.detail}
-          </p>
-        </>
+      <SoundLegendModal open={showSoundLegend} onClose={() => setShowSoundLegend(false)} />
+
+      {flashMoment && screenPhase === "round" && (
+        <div
+          className={`shadow-coaching-flash shadow-coaching-flash--${
+            flashMoment.kind === "positive" ? "positive" : soundCategoryForEventType(flashMoment.eventType)
+          }`}
+          aria-hidden
+        />
       )}
 
       {screenPhase === "round" && (
