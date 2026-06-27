@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+type Project = "fightflo" | "synclyst";
+
 interface ContentLink {
   id: string;
   url: string;
@@ -9,6 +11,7 @@ interface ContentLink {
   label: string | null;
   tags: string[];
   notes: string | null;
+  project: Project;
   created_at: string;
 }
 
@@ -22,6 +25,11 @@ const PLATFORM_EMOJI: Record<string, string> = {
   other: "🔗",
 };
 
+const PROJECTS: { id: Project; label: string; accent: string }[] = [
+  { id: "fightflo", label: "Fightflo", accent: "#fa4141" },
+  { id: "synclyst", label: "Synclyst", accent: "#a855f7" },
+];
+
 export default function ContentLinksAdminPage() {
   const [secret, setSecret] = useState("");
   const [authed, setAuthed] = useState(false);
@@ -29,13 +37,17 @@ export default function ContentLinksAdminPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [url, setUrl] = useState("");
-  const [label, setLabel] = useState("");
-  const [tagsInput, setTagsInput] = useState("");
-  const [notes, setNotes] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  const [filterTag, setFilterTag] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<
+    Record<Project, { url: string; label: string; tags: string; notes: string }>
+  >({
+    fightflo: { url: "", label: "", tags: "", notes: "" },
+    synclyst: { url: "", label: "", tags: "", notes: "" },
+  });
+  const [saving, setSaving] = useState<Project | null>(null);
+  const [filterTag, setFilterTag] = useState<Record<Project, string | null>>({
+    fightflo: null,
+    synclyst: null,
+  });
 
   useEffect(() => {
     const stored = typeof window !== "undefined" ? sessionStorage.getItem(SECRET_KEY) : null;
@@ -70,35 +82,36 @@ export default function ContentLinksAdminPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed]);
 
-  const handleSave = useCallback(async () => {
-    if (!url.trim()) {
-      setError("Paste a link first");
-      return;
-    }
-    setSaving(true);
-    setError("");
-    try {
-      const tags = tagsInput
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean);
-      const res = await fetch("/api/admin/content-links", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-secret": secret },
-        body: JSON.stringify({ url, label, tags, notes }),
-      });
-      if (!res.ok) throw new Error("Failed to save");
-      setUrl("");
-      setLabel("");
-      setTagsInput("");
-      setNotes("");
-      await fetchItems(secret);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save");
-    } finally {
-      setSaving(false);
-    }
-  }, [url, label, tagsInput, notes, secret, fetchItems]);
+  const handleSave = useCallback(
+    async (project: Project) => {
+      const draft = drafts[project];
+      if (!draft.url.trim()) {
+        setError("Paste a link first");
+        return;
+      }
+      setSaving(project);
+      setError("");
+      try {
+        const tags = draft.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
+        const res = await fetch("/api/admin/content-links", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-admin-secret": secret },
+          body: JSON.stringify({ url: draft.url, label: draft.label, tags, notes: draft.notes, project }),
+        });
+        if (!res.ok) throw new Error("Failed to save");
+        setDrafts((prev) => ({ ...prev, [project]: { url: "", label: "", tags: "", notes: "" } }));
+        await fetchItems(secret);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to save");
+      } finally {
+        setSaving(null);
+      }
+    },
+    [drafts, secret, fetchItems]
+  );
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -116,17 +129,6 @@ export default function ContentLinksAdminPage() {
     },
     [secret, fetchItems]
   );
-
-  const allTags = useMemo(() => {
-    const set = new Set<string>();
-    items.forEach((item) => item.tags.forEach((tag) => set.add(tag)));
-    return Array.from(set).sort();
-  }, [items]);
-
-  const visibleItems = useMemo(() => {
-    if (!filterTag) return items;
-    return items.filter((item) => item.tags.includes(filterTag));
-  }, [items, filterTag]);
 
   if (!authed) {
     return (
@@ -154,103 +156,144 @@ export default function ContentLinksAdminPage() {
 
   return (
     <div style={pageStyle}>
-      <div style={{ ...cardStyle, maxWidth: "680px" }}>
+      <div style={{ ...cardStyle, maxWidth: "720px" }}>
         <h1 style={titleStyle}>Content swipe file</h1>
         <p style={subStyle}>Paste a TikTok/IG/etc link, label it, tag it, come back later.</p>
+        {error ? <p style={errorStyle}>{error}</p> : null}
 
-        <div style={formBoxStyle}>
-          <input
-            type="text"
-            placeholder="Paste link here (TikTok, IG, YouTube...)"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            style={inputStyle}
-          />
-          <input
-            type="text"
-            placeholder="Label (e.g. 'good hook style')"
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            style={inputStyle}
-          />
-          <input
-            type="text"
-            placeholder="Tags, comma separated (e.g. hook, transition, voiceover)"
-            value={tagsInput}
-            onChange={(e) => setTagsInput(e.target.value)}
-            style={inputStyle}
-          />
-          <textarea
-            placeholder="Notes (optional)"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            style={{ ...inputStyle, resize: "vertical" as const }}
-            rows={2}
-          />
-          {error ? <p style={errorStyle}>{error}</p> : null}
-          <button onClick={() => void handleSave()} disabled={saving} style={primaryBtnStyle}>
-            {saving ? "Saving…" : "Save link"}
-          </button>
-        </div>
+        {PROJECTS.map((proj) => {
+          const projItems = items.filter((item) => item.project === proj.id);
+          const allTags = Array.from(
+            new Set(projItems.flatMap((item) => item.tags))
+          ).sort();
+          const activeFilterTag = filterTag[proj.id];
+          const visibleItems = activeFilterTag
+            ? projItems.filter((item) => item.tags.includes(activeFilterTag))
+            : projItems;
+          const draft = drafts[proj.id];
 
-        {allTags.length > 0 ? (
-          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", margin: "1.25rem 0 0.5rem" }}>
-            <button
-              onClick={() => setFilterTag(null)}
-              style={filterTag === null ? tagChipActiveStyle : tagChipStyle}
+          return (
+            <div
+              key={proj.id}
+              style={{ ...projectSectionStyle, borderColor: `${proj.accent}33` }}
             >
-              All
-            </button>
-            {allTags.map((tag) => (
-              <button
-                key={tag}
-                onClick={() => setFilterTag(tag)}
-                style={filterTag === tag ? tagChipActiveStyle : tagChipStyle}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        ) : null}
+              <h2 style={{ ...projectTitleStyle, color: proj.accent, borderColor: `${proj.accent}33` }}>
+                {proj.label}
+              </h2>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginTop: "1rem" }}>
-          {visibleItems.length === 0 ? (
-            <p style={{ fontSize: "0.85rem", opacity: 0.6 }}>No links saved yet.</p>
-          ) : (
-            visibleItems.map((item) => (
-              <div key={item.id} style={rowStyle}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" }}>
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: "#fff", fontSize: "0.85rem", fontWeight: 600, wordBreak: "break-all" }}
-                  >
-                    {PLATFORM_EMOJI[item.platform] ?? "🔗"} {item.label || item.url}
-                  </a>
-                  <button onClick={() => void handleDelete(item.id)} style={dangerBtnStyle}>
-                    Delete
-                  </button>
-                </div>
-                {item.notes ? (
-                  <p style={{ margin: "0.4rem 0", fontSize: "0.8rem", opacity: 0.7 }}>{item.notes}</p>
-                ) : null}
-                {item.tags.length > 0 ? (
-                  <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginTop: "0.4rem" }}>
-                    {item.tags.map((tag) => (
-                      <span key={tag} style={tagPillStyle}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-                <p style={{ margin: "0.5rem 0 0", fontSize: "0.68rem", opacity: 0.35 }}>
-                  {new Date(item.created_at).toLocaleDateString()}
-                </p>
+              <div style={formBoxStyle}>
+                <input
+                  type="text"
+                  placeholder="Paste link here (TikTok, IG, YouTube...)"
+                  value={draft.url}
+                  onChange={(e) =>
+                    setDrafts((prev) => ({ ...prev, [proj.id]: { ...prev[proj.id], url: e.target.value } }))
+                  }
+                  style={inputStyle}
+                />
+                <input
+                  type="text"
+                  placeholder="Label (e.g. 'good hook style')"
+                  value={draft.label}
+                  onChange={(e) =>
+                    setDrafts((prev) => ({ ...prev, [proj.id]: { ...prev[proj.id], label: e.target.value } }))
+                  }
+                  style={inputStyle}
+                />
+                <input
+                  type="text"
+                  placeholder="Tags, comma separated"
+                  value={draft.tags}
+                  onChange={(e) =>
+                    setDrafts((prev) => ({ ...prev, [proj.id]: { ...prev[proj.id], tags: e.target.value } }))
+                  }
+                  style={inputStyle}
+                />
+                <textarea
+                  placeholder="Notes (optional)"
+                  value={draft.notes}
+                  onChange={(e) =>
+                    setDrafts((prev) => ({ ...prev, [proj.id]: { ...prev[proj.id], notes: e.target.value } }))
+                  }
+                  style={{ ...inputStyle, resize: "vertical" as const }}
+                  rows={2}
+                />
+                <button
+                  onClick={() => void handleSave(proj.id)}
+                  disabled={saving === proj.id}
+                  style={{ ...primaryBtnStyle, background: proj.accent }}
+                >
+                  {saving === proj.id ? "Saving…" : "Save link"}
+                </button>
               </div>
-            ))
-          )}
-        </div>
+
+              {allTags.length > 0 ? (
+                <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", margin: "1rem 0 0.5rem" }}>
+                  <button
+                    onClick={() => setFilterTag((prev) => ({ ...prev, [proj.id]: null }))}
+                    style={
+                      activeFilterTag === null
+                        ? tagChipActiveStyle(proj.accent)
+                        : tagChipStyle
+                    }
+                  >
+                    All
+                  </button>
+                  {allTags.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => setFilterTag((prev) => ({ ...prev, [proj.id]: tag }))}
+                      style={
+                        activeFilterTag === tag ? tagChipActiveStyle(proj.accent) : tagChipStyle
+                      }
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginTop: "1rem" }}>
+                {visibleItems.length === 0 ? (
+                  <p style={{ fontSize: "0.85rem", opacity: 0.6 }}>No links saved yet.</p>
+                ) : (
+                  visibleItems.map((item) => (
+                    <div key={item.id} style={rowStyle}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" }}>
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ color: "#fff", fontSize: "0.85rem", fontWeight: 600, wordBreak: "break-all" }}
+                        >
+                          {PLATFORM_EMOJI[item.platform] ?? "🔗"} {item.label || item.url}
+                        </a>
+                        <button onClick={() => void handleDelete(item.id)} style={dangerBtnStyle}>
+                          Delete
+                        </button>
+                      </div>
+                      {item.notes ? (
+                        <p style={{ margin: "0.4rem 0", fontSize: "0.8rem", opacity: 0.7 }}>{item.notes}</p>
+                      ) : null}
+                      {item.tags.length > 0 ? (
+                        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginTop: "0.4rem" }}>
+                          {item.tags.map((tag) => (
+                            <span key={tag} style={tagPillStyle}>
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                      <p style={{ margin: "0.5rem 0 0", fontSize: "0.68rem", opacity: 0.35 }}>
+                        {new Date(item.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -280,7 +323,23 @@ const titleStyle: React.CSSProperties = {
 const subStyle: React.CSSProperties = {
   fontSize: "0.8rem",
   opacity: 0.6,
-  marginBottom: "1rem",
+  marginBottom: "1.25rem",
+};
+
+const projectSectionStyle: React.CSSProperties = {
+  marginBottom: "1.75rem",
+  padding: "1.25rem",
+  borderRadius: "0.9rem",
+  border: "1px solid rgba(255,255,255,0.14)",
+  background: "rgba(255,255,255,0.02)",
+};
+
+const projectTitleStyle: React.CSSProperties = {
+  fontSize: "1.1rem",
+  fontWeight: 700,
+  marginBottom: "0.85rem",
+  paddingBottom: "0.6rem",
+  borderBottom: "1px solid rgba(255,255,255,0.1)",
 };
 
 const formBoxStyle: React.CSSProperties = {
@@ -309,7 +368,6 @@ const primaryBtnStyle: React.CSSProperties = {
   padding: "0.7rem",
   borderRadius: "0.6rem",
   border: "none",
-  background: "#fa4141",
   color: "#fff",
   fontWeight: 600,
   fontSize: "0.88rem",
@@ -353,14 +411,17 @@ const tagChipStyle: React.CSSProperties = {
   cursor: "pointer",
 };
 
-const tagChipActiveStyle: React.CSSProperties = {
-  ...tagChipStyle,
-  background: "#fa4141",
-  borderColor: "#fa4141",
-  color: "#fff",
-};
+function tagChipActiveStyle(accent: string): React.CSSProperties {
+  return {
+    ...tagChipStyle,
+    background: accent,
+    borderColor: accent,
+    color: "#fff",
+  };
+}
 
 const errorStyle: React.CSSProperties = {
   color: "#fa4141",
   fontSize: "0.82rem",
+  marginBottom: "0.5rem",
 };

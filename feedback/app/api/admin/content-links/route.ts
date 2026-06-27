@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     label?: string;
     tags?: string[];
     notes?: string;
+    project?: "fightflo" | "synclyst";
   };
 
   if (!body.url?.trim()) {
@@ -38,6 +39,7 @@ export async function POST(request: NextRequest) {
     label: body.label,
     tags: body.tags,
     notes: body.notes,
+    project: body.project === "synclyst" ? "synclyst" : "fightflo",
   });
 
   return NextResponse.json({ ok: true });

@@ -1565,6 +1565,8 @@ export async function deleteTestimonial(id: string): Promise<void> {
   await supabase.from("testimonials").delete().eq("id", id);
 }
 
+export type ContentLinkProject = "fightflo" | "synclyst";
+
 export interface ContentLinkRecord {
   id: string;
   url: string;
@@ -1572,6 +1574,7 @@ export interface ContentLinkRecord {
   label: string | null;
   tags: string[];
   notes: string | null;
+  project: ContentLinkProject;
   created_at: string;
 }
 
@@ -1589,6 +1592,7 @@ export async function createContentLink(input: {
   label?: string | null;
   tags?: string[];
   notes?: string | null;
+  project: ContentLinkProject;
 }): Promise<void> {
   const supabase = getSupabase();
   const { error } = await supabase.from("content_links").insert({
@@ -1597,6 +1601,7 @@ export async function createContentLink(input: {
     label: input.label?.trim() || null,
     tags: input.tags?.map((t) => t.trim().toLowerCase()).filter(Boolean) ?? [],
     notes: input.notes?.trim() || null,
+    project: input.project,
   });
   if (error) throw error;
 }
@@ -1733,4 +1738,21 @@ export async function recordUsageAlert(
     last_alert_percent: percent,
     last_alert_at: new Date().toISOString(),
   });
+}
+
+export async function listUserEmailsByIds(
+  ids: string[]
+): Promise<Record<string, string>> {
+  if (ids.length === 0) return {};
+  const supabase = getSupabase();
+  const { data } = await supabase
+    .from("users")
+    .select("id, email")
+    .in("id", ids);
+
+  const map: Record<string, string> = {};
+  for (const row of (data as { id: string; email: string }[]) ?? []) {
+    if (row.email) map[row.id] = row.email;
+  }
+  return map;
 }

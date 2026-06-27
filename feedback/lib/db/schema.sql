@@ -208,11 +208,16 @@ CREATE TABLE IF NOT EXISTS content_links (
   label TEXT,
   tags TEXT[] NOT NULL DEFAULT '{}',
   notes TEXT,
+  project TEXT NOT NULL DEFAULT 'fightflo', -- 'fightflo' or 'synclyst'
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_content_links_created_at ON content_links(created_at);
 CREATE INDEX IF NOT EXISTS idx_content_links_tags ON content_links USING GIN(tags);
+CREATE INDEX IF NOT EXISTS idx_content_links_project ON content_links(project);
+
+-- Was missing on the first version of this table.
+ALTER TABLE content_links ADD COLUMN IF NOT EXISTS project TEXT NOT NULL DEFAULT 'fightflo';
 
 -- Personal task list — two buckets (now / later). Checking a task off
 -- deletes it rather than marking it done; this is a scratchpad, not history.
