@@ -108,7 +108,16 @@ export function ShadowRoundScreen({
   // issue/positive counters — not the raw per-frame metrics.
   const [flashMoment, setFlashMoment] = useState<ShadowMoment | null>(null);
   const lastMomentCountRef = useRef(0);
+  const lastSoundAtRef = useRef(0);
   const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Each category has its own ~1s debounce upstream, but different
+  // categories firing back-to-back still stacked sounds too fast to tell
+  // apart. This is a second, global gate: no new sound/flash fires until
+  // enough real time has passed since the last one, regardless of type —
+  // the underlying moment is still logged for the post-round summary
+  // either way, this only throttles the live alert cadence.
+  const SOUND_MIN_GAP_MS = 2600;
 
   useEffect(() => {
     if (screenPhase !== "round") {
@@ -120,6 +129,10 @@ export function ShadowRoundScreen({
 
     const newest = moments[moments.length - 1];
     lastMomentCountRef.current = moments.length;
+
+    const now = Date.now();
+    if (now - lastSoundAtRef.current < SOUND_MIN_GAP_MS) return;
+    lastSoundAtRef.current = now;
 
     playCoachingSound(soundCategoryForEventType(newest.eventType));
     setFlashMoment(newest);
