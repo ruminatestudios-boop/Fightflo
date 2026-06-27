@@ -129,6 +129,35 @@ export function ShadowRoundScreen({
     guardDropSinceRef.current = null;
   }
 
+  // Raw liveNote is recomputed every frame and can change faster than a
+  // human can read it. Hold whatever's currently displayed for a minimum
+  // duration before swapping to a new message, so callouts are actually
+  // readable instead of flickering between messages mid-sentence.
+  const NOTE_MIN_DISPLAY_MS = 1500;
+  const [displayedNote, setDisplayedNote] = useState<ReturnType<typeof liveShadowboxingNote>>(null);
+  const lastNoteChangeAtRef = useRef(0);
+
+  useEffect(() => {
+    const now = Date.now();
+    const sameTitle = displayedNote?.title === liveNote?.title;
+    if (sameTitle) return;
+
+    const elapsedSinceLastChange = now - lastNoteChangeAtRef.current;
+    if (elapsedSinceLastChange >= NOTE_MIN_DISPLAY_MS) {
+      setDisplayedNote(liveNote);
+      lastNoteChangeAtRef.current = now;
+      return;
+    }
+
+    const remaining = NOTE_MIN_DISPLAY_MS - elapsedSinceLastChange;
+    const timeoutId = window.setTimeout(() => {
+      setDisplayedNote(liveNote);
+      lastNoteChangeAtRef.current = Date.now();
+    }, remaining);
+    return () => window.clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveNote?.title]);
+
   const remainingSec = Math.max(0, roundSeconds - elapsedSec);
 
   const stopCamera = useCallback(() => {
@@ -429,17 +458,17 @@ export function ShadowRoundScreen({
         </div>
       )}
 
-      {liveNote && screenPhase === "round" && (
+      {displayedNote && screenPhase === "round" && (
         <>
           <p
             className={`stepguide-cinema-pill stepguide-cinema-pill--${
-              liveNote.kind === "positive" ? "green" : "red"
+              displayedNote.kind === "positive" ? "green" : "red"
             } live-record-note`}
           >
-            {liveNote.title}
+            {displayedNote.title}
           </p>
           <p className="stepguide-cinema-pill stepguide-cinema-pill--detail live-record-note">
-            {liveNote.detail}
+            {displayedNote.detail}
           </p>
         </>
       )}
