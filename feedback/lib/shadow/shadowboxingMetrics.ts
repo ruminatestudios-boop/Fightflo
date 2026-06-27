@@ -164,12 +164,11 @@ function resolveHand(
   return "right";
 }
 
-function isWristExtended(
-  landmarks: FrameLandmarks,
-  metrics: ReturnType<typeof computeFrameMetrics>
-): boolean {
-  if (metrics.left_wrist_below_guard || metrics.right_wrist_below_guard) return true;
-
+function isWristExtended(landmarks: FrameLandmarks): boolean {
+  // A dropped/relaxed hand is not the same thing as throwing a punch — using
+  // wrist-below-guard as a stand-in for "extending" meant resting hands with
+  // no punches at all could still fire elbow-flare/flat-hip checks on pure
+  // noise. Only a genuine outward reach should count as "in extension."
   const ls = landmarks.left_shoulder;
   const rs = landmarks.right_shoulder;
   const lw = landmarks.left_wrist;
@@ -290,7 +289,7 @@ export function ingestShadowboxingFrame(
     next.chinUpStreak = 0;
   }
 
-  const extending = isWristExtended(landmarks, metrics);
+  const extending = isWristExtended(landmarks);
 
   if (extending) {
     next.extensionStreak += 1;

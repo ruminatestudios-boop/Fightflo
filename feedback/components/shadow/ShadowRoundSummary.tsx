@@ -68,6 +68,13 @@ export function ShadowRoundSummary({
   const topIssue = issues[0];
   const topPositive = positives[0];
 
+  // Elbow/hip/etc checks only mean something relative to an actual punch —
+  // with too few thrown, flagged "issues" are more likely camera noise than
+  // real technique problems. Say that plainly rather than presenting noise
+  // as a confident "biggest issue."
+  const punchCount = result.punches?.length ?? 0;
+  const lowActivity = punchCount < 2;
+
   return (
     <div className="shadow-round-summary">
       <button
@@ -142,7 +149,15 @@ export function ShadowRoundSummary({
 
       {tab === "summary" ? (
         <div className="shadow-round-summary-synopsis">
-          {topIssue ? (
+          {lowActivity ? (
+            <div className="shadow-round-summary-synopsis-row">
+              <p className="shadow-round-summary-synopsis-label">Not enough data</p>
+              <p className="shadow-round-summary-synopsis-detail">
+                Not enough punching activity detected this round to give specific feedback —
+                throw more combos next round.
+              </p>
+            </div>
+          ) : topIssue ? (
             <div className="shadow-round-summary-synopsis-row shadow-round-summary-synopsis-row--issue">
               <p className="shadow-round-summary-synopsis-label">Biggest issue</p>
               <p className="shadow-round-summary-synopsis-title">
@@ -158,7 +173,7 @@ export function ShadowRoundSummary({
             </div>
           )}
 
-          {topPositive ? (
+          {lowActivity ? null : topPositive ? (
             <div className="shadow-round-summary-synopsis-row shadow-round-summary-synopsis-row--positive">
               <p className="shadow-round-summary-synopsis-label">Best moment</p>
               <p className="shadow-round-summary-synopsis-title">

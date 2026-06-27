@@ -325,6 +325,22 @@ export function buildShadowRoundSummary(input: {
   drillName: string;
   primaryIssue: ShadowWeaknessType | null;
 } {
+  const punchCount = input.comboAnalysis?.punches.length ?? 0;
+
+  // Almost everything below (elbow flare, flat hips, etc) only makes sense
+  // relative to an actual punch — with too few thrown, any flagged issue is
+  // more likely camera noise than something real. Say that plainly instead
+  // of presenting noise as a confident finding.
+  if (punchCount < 2) {
+    return {
+      summary:
+        "Not enough punching activity detected this round to give specific feedback — throw more combos next round.",
+      mechanicalFix: "Throw at least a few combos so there's enough to analyse.",
+      drillName: "Just punch — get reps in before worrying about form feedback.",
+      primaryIssue: null,
+    };
+  }
+
   const issues = input.moments.filter((m) => m.kind === "issue");
   const positives = input.moments.filter((m) => m.kind === "positive");
 
