@@ -3,14 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { OverlayCanvas } from "@/components/video/OverlayCanvas";
-import { ShadowGuardFlash } from "@/components/shadow/ShadowGuardFlash";
 import { ShadowRoundSummary } from "@/components/shadow/ShadowRoundSummary";
 import { useShadowRoundTracking } from "@/hooks/useShadowRoundTracking";
 import { useLiveCameraPose } from "@/hooks/useLiveCameraPose";
 import { PersonLockOverlay } from "@/components/live/PersonLockOverlay";
-import type { ShadowMoment } from "@/lib/shadow/shadowboxingCopy";
-import { playCoachingSound, soundCategoryForEventType } from "@/lib/shadow/liveCoachingSounds";
-import { SoundLegendModal } from "@/components/shadow/SoundLegendModal";
 import {
   attachStreamToVideo,
   detachVideoStream,
@@ -65,7 +61,6 @@ export function ShadowRoundScreen({
   const [recordingFile, setRecordingFile] = useState<File | null>(null);
   const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
-  const [showSoundLegend, setShowSoundLegend] = useState(false);
 
   const trackingPhase =
     screenPhase === "calibrate"
@@ -83,9 +78,7 @@ export function ShadowRoundScreen({
 
   const {
     calibration,
-    stats,
     calibrateFrames,
-    activeWarning,
     finishCalibration,
     resetTracking,
     buildResult,
@@ -99,52 +92,10 @@ export function ShadowRoundScreen({
     roundSeconds,
   });
 
-  // Text-on-screen during a live round fights the activity itself — eyes are
-  // on your hands/coach, not the phone, so by the time text could be read the
-  // moment's already passed. Live feedback is now sound + a screen flash only
-  // (instant, no reading required); the readable explanation moves to the
-  // post-round summary where there's actually time to read it. Triggered off
-  // stats.moments — the same properly-debounced event log driving the HUD
-  // issue/positive counters — not the raw per-frame metrics.
-  const [flashMoment, setFlashMoment] = useState<ShadowMoment | null>(null);
-  const lastMomentCountRef = useRef(0);
-  const lastSoundAtRef = useRef(0);
-  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Each category has its own ~1s debounce upstream, but different
-  // categories firing back-to-back still stacked sounds too fast to tell
-  // apart. This is a second, global gate: no new sound/flash fires until
-  // enough real time has passed since the last one, regardless of type —
-  // the underlying moment is still logged for the post-round summary
-  // either way, this only throttles the live alert cadence.
-  const SOUND_MIN_GAP_MS = 2600;
-
-  useEffect(() => {
-    if (screenPhase !== "round") {
-      lastMomentCountRef.current = 0;
-      return;
-    }
-    const moments = stats.moments;
-    if (moments.length <= lastMomentCountRef.current) return;
-
-    const newest = moments[moments.length - 1];
-    lastMomentCountRef.current = moments.length;
-
-    const now = Date.now();
-    if (now - lastSoundAtRef.current < SOUND_MIN_GAP_MS) return;
-    lastSoundAtRef.current = now;
-
-    playCoachingSound(soundCategoryForEventType(newest.eventType));
-    setFlashMoment(newest);
-    if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
-    flashTimerRef.current = setTimeout(() => setFlashMoment(null), 450);
-  }, [stats.moments, screenPhase]);
-
-  useEffect(() => {
-    return () => {
-      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
-    };
-  }, []);
+  // Decided against any live feedback during the round — text was too fast
+  // to read, sounds (even debounced) felt overwhelming during real pad work.
+  // Training should just feel like training; the full breakdown (timestamps,
+  // clips, fixes) lives entirely in the post-round summary now.
 
   const remainingSec = Math.max(0, roundSeconds - elapsedSec);
 
@@ -390,12 +341,10 @@ export function ShadowRoundScreen({
           guardCalibration={calibration}
           videoFit="cover"
           mirrorLandmarks={facing === "user"}
-          highlightJoint={flashMoment?.joint ?? null}
-          highlightKind={flashMoment?.kind ?? "issue"}
+          highlightJoint={null}
+          highlightKind="issue"
         />
       )}
-
-      <ShadowGuardFlash warning={activeWarning} />
 
       <div className="shadow-round-top">
         <button
@@ -443,25 +392,7 @@ export function ShadowRoundScreen({
             starts automatically when the countdown ends.
             {calibrateFrames > 0 ? ` (${calibrateFrames} frames)` : ""}
           </p>
-          <button
-            type="button"
-            className="shadow-round-sound-legend-btn"
-            onClick={() => setShowSoundLegend(true)}
-          >
-            🔊 What do the sounds mean?
-          </button>
         </div>
-      )}
-
-      <SoundLegendModal open={showSoundLegend} onClose={() => setShowSoundLegend(false)} />
-
-      {flashMoment && screenPhase === "round" && (
-        <div
-          className={`shadow-coaching-flash shadow-coaching-flash--${
-            flashMoment.kind === "positive" ? "positive" : soundCategoryForEventType(flashMoment.eventType)
-          }`}
-          aria-hidden
-        />
       )}
 
       {screenPhase === "round" && (
