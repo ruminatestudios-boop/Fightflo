@@ -96,10 +96,38 @@ export function ShadowRoundScreen({
     roundSeconds,
   });
 
-  const liveNote =
-    screenPhase === "round" && liveLandmarks
-      ? liveShadowboxingNote(computeFrameMetrics(liveLandmarks, calibration))
-      : null;
+  // Hands naturally dip below guard for a beat during real punching/recovery —
+  // flagging every brief dip as "wrist dropped" drowns out every other check
+  // (chin, elbow, hips) since guard is evaluated first. Only surface it once
+  // the drop has actually persisted, so genuinely sustained exposure still
+  // gets caught but normal recovery motion doesn't dominate every callout.
+  const guardDropSinceRef = useRef<number | null>(null);
+  const GUARD_DROP_MIN_MS = 350;
+
+  let liveNote: ReturnType<typeof liveShadowboxingNote> = null;
+  if (screenPhase === "round" && liveLandmarks) {
+    const metrics = computeFrameMetrics(liveLandmarks, calibration);
+
+    if (metrics.guard_dropped) {
+      if (guardDropSinceRef.current === null) guardDropSinceRef.current = Date.now();
+    } else {
+      guardDropSinceRef.current = null;
+    }
+
+    const guardDropSustained =
+      metrics.guard_dropped &&
+      guardDropSinceRef.current !== null &&
+      Date.now() - guardDropSinceRef.current >= GUARD_DROP_MIN_MS;
+
+    const effectiveMetrics =
+      metrics.guard_dropped && !guardDropSustained
+        ? { ...metrics, guard_dropped: false }
+        : metrics;
+
+    liveNote = liveShadowboxingNote(effectiveMetrics);
+  } else {
+    guardDropSinceRef.current = null;
+  }
 
   const remainingSec = Math.max(0, roundSeconds - elapsedSec);
 
