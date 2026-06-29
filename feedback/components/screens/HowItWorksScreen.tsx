@@ -43,14 +43,6 @@ export function HowItWorksScreen({ onGetStarted }: HowItWorksScreenProps) {
     <div className="how-it-works-root">
       <div className="how-it-works-image" aria-hidden />
 
-      <button
-        type="button"
-        className="how-it-works-skip"
-        onClick={onGetStarted}
-      >
-        Skip
-      </button>
-
       <div className="how-it-works-content">
         <div className="how-it-works-gradient" aria-hidden />
 
