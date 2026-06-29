@@ -331,7 +331,6 @@ export function HomeSettingsModals({
       <ModalShell
         open={open === "guide"}
         onClose={onClose}
-        compact
         subtitle="Quick guide"
         title="How to use Fightflo"
         titleId="home-guide-modal-title"
