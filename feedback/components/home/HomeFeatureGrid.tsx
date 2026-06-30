@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { homeCardImage } from "@/lib/home/cardImages";
 import { FeedAppInfoCards } from "@/components/home/FeedAppInfoCards";
 import { HomeFeatureCarousel } from "@/components/home/HomeFeatureCarousel";
+import { StreakCard } from "@/components/home/StreakCard";
 import type { HomeInsights } from "@/lib/insights/types";
 
 export type HomeFeatureId =
@@ -236,6 +237,7 @@ export function HomeFeatureGrid({
         {!isFeed ? <p className="home-feature-section-label">Training tools</p> : null}
         {isFeed ? (
           <>
+            <StreakCard />
             <HomeFeatureCarousel
               cards={secondary}
               activeId={activeId}

@@ -1801,3 +1801,22 @@ export async function listLiveSessionStats(
   if (error) return [];
   return (data as LiveSessionStatRecord[]) ?? [];
 }
+
+/** Unique UTC calendar dates (YYYY-MM-DD) the user had any activity on —
+ * real sessions or live-only completions — for streak calculation. */
+export async function getUserActiveDateKeys(userId: string): Promise<string[]> {
+  const supabase = getSupabase();
+  const [sessionsResult, liveResult] = await Promise.all([
+    supabase.from("sessions").select("created_at").eq("user_id", userId),
+    supabase.from("live_session_stats").select("created_at").eq("user_id", userId),
+  ]);
+
+  const dates = new Set<string>();
+  for (const row of (sessionsResult.data as { created_at: string }[]) ?? []) {
+    dates.add(row.created_at.slice(0, 10));
+  }
+  for (const row of (liveResult.data as { created_at: string }[]) ?? []) {
+    dates.add(row.created_at.slice(0, 10));
+  }
+  return Array.from(dates);
+}

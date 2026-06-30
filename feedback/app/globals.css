@@ -3598,6 +3598,101 @@ button.stepguide-card-ts:active {
   padding-inline: 0.15rem;
 }
 
+.streak-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(250, 65, 65, 0.18);
+  background: linear-gradient(135deg, rgba(250, 65, 65, 0.1), #0d0d0d 65%);
+}
+
+.streak-card-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.streak-card-count {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.streak-card-flame {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.streak-card-number {
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+}
+
+.streak-card-copy {
+  min-width: 0;
+}
+
+.streak-card-title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.streak-card-subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.streak-card-week {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.3rem;
+}
+
+.streak-card-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 1;
+}
+
+.streak-card-day-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.streak-card-day-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 0.85rem;
+}
+
+.streak-card-day-dot--active {
+  border-color: rgba(250, 65, 65, 0.5);
+  background: rgba(250, 65, 65, 0.15);
+}
+
+.streak-card-day-dot--today {
+  border-color: #fa4141;
+  border-width: 1.5px;
+}
+
 .feed-action-card {
   display: flex;
   flex-direction: column;
