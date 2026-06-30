@@ -268,3 +268,20 @@ CREATE TABLE IF NOT EXISTS usage_alerts (
   last_alert_percent NUMERIC,
   last_alert_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Live-only session stats (e.g. a shadowboxing round the user never sent
+-- through full analysis) — without this, that activity vanished entirely
+-- and never reached Progress. Feeds the same metrics buildProgressInsight
+-- already computes from sessions/reports; not a separate display system.
+CREATE TABLE IF NOT EXISTS live_session_stats (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL,
+  source_mode TEXT NOT NULL, -- 'shadowbox' for now
+  guard_drops INTEGER NOT NULL DEFAULT 0,
+  total_faults INTEGER NOT NULL DEFAULT 0,
+  positive_count INTEGER NOT NULL DEFAULT 0,
+  fault_variety INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_live_session_stats_user_id ON live_session_stats(user_id);

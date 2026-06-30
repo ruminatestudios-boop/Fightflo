@@ -1,5 +1,9 @@
 import { analyzeGuardFromReport } from "@/lib/guard/guardAnalysis";
-import { getReportBySessionId, getUserSessionLibrary } from "@/lib/db/queries";
+import {
+  getReportBySessionId,
+  getUserSessionLibrary,
+  listLiveSessionStats,
+} from "@/lib/db/queries";
 import type { Report } from "@/types";
 import { buildProgressInsight } from "@/lib/insights/progressMetrics";
 import type {
@@ -11,7 +15,10 @@ import type {
 } from "./types";
 
 export async function buildHomeInsights(userId: string): Promise<HomeInsights> {
-  const sessions = await getUserSessionLibrary(userId);
+  const [sessions, liveStats] = await Promise.all([
+    getUserSessionLibrary(userId),
+    listLiveSessionStats(userId),
+  ]);
   const complete = sessions.filter((s) => s.status === "complete");
 
   const reports = new Map<string, Report | null>();
@@ -85,7 +92,7 @@ export async function buildHomeInsights(userId: string): Promise<HomeInsights> {
     reupload,
     guard,
     weeklyFocus,
-    progress: buildProgressInsight(sessions, reports),
+    progress: buildProgressInsight(sessions, reports, liveStats),
     coachShare,
   };
 }

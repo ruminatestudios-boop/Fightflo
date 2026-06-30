@@ -89,7 +89,7 @@ import {
   storeUserId,
 } from "@/lib/storage/client";
 import type { SkillLevel, SportId } from "@/types";
-import type { ShadowRoundLength } from "@/lib/shadow/types";
+import type { ShadowRoundLength, ShadowRoundResult } from "@/lib/shadow/types";
 
 type HomeView =
   | "home"
@@ -660,7 +660,29 @@ export function NetflixHome({ homeRoute = "home" }: NetflixHomeProps) {
               writeHomeUrlState("home", "home", homeRoute);
               void handleFile(file);
             }}
-            onDone={() => setShadowRoundSeconds(null)}
+            onDone={(result: ShadowRoundResult) => {
+              setShadowRoundSeconds(null);
+              const userId = localStorage.getItem("feedback_anon_user_id");
+              if (userId) {
+                const faultVariety = new Set(
+                  result.moments
+                    .filter((m) => m.kind === "issue")
+                    .map((m) => m.eventType)
+                ).size;
+                void fetch("/api/live-session-stats", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    userId,
+                    sourceMode: "shadowbox",
+                    guardDrops: result.dropCount,
+                    totalFaults: result.issueCount,
+                    positiveCount: result.positiveCount,
+                    faultVariety,
+                  }),
+                }).catch(() => undefined);
+              }
+            }}
           />
         )}
 

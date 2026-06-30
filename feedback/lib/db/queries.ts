@@ -1756,3 +1756,48 @@ export async function listUserEmailsByIds(
   }
   return map;
 }
+
+export interface LiveSessionStatRecord {
+  id: string;
+  user_id: string;
+  source_mode: string;
+  guard_drops: number;
+  total_faults: number;
+  positive_count: number;
+  fault_variety: number;
+  created_at: string;
+}
+
+export async function createLiveSessionStat(input: {
+  userId: string;
+  sourceMode: string;
+  guardDrops: number;
+  totalFaults: number;
+  positiveCount: number;
+  faultVariety: number;
+}): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase.from("live_session_stats").insert({
+    user_id: input.userId,
+    source_mode: input.sourceMode,
+    guard_drops: input.guardDrops,
+    total_faults: input.totalFaults,
+    positive_count: input.positiveCount,
+    fault_variety: input.faultVariety,
+  });
+  if (error) throw error;
+}
+
+export async function listLiveSessionStats(
+  userId: string
+): Promise<LiveSessionStatRecord[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("live_session_stats")
+    .select()
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+
+  if (error) return [];
+  return (data as LiveSessionStatRecord[]) ?? [];
+}

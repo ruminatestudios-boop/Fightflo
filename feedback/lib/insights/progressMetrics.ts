@@ -1,5 +1,10 @@
 import { analyzeGuardFromReport } from "@/lib/guard/guardAnalysis";
-import { getReportBySessionId, getUserSessionLibrary } from "@/lib/db/queries";
+import {
+  getReportBySessionId,
+  getUserSessionLibrary,
+  listLiveSessionStats,
+  type LiveSessionStatRecord,
+} from "@/lib/db/queries";
 import type { Report, WeaknessTrend } from "@/types";
 import type { ProgressInsight, ProgressMetric, ProgressMetricId } from "./types";
 
@@ -180,22 +185,62 @@ function extractSnapshot(
   };
 }
 
+/**
+ * Live-only completions (e.g. a shadowboxing round never sent through full
+ * analysis) carry counts but no report — no fault title, no pose score.
+ * They still contribute to the numeric trend lines (guard drops, total
+ * issues), just not to "Main fault"/"latest strength" text, which needs an
+ * actual analyzed report.
+ */
+function liveStatToSnapshot(stat: LiveSessionStatRecord): Omit<SessionSnapshot, "session"> {
+  return {
+    date: new Date(stat.created_at).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    }),
+    positiveCount: stat.positive_count,
+    totalFaults: stat.total_faults,
+    guardDrops: stat.guard_drops,
+    faultVariety: stat.fault_variety,
+    poseScore: null,
+  };
+}
+
 export function buildProgressInsight(
   sessions: Awaited<ReturnType<typeof getUserSessionLibrary>>,
-  reports: Map<string, Report | null>
+  reports: Map<string, Report | null>,
+  liveStats: LiveSessionStatRecord[] = []
 ): ProgressInsight | null {
   const complete = sessions
     .filter((session) => session.status === "complete")
     .slice()
     .sort((a, b) => a.session_number - b.session_number);
 
-  if (complete.length === 0) return null;
+  if (complete.length === 0 && liveStats.length === 0) return null;
 
-  const snapshots = complete.map((session) =>
-    extractSnapshot(session, reports.get(session.id) ?? null)
-  );
+  // Merge analyzed sessions and live-only completions into one chronological
+  // timeline, re-numbered sequentially across both sources so the chart
+  // reads as one continuous progress history regardless of which mode each
+  // entry came from.
+  const timeline = [
+    ...complete.map((session) => ({
+      createdAt: session.created_at,
+      snapshot: extractSnapshot(session, reports.get(session.id) ?? null),
+    })),
+    ...liveStats.map((stat) => ({
+      createdAt: stat.created_at,
+      snapshot: liveStatToSnapshot(stat) as SessionSnapshot,
+    })),
+  ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
-  const latestReport = reports.get(complete[complete.length - 1].id) ?? null;
+  if (timeline.length === 0) return null;
+
+  const snapshots = timeline.map((entry, i) => ({ ...entry.snapshot, session: i + 1 }));
+
+  const latestReport =
+    complete.length > 0
+      ? reports.get(complete[complete.length - 1].id) ?? null
+      : null;
   const rawMainFault = latestReport?.main_weakness?.title?.trim() ?? "";
   const latestMainFault = isMeaningfulFaultTitle(rawMainFault)
     ? rawMainFault
@@ -278,7 +323,7 @@ export function buildProgressInsight(
   const worseFocus = focusMetrics.filter((metric) => metric.trend === "worse").length;
 
   const headline =
-    complete.length === 1
+    snapshots.length === 1
       ? "First session logged"
       : improvingStrength > 0 && worseFocus === 0
         ? "Strengths building"
@@ -289,7 +334,7 @@ export function buildProgressInsight(
             : "Holding steady";
 
   const headlineDetail =
-    complete.length === 1
+    snapshots.length === 1
       ? "Upload more clips — we'll chart strengths and issues across sessions."
       : latestStrengthTitle && latestMainFault
         ? `Latest strength: ${latestStrengthTitle}. Main fault to sharpen: ${latestMainFault}.`
@@ -300,7 +345,7 @@ export function buildProgressInsight(
             : "Upload clear, full-body clips so we can flag strengths and faults across sessions.";
 
   return {
-    sessionCount: complete.length,
+    sessionCount: snapshots.length,
     headline,
     headlineDetail,
     latestMainFault,
@@ -314,7 +359,10 @@ export function buildProgressInsight(
 export async function buildProgressInsightForUser(
   userId: string
 ): Promise<ProgressInsight | null> {
-  const sessions = await getUserSessionLibrary(userId);
+  const [sessions, liveStats] = await Promise.all([
+    getUserSessionLibrary(userId),
+    listLiveSessionStats(userId),
+  ]);
   const complete = sessions.filter((session) => session.status === "complete");
 
   const reports = new Map<string, Report | null>();
@@ -324,5 +372,5 @@ export async function buildProgressInsightForUser(
     })
   );
 
-  return buildProgressInsight(sessions, reports);
+  return buildProgressInsight(sessions, reports, liveStats);
 }
