@@ -86,10 +86,7 @@ export function HowItWorksScreen({ onGetStarted }: HowItWorksScreenProps) {
               <span className="how-it-works-step-icon" aria-hidden>
                 {step.icon}
               </span>
-              <div className="how-it-works-step-text">
-                <p className="how-it-works-step-title">{step.title}</p>
-                <p className="how-it-works-step-body">{step.body}</p>
-              </div>
+              <p className="how-it-works-step-title">{step.title}</p>
             </div>
           ))}
         </div>
