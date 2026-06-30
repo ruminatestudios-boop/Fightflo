@@ -1,6 +1,7 @@
 "use client";
 
 import type { ProgressInsight } from "@/lib/insights/types";
+import { StreakCard } from "@/components/home/StreakCard";
 import { InsightCard } from "@/components/home/InsightCard";
 import { FaultProgressChart } from "@/components/charts/FaultProgressChart";
 import { FlowEmpty, FlowPanel, FlowShell } from "../FlowShell";
@@ -14,6 +15,7 @@ export function ProgressFlow({ insight, onBack }: ProgressFlowProps) {
   if (!insight) {
     return (
       <FlowShell title="Your progress" subtitle="Session metrics" onBack={onBack}>
+        <StreakCard showWhenEmpty />
         <FlowEmpty message="Complete at least one analysis to start tracking progress." />
       </FlowShell>
     );
@@ -25,6 +27,8 @@ export function ProgressFlow({ insight, onBack }: ProgressFlowProps) {
 
   return (
     <FlowShell title="Your progress" subtitle="Strengths & areas to sharpen" onBack={onBack}>
+      <StreakCard showWhenEmpty />
+
       <InsightCard
         kicker={`${insight.sessionCount} session${insight.sessionCount === 1 ? "" : "s"} tracked`}
         title={insight.headline}

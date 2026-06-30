@@ -36,6 +36,16 @@ export function FeedPageClient() {
       return;
     }
 
+    // Deep-link to progress / streak — skip onboarding overlay
+    if (
+      params.get("view") === "progress" ||
+      params.get("preview") === "streak" ||
+      params.get("preview") === "progress"
+    ) {
+      markHowItWorksSeen();
+      setShowHowItWorks(false);
+    }
+
     if (!hasSeenHowItWorks()) {
       setShowHowItWorks(true);
     }
