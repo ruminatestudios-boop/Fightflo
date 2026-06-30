@@ -39,14 +39,23 @@ const STEPS = [
   },
 ];
 
+// A ghost copy of the first card appended at the end lets the slide keep
+// moving in the same direction through the loop point, instead of jumping
+// backward — once it lands on the ghost, we snap (no transition) back to
+// the real first card, invisibly.
+const SLIDE_COUNT = STEPS.length + 1;
+
 /** One-time "how it works" screen — shown once ever, then dismissed for good. */
 export function HowItWorksScreen({ onGetStarted }: HowItWorksScreenProps) {
+  const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [transitionEnabled, setTransitionEnabled] = useState(true);
+  const dotIndex = slideIndex % STEPS.length;
 
   useEffect(() => {
     const id = window.setInterval(() => {
-      setActiveIndex((i) => (i + 1) % STEPS.length);
+      setSlideIndex((i) => i + 1);
     }, 2600);
     return () => window.clearInterval(id);
   }, []);
@@ -57,11 +66,29 @@ export function HowItWorksScreen({ onGetStarted }: HowItWorksScreenProps) {
   // Driving the slide with a CSS transform instead is fully deterministic.
   useEffect(() => {
     const track = trackRef.current;
-    if (!track) return;
-    const card = track.children[activeIndex] as HTMLElement | undefined;
+    const viewport = viewportRef.current;
+    if (!track || !viewport) return;
+    const card = track.children[slideIndex] as HTMLElement | undefined;
     if (!card) return;
-    track.style.transform = `translateX(-${card.offsetLeft}px)`;
-  }, [activeIndex]);
+
+    const maxOffset = Math.max(0, track.scrollWidth - viewport.clientWidth);
+    const offset = Math.min(card.offsetLeft, maxOffset);
+    track.style.transform = `translateX(-${offset}px)`;
+
+    if (slideIndex === SLIDE_COUNT - 1) {
+      const timeoutId = window.setTimeout(() => {
+        setTransitionEnabled(false);
+        setSlideIndex(0);
+      }, 520);
+      return () => window.clearTimeout(timeoutId);
+    }
+
+    if (!transitionEnabled) {
+      // Re-enable on the next frame so the snap-back itself stays instant.
+      const rafId = requestAnimationFrame(() => setTransitionEnabled(true));
+      return () => cancelAnimationFrame(rafId);
+    }
+  }, [slideIndex, transitionEnabled]);
 
   return (
     <div className="how-it-works-root">
@@ -84,10 +111,14 @@ export function HowItWorksScreen({ onGetStarted }: HowItWorksScreenProps) {
           <span className="how-it-works-headline-accent">Know exactly</span> what to fix.
         </h1>
 
-        <div className="how-it-works-steps-viewport">
-          <div className="how-it-works-steps" ref={trackRef}>
-            {STEPS.map((step) => (
-              <div key={step.title} className="how-it-works-step">
+        <div className="how-it-works-steps-viewport" ref={viewportRef}>
+          <div
+            className="how-it-works-steps"
+            ref={trackRef}
+            style={{ transition: transitionEnabled ? undefined : "none" }}
+          >
+            {[...STEPS, STEPS[0]].map((step, i) => (
+              <div key={`${step.title}-${i}`} className="how-it-works-step">
                 <span className="how-it-works-step-icon" aria-hidden>
                   {step.icon}
                 </span>
@@ -101,7 +132,7 @@ export function HowItWorksScreen({ onGetStarted }: HowItWorksScreenProps) {
           {STEPS.map((step, i) => (
             <span
               key={step.title}
-              className={`how-it-works-dot${i === activeIndex ? " how-it-works-dot--active" : ""}`}
+              className={`how-it-works-dot${i === dotIndex ? " how-it-works-dot--active" : ""}`}
             />
           ))}
         </div>

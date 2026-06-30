@@ -9637,7 +9637,7 @@ button.stepguide-card-ts:active {
   width: auto;
   max-width: none;
   padding: 0.5rem 0.75rem;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(10, 10, 10, 0.55);
   backdrop-filter: blur(6px);
