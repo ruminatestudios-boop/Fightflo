@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 interface HowItWorksScreenProps {
   onGetStarted: () => void;
 }
@@ -39,9 +41,35 @@ const STEPS = [
 
 /** One-time "how it works" screen — shown once ever, then dismissed for good. */
 export function HowItWorksScreen({ onGetStarted }: HowItWorksScreenProps) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setActiveIndex((i) => (i + 1) % STEPS.length);
+    }, 2600);
+    return () => window.clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const card = track.children[activeIndex] as HTMLElement | undefined;
+    if (!card) return;
+    track.scrollTo({ left: card.offsetLeft, behavior: "instant" as ScrollBehavior });
+  }, [activeIndex]);
+
   return (
     <div className="how-it-works-root">
-      <div className="how-it-works-image" aria-hidden />
+      <video
+        className="how-it-works-image"
+        src="https://cdn.shopify.com/videos/c/o/v/1d05a80141624d6bae42378c29e56983.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        aria-hidden
+      />
 
       <div className="how-it-works-content">
         <div className="how-it-works-gradient" aria-hidden />
@@ -52,7 +80,7 @@ export function HowItWorksScreen({ onGetStarted }: HowItWorksScreenProps) {
           <span className="how-it-works-headline-accent">Know exactly</span> what to fix.
         </h1>
 
-        <div className="how-it-works-steps">
+        <div className="how-it-works-steps" ref={trackRef}>
           {STEPS.map((step) => (
             <div key={step.title} className="how-it-works-step">
               <span className="how-it-works-step-icon" aria-hidden>
@@ -63,6 +91,15 @@ export function HowItWorksScreen({ onGetStarted }: HowItWorksScreenProps) {
                 <p className="how-it-works-step-body">{step.body}</p>
               </div>
             </div>
+          ))}
+        </div>
+
+        <div className="how-it-works-dots" aria-hidden>
+          {STEPS.map((step, i) => (
+            <span
+              key={step.title}
+              className={`how-it-works-dot${i === activeIndex ? " how-it-works-dot--active" : ""}`}
+            />
           ))}
         </div>
 
