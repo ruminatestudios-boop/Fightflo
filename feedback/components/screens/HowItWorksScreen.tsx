@@ -51,12 +51,16 @@ export function HowItWorksScreen({ onGetStarted }: HowItWorksScreenProps) {
     return () => window.clearInterval(id);
   }, []);
 
+  // Native scroll-snap fights any attempt at an animated scroll here — it
+  // forcibly resets to position 0 shortly after a programmatic smooth
+  // scroll, verified live (scrollLeft animates partway then snaps back).
+  // Driving the slide with a CSS transform instead is fully deterministic.
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
     const card = track.children[activeIndex] as HTMLElement | undefined;
     if (!card) return;
-    track.scrollTo({ left: card.offsetLeft, behavior: "instant" as ScrollBehavior });
+    track.style.transform = `translateX(-${card.offsetLeft}px)`;
   }, [activeIndex]);
 
   return (
@@ -80,15 +84,17 @@ export function HowItWorksScreen({ onGetStarted }: HowItWorksScreenProps) {
           <span className="how-it-works-headline-accent">Know exactly</span> what to fix.
         </h1>
 
-        <div className="how-it-works-steps" ref={trackRef}>
-          {STEPS.map((step) => (
-            <div key={step.title} className="how-it-works-step">
-              <span className="how-it-works-step-icon" aria-hidden>
-                {step.icon}
-              </span>
-              <p className="how-it-works-step-title">{step.title}</p>
-            </div>
-          ))}
+        <div className="how-it-works-steps-viewport">
+          <div className="how-it-works-steps" ref={trackRef}>
+            {STEPS.map((step) => (
+              <div key={step.title} className="how-it-works-step">
+                <span className="how-it-works-step-icon" aria-hidden>
+                  {step.icon}
+                </span>
+                <p className="how-it-works-step-title">{step.title}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="how-it-works-dots" aria-hidden>
