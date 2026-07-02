@@ -21,5 +21,12 @@ export async function POST(request: Request) {
 
   const actual = await sha256Hex(passcode);
   const ok = actual === expected;
-  return NextResponse.json({ ok }, { status: ok ? 200 : 401 });
+  if (!ok) {
+    return NextResponse.json({ ok: false }, { status: 401 });
+  }
+
+  // Hand the client a secret to authenticate subsequent /api/tasks* writes with,
+  // since knowing the correct passcode is what proves the request is authorized.
+  const secret = process.env.TASKS_API_SECRET || "";
+  return NextResponse.json({ ok: true, secret });
 }

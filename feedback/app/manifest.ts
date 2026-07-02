@@ -24,5 +24,18 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "maskable",
       },
     ],
+    // Lets a shared link (Android share sheet) land directly in the /tasks list.
+    // The `params` shape here follows the actual Web Share Target spec (a plain
+    // title/text/url map) rather than Next's `share_target` type, which models
+    // a different (array-based) shape that Chrome doesn't use for this.
+    share_target: {
+      action: `${prefix}/tasks/share-target`,
+      method: "get",
+      params: {
+        title: "title",
+        text: "text",
+        url: "url",
+      },
+    } as unknown as MetadataRoute.Manifest["share_target"],
   };
 }

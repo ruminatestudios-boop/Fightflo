@@ -32,6 +32,8 @@
     { "source": "/developer", "destination": "https://feedback.fightflo.app/developer" },
     { "source": "/developer/:path*", "destination": "https://feedback.fightflo.app/developer/:path*" },
     { "source": "/tasks", "destination": "https://feedback.fightflo.app/tasks" },
+    { "source": "/tasks/:path*", "destination": "https://feedback.fightflo.app/tasks/:path*" },
+    { "source": "/tasks-icons/:path*", "destination": "https://feedback.fightflo.app/tasks-icons/:path*" },
     { "source": "/api/tasks", "destination": "https://feedback.fightflo.app/api/tasks" },
     { "source": "/api/tasks/:path*", "destination": "https://feedback.fightflo.app/api/tasks/:path*" },
     { "source": "/api/tasks-passcode", "destination": "https://feedback.fightflo.app/api/tasks-passcode" }

@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { isSupabaseBrowserConfigured, supabaseBrowser } from "@/lib/supabase/browserClient";
+import { getTasksApiSecret } from "@/hooks/usePasscodeGate";
 import type { TodoItem, TodoSource } from "@/types/todo";
+
+function authHeaders(): HeadersInit {
+  const secret = getTasksApiSecret();
+  return secret ? { "x-tasks-secret": secret } : {};
+}
 
 function upsertTodo(items: TodoItem[], item: TodoItem): TodoItem[] {
   const existing = items.findIndex((t) => t.id === item.id);
@@ -77,7 +83,7 @@ export function useTasks() {
 
     const res = await fetch("/api/tasks", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify({ title, source }),
     });
 
@@ -103,14 +109,14 @@ export function useTasks() {
     );
     await fetch(`/api/tasks/${task.id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify({ status: nextStatus }),
     });
   }, []);
 
   const deleteTask = useCallback(async (taskId: string) => {
     setTasks((current) => current.filter((t) => t.id !== taskId));
-    await fetch(`/api/tasks/${taskId}`, { method: "DELETE" });
+    await fetch(`/api/tasks/${taskId}`, { method: "DELETE", headers: authHeaders() });
   }, []);
 
   return { tasks, loading, error, addTask, toggleTask, deleteTask };

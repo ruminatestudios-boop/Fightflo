@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createTodo, listTodos } from "@/lib/db/todo";
+import { isTasksApiAuthorized } from "@/lib/db/tasksAuth";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  if (!isTasksApiAuthorized(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const todos = await listTodos();
   return NextResponse.json({ tasks: todos });
 }
 
 export async function POST(request: NextRequest) {
+  if (!isTasksApiAuthorized(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = (await request.json()) as { title?: string; source?: "voice" | "typed" };
   const title = body.title?.trim();
   if (!title) {

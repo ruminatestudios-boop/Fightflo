@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { CaptureView } from "@/components/tasks/CaptureView";
-import { FloatingRecordButton } from "@/components/tasks/FloatingRecordButton";
 import { TaskList } from "@/components/tasks/TaskList";
 import { TransportButton } from "@/components/tasks/TransportButton";
-import { PlusIcon } from "@/components/tasks/icons";
+import { MicIcon, PlusIcon } from "@/components/tasks/icons";
 import { useTasks } from "@/hooks/useTasks";
 
 export default function TasksPage() {
@@ -36,20 +35,29 @@ export default function TasksPage() {
         )}
       </main>
 
-      <footer className="p-4 flex items-center gap-2 border-t border-[var(--border)]">
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-          placeholder="Add a task…"
-          className="flex-1 h-11 rounded-full bg-[var(--surface-pill)] border border-[var(--border)] px-4 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-red)]"
-        />
-        <TransportButton variant="active" onClick={handleAdd} aria-label="Add task">
-          <PlusIcon className="h-5 w-5" />
+      <footer className="p-4 flex flex-col items-center gap-4 border-t border-[var(--border)]">
+        <TransportButton
+          variant="active"
+          size="xl"
+          onClick={() => setCapturing(true)}
+          aria-label="Add task by voice"
+        >
+          <MicIcon className="h-11 w-11" />
         </TransportButton>
-      </footer>
 
-      <FloatingRecordButton onClick={() => setCapturing(true)} />
+        <div className="w-full flex items-center gap-2">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+            placeholder="Add a task…"
+            className="flex-1 h-11 rounded-full bg-[var(--surface-pill)] border border-[var(--border)] px-4 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-red)]"
+          />
+          <TransportButton variant="active" onClick={handleAdd} aria-label="Add task">
+            <PlusIcon className="h-5 w-5" />
+          </TransportButton>
+        </div>
+      </footer>
 
       {capturing && (
         <CaptureView onAdd={(title) => addTask(title, "voice")} onClose={() => setCapturing(false)} />

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { deleteTodo, updateTodo } from "@/lib/db/todo";
+import { isTasksApiAuthorized } from "@/lib/db/tasksAuth";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!isTasksApiAuthorized(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
   const body = (await request.json()) as { title?: string; status?: "open" | "done" };
 
@@ -16,7 +21,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   return NextResponse.json({ ok: true });
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!isTasksApiAuthorized(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
   await deleteTodo(id);
   return NextResponse.json({ ok: true });

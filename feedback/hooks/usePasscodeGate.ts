@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-const STORAGE_KEY = "tasks_pin_ok";
+const SECRET_KEY = "tasks_api_secret";
+
+export function getTasksApiSecret(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(SECRET_KEY);
+}
 
 export function usePasscodeGate() {
   const [unlocked, setUnlocked] = useState(false);
@@ -10,7 +15,7 @@ export function usePasscodeGate() {
 
   useEffect(() => {
     // localStorage doesn't exist during SSR; read it post-mount to avoid a hydration mismatch.
-    setUnlocked(localStorage.getItem(STORAGE_KEY) === "true");
+    setUnlocked(Boolean(localStorage.getItem(SECRET_KEY)));
     setChecked(true);
   }, []);
 
@@ -20,9 +25,9 @@ export function usePasscodeGate() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ passcode }),
     });
-    const data = (await res.json()) as { ok: boolean };
-    if (data.ok) {
-      localStorage.setItem(STORAGE_KEY, "true");
+    const data = (await res.json()) as { ok: boolean; secret?: string };
+    if (data.ok && data.secret) {
+      localStorage.setItem(SECRET_KEY, data.secret);
       setUnlocked(true);
     }
     return data.ok;
