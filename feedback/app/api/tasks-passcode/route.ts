@@ -11,8 +11,9 @@ async function sha256Hex(value: string): Promise<string> {
 export async function POST(request: Request) {
   const { passcode } = (await request.json()) as { passcode?: string };
   const expected = (process.env.TASKS_PASSCODE_HASH || "").trim();
+  const secret = (process.env.TASKS_API_SECRET || "").trim();
 
-  if (!expected) {
+  if (!expected || !secret) {
     return NextResponse.json({ ok: false, error: "not_configured" }, { status: 500 });
   }
   if (!passcode) {
@@ -27,6 +28,5 @@ export async function POST(request: Request) {
 
   // Hand the client a secret to authenticate subsequent /api/tasks* writes with,
   // since knowing the correct passcode is what proves the request is authorized.
-  const secret = process.env.TASKS_API_SECRET || "";
   return NextResponse.json({ ok: true, secret });
 }

@@ -25,12 +25,17 @@ export function usePasscodeGate() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ passcode }),
     });
-    const data = (await res.json()) as { ok: boolean; secret?: string };
+    const data = (await res.json()) as { ok: boolean; secret?: string; error?: string };
+
+    if (data.error === "not_configured") {
+      return { ok: false, message: "Not set up yet — missing passcode/secret config." };
+    }
     if (data.ok && data.secret) {
       localStorage.setItem(SECRET_KEY, data.secret);
       setUnlocked(true);
+      return { ok: true };
     }
-    return data.ok;
+    return { ok: false, message: "Incorrect passcode" };
   }, []);
 
   return { unlocked, checked, submit };

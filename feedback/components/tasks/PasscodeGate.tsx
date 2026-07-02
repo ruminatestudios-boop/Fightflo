@@ -8,15 +8,15 @@ import { usePasscodeGate } from "@/hooks/usePasscodeGate";
 export function PasscodeGate({ children }: { children: React.ReactNode }) {
   const { unlocked, checked, submit } = usePasscodeGate();
   const [pin, setPin] = useState("");
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!checked) return null;
   if (unlocked) return <>{children}</>;
 
   async function handleSubmit() {
-    const ok = await submit(pin);
-    if (!ok) {
-      setError(true);
+    const result = await submit(pin);
+    if (!result.ok) {
+      setError(result.message ?? "Incorrect passcode");
       setPin("");
     }
   }
@@ -31,13 +31,13 @@ export function PasscodeGate({ children }: { children: React.ReactNode }) {
           value={pin}
           onChange={(e) => {
             setPin(e.target.value);
-            setError(false);
+            setError(null);
           }}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           autoFocus
           className="w-full h-12 rounded-full bg-[var(--surface-pill)] border border-[var(--border)] text-center text-lg tracking-widest text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-red)]"
         />
-        {error && <p className="text-xs text-[var(--accent-red)]">Incorrect passcode</p>}
+        {error && <p className="text-xs text-[var(--accent-red)]">{error}</p>}
         <TransportButton variant="active" onClick={handleSubmit} aria-label="Submit passcode">
           <ArrowRightIcon className="h-5 w-5" />
         </TransportButton>
