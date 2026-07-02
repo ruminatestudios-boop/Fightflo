@@ -1,0 +1,59 @@
+"use client";
+
+import { useState } from "react";
+import { CaptureView } from "@/components/tasks/CaptureView";
+import { FloatingRecordButton } from "@/components/tasks/FloatingRecordButton";
+import { TaskList } from "@/components/tasks/TaskList";
+import { TransportButton } from "@/components/tasks/TransportButton";
+import { PlusIcon } from "@/components/tasks/icons";
+import { useTasks } from "@/hooks/useTasks";
+
+export default function TasksPage() {
+  const { tasks, loading, error, addTask, toggleTask, deleteTask } = useTasks();
+  const [draft, setDraft] = useState("");
+  const [capturing, setCapturing] = useState(false);
+
+  async function handleAdd() {
+    const title = draft.trim();
+    if (!title) return;
+    setDraft("");
+    await addTask(title, "typed");
+  }
+
+  return (
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col">
+      <header className="px-4 pt-6 pb-2">
+        <h1 className="text-2xl font-semibold tracking-tight">Tasks</h1>
+      </header>
+
+      {error && <p className="px-4 text-sm text-[var(--accent-red)]">{error}</p>}
+
+      <main className="flex-1 overflow-y-auto">
+        {loading ? (
+          <p className="px-4 py-4 text-[var(--muted)] text-sm">Loading…</p>
+        ) : (
+          <TaskList tasks={tasks} onToggle={toggleTask} onDelete={deleteTask} />
+        )}
+      </main>
+
+      <footer className="p-4 flex items-center gap-2 border-t border-[var(--border)]">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+          placeholder="Add a task…"
+          className="flex-1 h-11 rounded-full bg-[var(--surface-pill)] border border-[var(--border)] px-4 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-red)]"
+        />
+        <TransportButton variant="active" onClick={handleAdd} aria-label="Add task">
+          <PlusIcon className="h-5 w-5" />
+        </TransportButton>
+      </footer>
+
+      <FloatingRecordButton onClick={() => setCapturing(true)} />
+
+      {capturing && (
+        <CaptureView onAdd={(title) => addTask(title, "voice")} onClose={() => setCapturing(false)} />
+      )}
+    </div>
+  );
+}

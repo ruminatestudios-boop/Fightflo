@@ -9835,3 +9835,22 @@ button.stepguide-card-ts:active {
   font-size: 0.78rem;
   color: rgba(255, 255, 255, 0.5);
 }
+
+/* /tasks route (voice to-do capture) */
+@keyframes tasks-sweep {
+  0% {
+    left: 0%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes tasks-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(250, 65, 65, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 16px rgba(250, 65, 65, 0);
+  }
+}
