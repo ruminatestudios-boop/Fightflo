@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CaptureView } from "@/components/tasks/CaptureView";
 import { TaskList } from "@/components/tasks/TaskList";
 import { TransportButton } from "@/components/tasks/TransportButton";
@@ -10,7 +11,17 @@ import { useTasks } from "@/hooks/useTasks";
 export default function TasksPage() {
   const { tasks, loading, error, addTask, toggleTask, deleteTask } = useTasks();
   const [draft, setDraft] = useState("");
-  const [capturing, setCapturing] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [capturing, setCapturing] = useState(() => searchParams.get("record") === "1");
+
+  useEffect(() => {
+    if (searchParams.get("record") === "1") {
+      // Strip the param so refreshing this page doesn't re-trigger recording.
+      router.replace("/tasks");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleAdd() {
     const title = draft.trim();

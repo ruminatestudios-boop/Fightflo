@@ -24,13 +24,22 @@ export function ShareTargetHandler() {
     submitted.current = true;
 
     const title = buildTitle(params.get("title"), params.get("text"), params.get("url"));
+    const isPopup = params.get("popup") === "1";
 
     addTask(title, "typed")
       .then((task) => {
-        if (task) {
-          router.replace("/tasks");
-        } else {
+        if (!task) {
           setStatus("error");
+          return;
+        }
+        if (isPopup) {
+          // Bookmarklet opened this as a background tab — close it instead of
+          // navigating. window.close() only works on script-opened windows;
+          // if it's a no-op (opened as a normal tab), fall back to /tasks.
+          window.close();
+          setTimeout(() => router.replace("/tasks"), 300);
+        } else {
+          router.replace("/tasks");
         }
       })
       .catch(() => setStatus("error"));
